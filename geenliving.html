@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌿 綠色採購類別快速查詢工具 v2.0</title>
+    <style>
+        :root {
+            --primary-color: #2d6a4f;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-muted: #666666;
+            --color-specified: #dcfce7; 
+            --color-specified-text: #166534;
+            --color-label: #dbeafe;    
+            --color-label-text: #1e40af;
+            --color-other: #fef9c3;    
+            --color-other-text: #854d0e;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .search-container {
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+            background: var(--bg-color);
+            padding: 10px 0;
+            border-bottom: 1px solid transparent;
+        }
+
+        .search-box {
+            position: relative;
+            width: 100%;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 15px 40px 15px 20px;
+            font-size: 1.1rem;
+            border: 2px solid #ddd;
+            border-radius: 15px;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        #searchInput:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(45, 106, 79, 0.2);
+        }
+
+        .clear-btn {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: #999;
+            cursor: pointer;
+            display: none;
+        }
+        .clear-btn:hover { color: #333; }
+
+        .filters {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid #ddd;
+            background: #fff;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn.active[data-type="all"] { background: #333; color: #fff; border-color: #333; }
+        .filter-btn.active[data-type="指定採購"] { background: var(--color-specified-text); color: #fff; border-color: var(--color-specified-text); }
+        .filter-btn.active[data-type="環保標章"] { background: var(--color-label-text); color: #fff; border-color: var(--color-label-text); }
+        .filter-btn.active[data-type="其他綠色採購"] { background: var(--color-other-text); color: #fff; border-color: var(--color-other-text); }
+
+        .recent-searches {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .recent-label { color: var(--text-muted); font-size: 0.8rem; }
+        .recent-chip {
+            background: #e9ecef;
+            padding: 4px 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            color: #495057;
+            transition: background 0.2s;
+        }
+        .recent-chip:hover { background: #dee2e6; }
+
+        .results-list {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-bottom: 30px;
+        }
+
+        .result-card {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-left: 6px solid #ddd;
+            transition: transform 0.2s, opacity 0.3s;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+        }
+
+        /* 根據權重降低透明度 */
+        .result-card.low-score { opacity: 0.7; }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .category-badge {
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+
+        .badge-specified { background: var(--color-specified); color: var(--color-specified-text); }
+        .badge-label { background: var(--color-label); color: var(--color-label-text); }
+        .badge-other { background: var(--color-other); color: var(--color-other-text); }
+
+        .item-no {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .product-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .product-name {
+            font-size: 1.05rem;
+            font-weight: 600;
+            line-height: 1.4;
+            flex-grow: 1;
+        }
+
+        .copy-btn {
+            background: #f1f3f5;
+            border: 1px solid #dee2e6;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            color: #495057;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover { background: #e2e8f0; }
+        .copy-btn.copied { background: var(--primary-color); color: white; border-color: var(--primary-color); }
+
+        .full-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 6px;
+            margin-top: 5px;
+        }
+
+        .no-results {
+            text-align: center;
+            color: var(--text-muted);
+            margin-top: 50px;
+            font-size: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .suggestion-btn {
+            background: var(--color-label);
+            color: var(--color-label-text);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        .highlight {
+            background-color: #fff3bf;
+            font-weight: bold;
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 15px; }
+            h1 { font-size: 1.3rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>🌿 綠色採購快速查詢 v2.0</h1>
+            <div class="subtitle">支援模糊搜尋與縮寫（例如：影印紙、筆電、螢幕）</div>
+        </header>
+
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="輸入關鍵字 (例如：影印紙...)" autocomplete="off">
+                <button id="clearBtn" class="clear-btn" aria-label="清除">&times;</button>
+            </div>
+            
+            <div class="filters">
+                <button class="filter-btn active" data-type="all">全部</button>
+                <button class="filter-btn" data-type="指定採購">指定採購</button>
+                <button class="filter-btn" data-type="環保標章">環保標章</button>
+                <button class="filter-btn" data-type="其他綠色採購">其他</button>
+            </div>
+
+            <div id="recentSearches" class="recent-searches" style="display: none;">
+                <span class="recent-label">最近搜尋：</span>
+                </div>
+        </div>
+
+        <div id="results" class="results-list"></div>
+    </div>
+
+    <script>
+        const synonyms = {
+            "筆電": "筆記型電腦",
+            "螢幕": "顯示器",
+            "影印紙": "影印用紙",
+            "電腦": "電腦主機",
+            "快印": "快印機",
+            "投影": "投影機",
+            "冷氣": "空氣調節",
+            "機車": "機車"
+        };
+
+        const database = [
+            // 附表 1: 指定採購項目
+            { id: "1", name: "衛生紙、擦手紙", full: "衛生紙（抽取式、小捲筒、大捲筒）、擦手紙", type: "指定採購", badge: "badge-specified" },
+            { id: "1-other", name: "面紙、平版衛生紙", full: "面紙、平版衛生紙", type: "其他綠色採購", badge: "badge-other" },
+            { id: "2", name: "檔案夾盒", full: "檔案夾盒", type: "指定採購", badge: "badge-specified" },
+            { id: "2-other", name: "塑膠檔案夾、卷宗夾", full: "塑膠檔案夾、卷宗夾", type: "其他綠色採購", badge: "badge-other" },
+            { id: "3", name: "瓦楞紙箱", full: "單/雙層瓦楞紙箱", type: "指定採購", badge: "badge-specified" },
+            { id: "3-other", name: "紙板", full: "紙板", type: "其他綠色採購", badge: "badge-other" },
+            { id: "4", name: "再生/環保碳粉匣", full: "再生/環保碳粉匣", type: "指定採購", badge: "badge-specified" },
+            { id: "4-other", name: "環保感光滾筒", full: "環保（再生）感光滾筒（組）", type: "其他綠色採購", badge: "badge-other" },
+            { id: "5", name: "聚酯纖維", full: "聚酯纖維（本白色）", type: "指定採購", badge: "badge-specified" },
+            { id: "6", name: "廢輪胎橡膠粉", full: "廢輪胎橡膠粉（黑色）", type: "指定採購", badge: "badge-specified" },
+            { id: "6-other", name: "橡膠絲、顆粒、塑膠棧板", full: "廢輪胎橡膠絲、顆粒（黑色）、塑膠棧板", type: "其他綠色採購", badge: "badge-other" },
+            { id: "7", name: "垃圾袋、清潔袋", full: "垃圾袋/清潔袋", type: "指定採購", badge: "badge-specified" },
+            { id: "7-other", name: "專用垃圾袋、交貨便專用袋、背心袋", full: "地方政府法令規範須使用之專用垃圾袋、交貨便專用袋、背心袋", type: "其他綠色採購", badge: "badge-other" },
+            { id: "8", name: "洗碗精、洗衣精、地板/浴廁/廚房清潔劑", full: "洗碗精/洗潔精、洗衣精/粉、洗衣膠囊、地板清潔劑、浴廁清潔劑、廚房清潔劑", type: "指定採購", badge: "badge-specified" },
+            { id: "8-other", name: "玻璃清潔劑、漂白水、馬桶疏通劑、冷洗精、洗車精", full: "玻璃清潔劑、漂白水、馬桶疏通劑、冷洗精、洗車精", type: "其他綠色採購", badge: "badge-other" },
+            { id: "9", name: "洗手乳、沐浴乳、洗髮乳", full: "洗手乳/液/露/慕斯、沐浴乳/精/露、洗髮乳/精/露", type: "指定採購", badge: "badge-specified" },
+            { id: "9-other", name: "肥皂、固體皂、液體皂、寵物洗毛精", full: "肥皂、固體皂、液體皂、皂類清潔劑、寵物洗毛精", type: "其他綠色採購", badge: "badge-other" },
+            { id: "10", name: "電腦主機、工作站", full: "一般辦公用電腦主機（含個人電腦、桌上型電腦）、工作站", type: "指定採購", badge: "badge-specified" },
+            { id: "10-other", name: "伺服器", full: "伺服器", type: "其他綠色採購", badge: "badge-other" },
+            { id: "11", name: "桌上型電腦", full: "桌上型（個人）電腦", type: "指定採購", badge: "badge-specified" },
+            { id: "11-other", name: "一體機電腦 (All-in-One)", full: "一體機電腦/All-in-One", type: "其他綠色採購", badge: "badge-other" },
+            { id: "12", name: "19-27吋顯示器, 55吋以上觸控螢幕", full: "19-27吋（含）顯示器、大尺寸（55吋以上）觸控螢幕", type: "指定採購", badge: "badge-specified" },
+            { id: "12-other", name: "超過27吋顯示器, 未達55吋觸控螢幕", full: "超過27吋顯示器、未達55吋之觸控螢幕", type: "其他綠色採購", badge: "badge-other" },
+            { id: "13", name: "雷射印表機", full: "雷射印表機", type: "指定採購", badge: "badge-specified" },
+            { id: "13-other", name: "3D印表機, 大圖/大尺寸/存摺/噴墨/快印/熱感/點矩陣印表機", full: "3D印表機、大圖輸出機、大尺寸印表機、存摺印表機、噴墨印表機、快印機（速印機）、熱感（式）收據印表機、點矩陣（點陣）式印表機", type: "其他綠色採購", badge: "badge-other" },
+            { id: "14", name: "筆記型電腦", full: "筆記型電腦", type: "指定採購", badge: "badge-specified" },
+            { id: "14-other", name: "平板電腦", full: "平板電腦", type: "其他綠色採購", badge: "badge-other" },
+            { id: "15", name: "原生碳粉匣、感光鼓匣", full: "原生碳粉匣、感光鼓匣*", type: "指定採購", badge: "badge-specified" },
+            { id: "16", name: "多功能複合機/影印機/印表機", full: "多功能複合機、多功能影印機、印表機", type: "指定採購", badge: "badge-specified" },
+            { id: "16-other", name: "大尺寸多功能印表機", full: "大尺寸多功能印表機", type: "其他綠色採購", badge: "badge-other" },
+            { id: "17", name: "掃描器", full: "掃描器", type: "指定採購", badge: "badge-specified" },
+            { id: "17-other", name: "可攜式/置頂式掃描器", full: "可攜式掃描器、置頂式掃描器", type: "其他綠色採購", badge: "badge-other" },
+            { id: "18", name: "投影機", full: "投影機", type: "指定採購", badge: "badge-specified" },
+            { id: "18-other", name: "實物/互動/微型投影機", full: "實物投影機、互動投影機、微型投影機", type: "其他綠色採購", badge: "badge-other" },
+            { id: "19", name: "610公升以下電冰箱", full: "總有效內容積610公升（含）以下電冰箱", type: "指定採購", badge: "badge-specified" },
+            { id: "19-other", name: "冷凍櫃, 冷凍/冷藏展示櫃", full: "冷凍櫃/箱、冷凍/冷藏展示櫃", type: "其他綠色採購", badge: "badge-other" },
+            { id: "20", name: "水冷式冷氣, 窗型/分離式冷氣機", full: "35.1千瓦（含）以下水冷式冷氣、16千瓦（含）以下窗型/分離/冷氣機、空氣調節器", type: "指定採購", badge: "badge-specified" },
+            { id: "20-other", name: "隱藏式/吊隱式/崁入式/氣冷箱型/移動式冷氣", full: "隱藏式空調、吊隱式、崁入式、氣冷式箱型、移動式冷氣", type: "其他綠色採購", badge: "badge-other" },
+            { id: "21", name: "洗衣機", full: "洗衣機", type: "指定採購", badge: "badge-specified" },
+            { id: "21-other", name: "脫水機, 滾筒式洗衣/乾衣機", full: "脫水機、滾筒式洗衣/乾衣機", type: "其他綠色採購", badge: "badge-other" },
+            { id: "22", name: "除濕機", full: "除濕機", type: "指定採購", badge: "badge-specified" },
+            { id: "22-other", name: "壁掛式, 埋入式/吊隱式除濕機", full: "壁掛式、埋入式/吊隱式除濕機", type: "其他綠色採購", badge: "badge-other" },
+            { id: "23", name: "循環扇", full: "循環扇", type: "指定採購", badge: "badge-specified" },
+            { id: "23-other", name: "立扇, 壁扇, 吸排扇, 換氣扇", full: "立扇、壁扇、吸排扇、換氣扇", type: "其他綠色採購", badge: "badge-other" },
+            { id: "24", name: "二段式省水馬桶", full: "二段式省水馬桶（含坐式及蹲式）", type: "指定採購", badge: "badge-specified" },
+            { id: "25", name: "水龍頭, 感應式水龍頭", full: "(水)龍頭、感應式(水)龍頭", type: "指定採購", badge: "badge-specified" },
+            { id: "25-other", name: "腳踏式/壁式/臉盆龍頭", full: "腳踏式龍頭、璧式龍頭、臉盆龍頭", type: "其他綠色採購", badge: "badge-other" },
+            { id: "26", name: "飲水機", full: "飲水(供應)機", type: "指定採購", badge: "badge-specified" },
+            { id: "27", name: "貯備型電開水器", full: "貯備型電開水器(機)", type: "指定採購", badge: "badge-specified" },
+            { id: "28", name: "LED燈泡", full: "發光二極體（LED）燈泡", type: "指定採購", badge: "badge-specified" },
+            { id: "29", name: "LED道路照明燈具", full: "發光二極體（LED）道路照明燈具", type: "指定採購", badge: "badge-specified" },
+            { id: "30", name: "LED平板燈, 格柵燈", full: "LED平板燈、格柵燈（吸頂式/嵌入式）", type: "指定採購", badge: "badge-specified" },
+            { id: "30-other", name: "軌道燈", full: "軌道燈", type: "其他綠色採購", badge: "badge-other" },
+            { id: "31", name: "數位複印機版紙", full: "數位複印機版紙", type: "指定採購", badge: "badge-specified" },
+            { id: "32", name: "碎紙機", full: "碎紙機", type: "指定採購", badge: "badge-specified" },
+            { id: "33", name: "油墨", full: "油墨*", type: "指定採購", badge: "badge-specified" },
+            { id: "34", name: "注射液", full: "注射液", type: "指定採購", badge: "badge-specified" },
+            { id: "35", name: "陶瓷面磚", full: "陶瓷面磚", type: "指定採購", badge: "badge-specified" },
+            { id: "36", name: "地磚, 水泥板, 空心磚, 緣石, 圍牆磚, 石磚", full: "地磚（混凝土地磚、透水磚、植草磚）、水泥板、空心磚、緣石、圍牆磚、石磚", type: "指定採購", badge: "badge-specified" },
+            { id: "37", name: "聚乙烯塑膠管", full: "聚乙烯塑膠管（一般用、給水、排水及排污用）", type: "指定採購", badge: "badge-specified" },
+            { id: "38", name: "電動機車", full: "電動機車", type: "指定採購", badge: "badge-specified" },
+            { id: "39", name: "機車", full: "機車", type: "指定採購", badge: "badge-specified" },
+            { id: "40", name: "4-5人座小客車, 5人座客貨兩用車", full: "4-5人座小客車、5人座客貨兩用車", type: "指定採購", badge: "badge-specified" },
+            { id: "40-other", name: "小貨車, 復康巴士, 救護車, 電動車", full: "小貨車、身心障礙交通車、柴油車、幼童專用車、復康巴士、資源回收車、救護車、電動車", type: "其他綠色採購", badge: "badge-other" },
+            { id: "41", name: "乾粉/泡沫/水滅火器", full: "乾粉/泡沫/水滅火器", type: "指定採購", badge: "badge-specified" },
+            { id: "41-other", name: "二氧化碳/強化液/住宅滅火器", full: "二氧化碳/強化液滅火器、住宅滅火器", type: "其他綠色採購", badge: "badge-other" },
+            { id: "42", name: "工業型乾式變壓器", full: "工業型乾式變壓器", type: "指定採購", badge: "badge-specified" },
+            { id: "42-other", name: "模鑄式變壓器", full: "模鑄式變壓器", type: "其他綠色採購", badge: "badge-other" },
+            { id: "43", name: "高效率/非晶質變壓器, 油浸式變壓器", full: "高效率/非晶質變壓器、油浸式變壓器", type: "指定採購", badge: "badge-specified" },
+
+            // 附表 2: 環保標章產品
+            { id: "44", name: "數位複印機油墨", full: "數位複印機油墨", type: "環保標章", badge: "badge-label" },
+            { id: "45", name: "奇異筆, 白板筆", full: "奇異筆/白板筆", type: "環保標章", badge: "badge-label" },
+            { id: "46", name: "影印用紙", full: "影印用紙（白色或彩色）", type: "環保標章", badge: "badge-label" },
+            { id: "47", name: "紙製膠帶", full: "紙製膠帶", type: "環保標章", badge: "badge-label" },
+            { id: "48", name: "辦公室用桌", full: "辦公室用桌", type: "環保標章", badge: "badge-label" },
+            { id: "49", name: "辦公室用椅", full: "辦公室用椅", type: "環保標章", badge: "badge-label" },
+            { id: "50", name: "印刷品", full: "印刷品", type: "環保標章", badge: "badge-label" },
+            { id: "51", name: "數位複印機", full: "數位複印機", type: "環保標章", badge: "badge-label" },
+            { id: "52", name: "低壓匯流排", full: "全模鑄式低壓匯流排LA/LB/U E系列、全模鑄式匯流排、耐火型匯流排", type: "環保標章", badge: "badge-label" },
+            { id: "53", name: "環保電線, 扁平光纜", full: "600V環保電線、扁平光纜", type: "環保標章", badge: "badge-label" },
+            { id: "54", name: "客貨兩用車, 貨車", full: "7-9人座客貨兩用車、貨車", type: "環保標章", badge: "badge-label" },
+            { id: "55", name: "床墊 (泡綿, 彈簧, 記憶, 乳膠, 獨立筒)", full: "泡綿床墊、彈簧床墊、記憶床墊、乳膠床墊、獨立筒床墊", type: "環保標章", badge: "badge-label" },
+            { id: "56", name: "枕頭 (水凝膠, 乳膠, 記憶, 棉質)", full: "水凝膠枕頭、乳膠枕頭、記憶枕頭、棉質枕頭", type: "環保標章", badge: "badge-label" },
+            { id: "57", name: "保溫杯", full: "保溫杯", type: "環保標章", badge: "badge-label" },
+            { id: "58", name: "電池", full: "電池", type: "環保標章", badge: "badge-label" },
+            { id: "59", name: "重填物之包裝或容器", full: "重填物之包裝或容器", type: "環保標章", badge: "badge-label" },
+            { id: "60", name: "屋外即熱式燃氣熱水器", full: "屋外即熱式燃氣熱水器", type: "環保標章", badge: "badge-label" },
+            { id: "61", name: "瓦斯台爐", full: "瓦斯台爐", type: "環保標章", badge: "badge-label" },
+            { id: "62", name: "轎車用輪胎", full: "轎車用輪胎", type: "環保標章", badge: "badge-label" },
+            { id: "63", name: "抽油煙機", full: "抽油煙機", type: "環保標章", badge: "badge-label" },
+            { id: "64", name: "地毯", full: "地毯", type: "環保標章", badge: "badge-label" },
+            { id: "65", name: "鞋類製品", full: "鞋類製品", type: "環保標章", badge: "badge-label" },
+            { id: "66", name: "冷氣, 空氣/清淨濾網", full: "冷氣、空氣/清淨濾網", type: "環保標章", badge: "badge-label" },
+            { id: "67", name: "保鮮盒", full: "保鮮盒", type: "環保標章", badge: "badge-label" },
+            { id: "68", name: "拖把", full: "拖把（組）", type: "環保標章", badge: "badge-label" },
+            { id: "69", name: "面紙", full: "面紙", type: "環保標章", badge: "badge-label" },
+            { id: "70", name: "滅火器 (二氧化碳, 住宅, 噴霧)", full: "二氧化碳滅火器、住宅滅火器、噴霧式滅火器", type: "環保標章", badge: "badge-label" },
+            { id: "71", name: "使用農業資源之產品", full: "使用農業資源之產品", type: "環保標章", badge: "badge-label" },
+            { id: "72", name: "生物可分解塑膠產品", full: "生物可分解塑膠產品", type: "環保標章", badge: "badge-label" },
+            { id: "73", name: "堆肥, 基肥, 渣粕肥料, 有機肥料", full: "堆肥、基肥、渣粕肥料、有機肥料", type: "環保標章", badge: "badge-label" },
+            { id: "74", name: "生質塑膠製品", full: "生質塑膠製品", type: "環保標章", badge: "badge-label" },
+            { id: "75", name: "塑膠類藥用輸液容器", full: "塑膠類藥用輸液容器", type: "環保標章", badge: "badge-label" },
+            { id: "76", name: "汽車租賃業", full: "汽車租賃業", type: "環保標章", badge: "badge-label" },
+            { id: "77", name: "旅行業", full: "旅行業", type: "環保標章", badge: "badge-label" },
+            { id: "78", name: "洗衣業", full: "洗衣業", type: "環保標章", badge: "badge-label" },
+            { id: "79", name: "平版印刷業", full: "平版印刷業", type: "環保標章", badge: "badge-label" },
+            { id: "80", name: "清潔服務業", full: "清潔服務業", type: "環保標章", badge: "badge-label" },
+            { id: "81", name: "洗車服務業", full: "洗車服務業", type: "環保標章", badge: "badge-label" },
+            { id: "82", name: "育樂場所", full: "育樂場所", type: "環保標章", badge: "badge-label" },
+            { id: "83", name: "旅館業", full: "旅館業", type: "環保標章", badge: "badge-label" },
+            { id: "84", name: "餐館業", full: "餐館業", type: "環保標章", badge: "badge-label" },
+            { id: "85", name: "卜特蘭水泥", full: "卜特蘭水泥", type: "環保標章", badge: "badge-label" },
+            { id: "86", name: "高爐爐碴水泥, 新型高爐水泥", full: "卜特蘭高爐爐碴水泥、新型高爐水泥", type: "環保標章", badge: "badge-label" },
+            { id: "87", name: "自然循環式太陽能熱水器", full: "自然循環式太陽能熱水器", type: "環保標章", badge: "badge-label" },
+            { id: "88", name: "空氣源式熱泵熱水器", full: "空氣源式熱泵熱水器", type: "環保標章", badge: "badge-label" },
+            { id: "89", name: "清水磚, 陶磚, 外裝馬賽克壁磚", full: "清水磚、陶磚、外裝馬賽克壁磚", type: "環保標章", badge: "badge-label" },
+            { id: "90", name: "地質改良劑, 飛石踏板, 導盲磚, 水泥欄杆", full: "地質改良劑、飛石踏板、飛灰爐石粉、導盲磚、水泥欄杆、造型磚、環保枕木", type: "環保標章", badge: "badge-label" },
+            { id: "91", name: "隔熱板, 隔音墊", full: "隔熱板、隔音墊", type: "環保標章", badge: "badge-label" },
+            { id: "92", name: "聚丙烯管", full: "聚丙烯管", type: "環保標章", badge: "badge-label" },
+            { id: "93", name: "水性水泥漆, 瀝青防水膠", full: "水性水泥漆、瀝青防水膠", type: "環保標章", badge: "badge-label" },
+            { id: "94", name: "活動隔牆", full: "活動隔牆", type: "環保標章", badge: "badge-label" },
+            { id: "95", name: "黏著劑", full: "黏著劑", type: "環保標章", badge: "badge-label" },
+            { id: "96", name: "門窗", full: "門窗", type: "環保標章", badge: "badge-label" },
+            { id: "97", name: "壁紙", full: "壁紙", type: "環保標章", badge: "badge-label" },
+            { id: "98", name: "樹脂, 壓克力面/中材", full: "樹脂、壓(亞)克力面/中材（塗料）", type: "環保標章", badge: "badge-label" },
+            { id: "99", name: "腳踏/壁式/臉盆龍頭", full: "腳踏式龍頭、璧式龍頭、臉盆龍頭", type: "環保標章", badge: "badge-label" },
+            { id: "100", name: "兩段式油壓沖水凡而", full: "兩段式油壓沖水凡而、兩段式腳踏油壓沖水凡而", type: "環保標章", badge: "badge-label" },
+            { id: "101", name: "蓮蓬頭", full: "蓮蓬頭", type: "環保標章", badge: "badge-label" },
+            { id: "102", name: "開飲機", full: "開飲機", type: "環保標章", badge: "badge-label" },
+            { id: "103", name: "螢光燈管", full: "螢光燈管", type: "環保標章", badge: "badge-label" },
+            { id: "104", name: "省電燈泡及燈管", full: "省電燈泡及燈管", type: "環保標章", badge: "badge-label" },
+            { id: "105", name: "螢光燈啟動器", full: "螢光燈啟動器", type: "環保標章", badge: "badge-label" },
+            { id: "106", name: "出口標示燈, 避難方向指示燈", full: "出口標示燈及避難方向指示燈", type: "環保標章", badge: "badge-label" },
+            { id: "107", name: "烘手機", full: "烘手機", type: "環保標章", badge: "badge-label" },
+            { id: "108", name: "充電器", full: "充電器", type: "環保標章", badge: "badge-label" },
+            { id: "109", name: "LED顯示板", full: "發光二極體（LED）顯示板", type: "環保標章", badge: "badge-label" },
+            { id: "110", name: "立扇, 吸排扇, 壁扇, 換氣扇", full: "立扇、吸排扇、壁扇、換氣扇", type: "環保標章", badge: "badge-label" },
+            { id: "111", name: "家用微波爐", full: "家用微波爐", type: "環保標章", badge: "badge-label" },
+            { id: "112", name: "電視機", full: "電視機", type: "環保標章", badge: "badge-label" },
+            { id: "113", name: "手持式頭髮吹風機", full: "手持式頭髮吹風機", type: "環保標章", badge: "badge-label" },
+            { id: "114", name: "電熱式衣物烘乾機", full: "電熱式衣物烘乾機", type: "環保標章", badge: "badge-label" },
+            { id: "115", name: "電鍋", full: "電鍋", type: "環保標章", badge: "badge-label" },
+            { id: "116", name: "電熱水瓶", full: "電熱水瓶", type: "環保標章", badge: "badge-label" },
+            { id: "117", name: "電離式空氣清淨機", full: "電離式空氣清淨機", type: "環保標章", badge: "badge-label" },
+            { id: "118", name: "電熱水壺", full: "電熱水壺", type: "環保標章", badge: "badge-label" },
+            { id: "119", name: "電烤箱", full: "電烤箱", type: "環保標章", badge: "badge-label" },
+            { id: "120", name: "電咖啡機", full: "電咖啡機", type: "環保標章", badge: "badge-label" },
+            { id: "121", name: "吸塵器", full: "吸塵器", type: "環保標章", badge: "badge-label" },
+            { id: "122", name: "家用洗碗機", full: "家用洗碗機", type: "環保標章", badge: "badge-label" },
+            { id: "123", name: "滾筒式洗衣/乾衣機", full: "滾筒式洗衣/乾衣機", type: "環保標章", badge: "badge-label" },
+            { id: "124", name: "貯備型電熱水器", full: "貯備型電熱水器", type: "環保標章", badge: "badge-label" },
+            { id: "125", name: "玻璃清潔劑, 漂白水, 馬桶疏通劑, 冷洗精, 洗車精", full: "玻璃清潔劑、漂白水、馬桶疏通劑、冷洗精、洗車精", type: "環保標章", badge: "badge-label" },
+            { id: "126", name: "肥皂, 固體皂, 液體皂, 寵物洗毛精", full: "肥皂、固體皂、液體皂、皂類清潔劑、寵物洗毛精", type: "環保標章", badge: "badge-label" },
+            { id: "127", name: "工商業用清潔劑", full: "工商業用清潔劑", type: "環保標章", badge: "badge-label" },
+            { id: "128", name: "3D/大圖/大尺寸/存摺/噴墨/快印/熱感收據印表機", full: "3D印表機、大圖輸出機、大尺寸印表機、存摺印表機、噴墨印表機、快印機（速印機）、熱感（式）收據印表機", type: "環保標章", badge: "badge-label" },
+            { id: "129", name: "原生感光滾筒, 碳粉卡匣", full: "原生感光滾筒、碳粉卡匣", type: "環保標章", badge: "badge-label" },
+            { id: "130", name: "油墨匣, 墨水, 墨水匣", full: "油墨匣、墨水、墨水匣", type: "環保標章", badge: "badge-label" },
+            { id: "131", name: "電腦滑鼠", full: "電腦滑鼠", type: "環保標章", badge: "badge-label" },
+            { id: "132", name: "電腦鍵盤", full: "電腦鍵盤", type: "環保標章", badge: "badge-label" },
+            { id: "133", name: "外接式硬碟", full: "外接式硬碟", type: "環保標章", badge: "badge-label" },
+            { id: "134", name: "不斷電系統", full: "不斷電系統", type: "環保標章", badge: "badge-label" },
+            { id: "135", name: "超過32吋顯示器", full: "超過32吋顯示器", type: "環保標章", badge: "badge-label" },
+            { id: "136", name: "大尺寸多功能印表機", full: "大尺寸多功能印表機", type: "環保標章", badge: "badge-label" },
+            { id: "137", name: "一體機電腦 (All-in-One)", full: "一體機電腦/All-in-One", type: "環保標章", badge: "badge-label" },
+            { id: "138", name: "平板電腦", full: "平板電腦", type: "環保標章", badge: "badge-label" },
+            { id: "139", name: "板材, 角材", full: "板材、角材", type: "環保標章", badge: "badge-label" },
+            { id: "140", name: "醫療廢棄物垃圾袋", full: "醫療廢棄物垃圾袋", type: "環保標章", badge: "badge-label" },
+            { id: "141", name: "回收再生環保布料, 宣影布, 不織布", full: "回收再生環保布料製品、回收紗商標布、宣影布、黑色不織布、環保纖維布", type: "環保標章", badge: "badge-label" },
+            { id: "142", name: "亮彩琉璃", full: "亮彩琉璃", type: "環保標章", badge: "badge-label" },
+            { id: "143", name: "環保網路基座板, 再生塑膠粒", full: "環保網路基座板、再生塑膠粒、透明膠片", type: "環保標章", badge: "badge-label" },
+            { id: "144", name: "便條紙, 資料箱", full: "便條紙、資料箱", type: "環保標章", badge: "badge-label" },
+            { id: "145", name: "銅(西)卡", full: "銅(西)卡", type: "環保標章", badge: "badge-label" },
+            { id: "146", name: "隔音墊緩衝材", full: "隔音墊緩衝材", type: "環保標章", badge: "badge-label" },
+            { id: "147", name: "食品包裝購物兩用袋", full: "食品包裝購物兩用袋", type: "環保標章", badge: "badge-label" },
+            { id: "148", name: "重複使用之飲料與食品容器", full: "重複使用之飲料與食品容器", type: "環保標章", badge: "badge-label" },
+            { id: "149", name: "生質柴油", full: "生質柴油", type: "環保標章", badge: "badge-label" },
+            { id: "150", name: "生質燃料油", full: "生質燃料油", type: "環保標章", badge: "badge-label" },
+            { id: "151", name: "再生感光滾筒", full: "再生感光滾筒", type: "環保標章", badge: "badge-label" },
+            { id: "152", name: "其他環保標章產品", full: "其他非前列之環保標章產品", type: "環保標章", badge: "badge-label" },
+
+            // 附表 3: 其他綠色採購
+            { id: "153", name: "第二類環保標章產品", full: "第二類環保標章產品", type: "其他綠色採購", badge: "badge-other" },
+            { id: "154", name: "節能標章產品", full: "節能標章產品", type: "其他綠色採購", badge: "badge-other" },
+            { id: "155", name: "省水標章產品", full: "省水標章產品", type: "其他綠色採購", badge: "badge-other" },
+            { id: "156", name: "綠建材標章產品", full: "綠建材標章產品", type: "其他綠色採購", badge: "badge-other" },
+            { id: "157", name: "碳足跡標籤", full: "碳足跡標籤及碳足跡減量標籤", type: "其他綠色採購", badge: "badge-other" },
+            { id: "158", name: "台灣木材標章產品", full: "「台灣木材標章」產品", type: "其他綠色採購", badge: "badge-other" },
+            { id: "159", name: "產銷履歷農產品標章", full: "產銷履歷農產品標章", type: "其他綠色採購", badge: "badge-other" },
+            { id: "160", name: "有機農產品標章", full: "有機農產品標章", type: "其他綠色採購", badge: "badge-other" },
+            { id: "161", name: "CAS台灣優良農產品", full: "CAS台灣優良農產品", type: "其他綠色採購", badge: "badge-other" },
+            { id: "162", name: "能源效率一級與二級產品", full: "依經濟部能源署之能源效率標示為一級與二級效率等級之產品", type: "其他綠色採購", badge: "badge-other" },
+            { id: "163", name: "國外標章產品", full: "國外標章產品（認列範疇詳見附表4）", type: "其他綠色採購", badge: "badge-other" },
+            { id: "164", name: "環保集點綠點", full: "以環保集點綠點作為宣導品或相關用途時認購之綠點金額", type: "其他綠色採購", badge: "badge-other" },
+            { id: "165", name: "資源再生綠色產品", full: "經濟部產發署資源再生綠色產品", type: "其他綠色採購", badge: "badge-other" },
+            { id: "166", name: "自行車, 電動輔助自行車, 微型電動二輪車", full: "自行車（包含電動輔助自行車、微型電動二輪車）", type: "其他綠色採購", badge: "badge-other" },
+            { id: "167", name: "電動車, 電動巴士, 電動工程機具", full: "電動車（包含電動巴士）、電動工程（施工）機具", type: "其他綠色採購", badge: "badge-other" },
+            { id: "168", name: "使用再生能源 (具憑證)", full: "使用再生能源（限具國家再生能源憑證中心核發再生能源憑證者）", type: "其他綠色採購", badge: "badge-other" },
+            { id: "169", name: "LED燈管", full: "LED燈管", type: "其他綠色採購", badge: "badge-other" },
+            { id: "170", name: "國產有機質肥料", full: "農業部農糧署網站公告推薦之「國產有機質肥料品牌推薦名單」", type: "其他綠色採購", badge: "badge-other" },
+            { id: "171", name: "綠色旅遊, 環境教育設施", full: "參與環境部認列之綠色旅遊行程、環境教育設施場所", type: "其他綠色採購", badge: "badge-other" },
+            { id: "172", name: "環保餐廳消費", full: "於環境部認列之環保餐廳消費", type: "其他綠色採購", badge: "badge-other" },
+            { id: "173", name: "再生能源發電設備, 儲能設備", full: "再生能源發電設備（如太陽能板、風力發電設備）、儲能設備", type: "其他綠色採購", badge: "badge-other" },
+            { id: "174", name: "能源管理系統, 深度節能服務", full: "能源管理系統、深度節能服務", type: "其他綠色採購", badge: "badge-other" },
+            { id: "175", name: "污染防治設施", full: "污染防治（制）設施（空、水、廢、毒、噪音、土壤地下水、海洋）", type: "其他綠色採購", badge: "badge-other" },
+            { id: "176", name: "循環產品, 循環服務", full: "環境部資源循環署公告之循環產品或循環服務", type: "其他綠色採購", badge: "badge-other" },
+            { id: "177", name: "大眾運具 (台鐵, 高鐵, 捷運, 公車, YouBike)", full: "搭乘大眾運具（臺鐵、高鐵、捷運、輕軌、公車/國道客運、公共自行車）", type: "其他綠色採購", badge: "badge-other" },
+            { id: "178", name: "租賃非認列產品", full: "租賃非上述認列之「以租代購優先推動產品」者", type: "其他綠色採購", badge: "badge-other" },
+        ];
+
+        const searchInput = document.getElementById('searchInput');
+        const clearBtn = document.getElementById('clearBtn');
+        const resultsDiv = document.getElementById('results');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const recentSearchesContainer = document.getElementById('recentSearches');
+
+        let currentFilter = 'all';
+        let recentSearches = new Set(); // 使用 Set 避免重複
+
+        // 監聽搜尋與清除
+        searchInput.addEventListener('input', () => {
+            clearBtn.style.display = searchInput.value ? 'block' : 'none';
+            performSearch();
+        });
+
+        clearBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            clearBtn.style.display = 'none';
+            searchInput.focus();
+            performSearch();
+        });
+
+        // 監聽過濾按鈕
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                currentFilter = e.target.dataset.type;
+                performSearch();
+            });
+        });
+
+        function highlightText(text, query) {
+            if (!query) return text;
+            const chars = query.split('');
+            let highlighted = text;
+            chars.forEach(char => {
+                const re = new RegExp(`(${char})`, 'gi');
+                highlighted = highlighted.replace(re, '<span class="highlight">$1</span>');
+            });
+            return highlighted;
+        }
+
+        // 一鍵複製功能
+        function copyToClipboard(text, btnElement) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = btnElement.innerHTML;
+                btnElement.innerHTML = '✔️ 已複製';
+                btnElement.classList.add('copied');
+                
+                // 加入歷史紀錄
+                addRecentSearch(text);
+
+                setTimeout(() => {
+                    btnElement.innerHTML = '📋 複製';
+                    btnElement.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        // 歷史紀錄處理
+        function addRecentSearch(term) {
+            // 簡化字串長度
+            const shortTerm = term.length > 8 ? term.substring(0, 8) + '...' : term;
+            recentSearches.delete(shortTerm); // 移除舊的
+            recentSearches.add(shortTerm); // 加入新的到最後
+            
+            // 保持最多 5 筆
+            if (recentSearches.size > 5) {
+                const firstItem = recentSearches.values().next().value;
+                recentSearches.delete(firstItem);
+            }
+            renderRecentSearches();
+        }
+
+        function renderRecentSearches() {
+            if (recentSearches.size === 0) {
+                recentSearchesContainer.style.display = 'none';
+                return;
+            }
+            
+            recentSearchesContainer.style.display = 'flex';
+            // 保留 "最近搜尋：" 標籤
+            recentSearchesContainer.innerHTML = '<span class="recent-label">最近搜尋：</span>';
+            
+            // 反轉陣列讓最新的在前面
+            const searchesArray = Array.from(recentSearches).reverse();
+            
+            searchesArray.forEach(term => {
+                const chip = document.createElement('span');
+                chip.className = 'recent-chip';
+                chip.textContent = term;
+                chip.onclick = () => {
+                    searchInput.value = term.replace('...', '');
+                    clearBtn.style.display = 'block';
+                    performSearch();
+                };
+                recentSearchesContainer.appendChild(chip);
+            });
+        }
+
+        // 計算匹配權重
+        function calculateMatchScore(item, query) {
+            const text = item.name.toLowerCase();
+            const fullText = item.full.toLowerCase();
+            const typeText = item.type.toLowerCase();
+            query = query.toLowerCase();
+
+            // 反向索引：如果搜尋類別名稱，該類別全給高分
+            if (query.length >= 2 && typeText.includes(query)) return 90;
+
+            let maxScore = 0;
+
+            // 1. 同義詞映射
+            for (let key in synonyms) {
+                if (query === key) {
+                    const officialName = synonyms[key];
+                    if (text.includes(officialName) || fullText.includes(officialName)) maxScore = Math.max(maxScore, 100);
+                }
+            }
+
+            // 2. 精確子字串匹配
+            if (text.includes(query)) maxScore = Math.max(maxScore, 80);
+            if (fullText.includes(query)) maxScore = Math.max(maxScore, 70);
+
+            // 3. 關鍵字交集匹配 (全字包含)
+            const queryChars = query.split('');
+            const allIncluded = queryChars.every(char => text.includes(char));
+            if (allIncluded) maxScore = Math.max(maxScore, 50);
+
+            // 4. 部分字匹配
+            const matchCount = queryChars.filter(char => text.includes(char)).length;
+            const matchRatio = matchCount / queryChars.length;
+            if (matchRatio > 0.5) maxScore = Math.max(maxScore, 20 * matchRatio);
+
+            return maxScore;
+        }
+
+        // 「您是不是在找...」簡單推薦邏輯
+        function findSuggestion(query) {
+            if (!query || query.length < 2) return null;
+            let bestMatch = null;
+            let highestOverlap = 0;
+
+            const queryChars = query.toLowerCase().split('');
+
+            database.forEach(item => {
+                const nameChars = item.name.toLowerCase().split('');
+                let overlapCount = 0;
+                // 計算字符重疊度
+                queryChars.forEach(char => {
+                    if (nameChars.includes(char)) overlapCount++;
+                });
+                
+                if (overlapCount > highestOverlap) {
+                    highestOverlap = overlapCount;
+                    bestMatch = item.name;
+                }
+            });
+
+            return highestOverlap >= 1 ? bestMatch : null;
+        }
+
+        function getBorderColor(badge) {
+            if (badge === 'badge-specified') return '#166534';
+            if (badge === 'badge-label') return '#1e40af';
+            if (badge === 'badge-other') return '#854d0e';
+            return '#ddd';
+        }
+
+        function performSearch() {
+            const query = searchInput.value.trim();
+            resultsDiv.innerHTML = '';
+
+            // 篩選分類
+            let filteredDB = database;
+            if (currentFilter !== 'all') {
+                filteredDB = database.filter(item => item.type === currentFilter);
+            }
+
+            // 若沒有關鍵字但有選分類，顯示該分類所有項目
+            if (!query && currentFilter !== 'all') {
+                renderResults(filteredDB.map(item => ({ ...item, score: 100 })), '');
+                return;
+            }
+
+            if (!query) {
+                resultsDiv.innerHTML = '<div class="no-results">請輸入關鍵字或點擊上方分類開始查詢...</div>';
+                return;
+            }
+
+            // 加上權重計算並排序
+            const scoredResults = filteredDB.map(item => {
+                const score = calculateMatchScore(item, query);
+                return { ...item, score };
+            }).filter(item => item.score > 0).sort((a, b) => b.score - a.score);
+
+            if (scoredResults.length === 0) {
+                const suggestion = findSuggestion(query);
+                let html = '<div class="no-results"><div>❌ 找不到匹配項目</div>';
+                if (suggestion) {
+                    html += `
+                        <div>您是不是在找：</div>
+                        <button class="suggestion-btn" onclick="document.getElementById('searchInput').value='${suggestion}'; document.getElementById('clearBtn').style.display='block'; performSearch();">
+                            ${suggestion}
+                        </button>
+                    `;
+                }
+                html += '</div>';
+                resultsDiv.innerHTML = html;
+                return;
+            }
+
+            renderResults(scoredResults, query);
+        }
+
+        function renderResults(results, query) {
+            results.forEach(item => {
+                const card = document.createElement('div');
+                // 分級顯示：分數低的加上半透明效果
+                card.className = item.score < 50 ? 'result-card low-score' : 'result-card';
+                card.style.borderLeftColor = getBorderColor(item.badge);
+
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span class="category-badge ${item.badge}">${item.type}</span>
+                        <span class="item-no">項次: ${item.id}</span>
+                    </div>
+                    <div class="product-title-row">
+                        <div class="product-name">${highlightText(item.name, query)}</div>
+                        <button class="copy-btn" onclick="copyToClipboard('${item.name}', this)" title="複製此項目名稱">📋 複製</button>
+                    </div>
+                    <div class="full-desc">完整描述: ${highlightText(item.full, query)}</div>
+                `;
+                resultsDiv.appendChild(card);
+            });
+        }
+
+        // 初始化
+        performSearch();
+    </script>
+</body>
+</html>
