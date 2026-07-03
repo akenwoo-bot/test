@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏫 新營國小教職員通訊錄快速查詢工具 v1.1</title>
+    <style>
+        :root {
+            --primary-color: #1e3a8a; /* 學校氛圍改用沉穩藍 */
+            --bg-color: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            
+            /* 分類標籤色彩 */
+            --color-admin: #dbeafe; --text-admin: #1e40af;
+            --color-class: #dcfce7; --text-class: #166534;
+            --color-subject: #fef9c3; --text-subject: #854d0e;
+            --color-kind: #fae8ff; --text-kind: #86198f;
+            --color-other: #f1f5f9; --text-other: #475569;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container { width: 100%; max-width: 600px; }
+        header { text-align: center; margin-bottom: 20px; }
+        h1 { color: var(--primary-color); font-size: 1.5rem; margin-bottom: 10px; }
+        .subtitle { color: var(--text-muted); font-size: 0.9rem; }
+
+        .search-container {
+            position: sticky; top: 10px; z-index: 100;
+            background: var(--bg-color); padding: 10px 0;
+        }
+
+        .search-box { position: relative; width: 100%; }
+        #searchInput {
+            width: 100%; padding: 15px 40px 15px 20px; font-size: 1.1rem;
+            border: 2px solid #cbd5e1; border-radius: 15px; outline: none;
+            box-sizing: border-box; transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        #searchInput:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2);
+        }
+
+        .clear-btn {
+            position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; font-size: 1.2rem; color: #94a3b8; cursor: pointer; display: none;
+        }
+
+        .filters { display: flex; gap: 6px; margin-top: 12px; justify-content: center; flex-wrap: wrap; }
+        .filter-btn {
+            padding: 6px 12px; border-radius: 20px; border: 1px solid #cbd5e1;
+            background: #fff; color: var(--text-muted); font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
+        }
+
+        .filter-btn.active[data-type="all"] { background: #1e293b; color: #fff; }
+        .filter-btn.active[data-type="行政人員"] { background: var(--text-admin); color: #fff; }
+        .filter-btn.active[data-type="級任教師"] { background: var(--text-class); color: #fff; }
+        .filter-btn.active[data-type="科任/特教"] { background: var(--text-subject); color: #fff; }
+        .filter-btn.active[data-type="幼兒園"] { background: var(--text-kind); color: #fff; }
+        .filter-btn.active[data-type="其他人員"] { background: var(--text-other); color: #fff; }
+
+        .results-list { margin-top: 15px; display: flex; flex-direction: column; gap: 12px; padding-bottom: 30px; }
+        .result-card {
+            background: var(--card-bg); padding: 15px; border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 6px solid #cbd5e1;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+
+        .card-header { display: flex; justify-content: space-between; align-items: center; }
+        .category-badge { font-size: 0.75rem; font-weight: bold; padding: 4px 8px; border-radius: 6px; }
+        
+        .badge-admin { background: var(--color-admin); color: var(--text-admin); }
+        .badge-class { background: var(--color-class); color: var(--text-class); }
+        .badge-subject { background: var(--color-subject); color: var(--text-subject); }
+        .badge-kind { background: var(--color-kind); color: var(--text-kind); }
+        .badge-other { background: var(--color-other); color: var(--text-other); }
+
+        .teacher-info-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .teacher-name-box { display: flex; align-items: baseline; gap: 8px; }
+        .teacher-name { font-size: 1.15rem; font-weight: 600; }
+        .teacher-title { font-size: 0.9rem; color: var(--text-muted); }
+
+        .copy-btn {
+            background: #f1f5f9; border: 1px solid #e2e8f0; padding: 5px 10px;
+            border-radius: 6px; font-size: 0.8rem; cursor: pointer; color: #475569;
+            white-space: nowrap; transition: all 0.2s;
+        }
+        .copy-btn:hover { background: #e2e8f0; }
+        .copy-btn.copied { background: #10b981; color: white; border-color: #10b981; }
+
+        .email-box {
+            font-size: 0.85rem; color: var(--text-muted); background: #f8fafc;
+            padding: 8px; border-radius: 6px; margin-top: 2px;
+            word-break: break-all; font-family: monospace;
+        }
+
+        .no-results { text-align: center; color: var(--text-muted); margin-top: 50px; font-size: 1rem; }
+        .highlight { background-color: #fef08a; font-weight: bold; padding: 0 2px; border-radius: 2px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>🏫 新營國小教職員快速查詢工具</h1>
+            <div class="subtitle">支援姓名、職稱、班級、Email 模糊查詢（例如：一年甲班、特教、組長）</div>
+        </header>
+
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="輸入關鍵字查詢..." autocomplete="off">
+                <button id="clearBtn" class="clear-btn">&times;</button>
+            </div>
+            
+            <div class="filters">
+                <button class="filter-btn active" data-type="all">全部</button>
+                <button class="filter-btn" data-type="行政人員">行政</button>
+                <button class="filter-btn" data-type="級任教師">級任</button>
+                <button class="filter-btn" data-type="科任/特教">科任/特教</button>
+                <button class="filter-btn" data-type="幼兒園">幼兒園</button>
+                <button class="filter-btn" data-type="其他人員">其他</button>
+            </div>
+        </div>
+
+        <div id="results" class="results-list"></div>
+    </div>
+
+    <script>
+        // 繁體中文註解：結構化全校教職員資料庫
+        const database = [
+            { title: "校長", name: "曹欽瑋", email: "tsaochinwei@tn.edu.tw", types: ["行政人員"], badge: "badge-admin" },
+            { title: "教務主任", name: "陳意佳", email: "yichiachen@tn.edu.tw", types: ["行政人員"], badge: "badge-admin" },
+            { title: "學務主任", name: "張碩熙", email: "changcghi@tn.edu.tw", types: ["行政人員"], badge: "badge-admin" },
+            { title: "總務主任", name: "蘇煒能", email: "woei3702@tn.edu.tw", types: ["行政人員"], badge: "badge-admin" },
+            { title: "輔導主任", name: "莊蕙元", email: "yvonne1975@tn.edu.tw", types: ["行政人員"], badge: "badge-admin" },
+            { title: "人事主任", name: "許芯瑜", email: "freegirl@tn.edu.tw", types: ["行政人員"], badge: "badge-admin" },
+            { title: "會計主任", name: "孫詠淳", email: "a0955315441@tn.edu.tw", types: ["行政人員"], badge: "badge-admin" },
+            { title: "幼兒園主任", name: "陳薇", email: "littlewei94@tn.edu.tw", types: ["行政人員", "幼兒園"], badge: "badge-admin" },
+            { title: "教學組長", name: "許媫雯", email: "anita0623@tn.edu.tw", types: ["行政人員"], badge: "badge-admin" },
+            { title: "註冊組長-二年甲班", name: "吳雅惠", email: "aeiou6325709@tn.edu.tw", types: ["行政人員", "級任教師"], badge: "badge-admin" },
+            { title: "課發組長", name: "蔣宜雯", email: "ciw348017@tn.edu.tw", types: ["行政人員"], badge: "badge-admin" },
+            { title: "資訊組長", name: "李俊昇", email: "imlee@tn.edu.tw", types: ["行政人員"], badge: "badge-admin" },
+            { title: "生教組長", name: "陳姸靜", email: "s0923705@tn.edu.tw", types: ["行政人員"], badge: "badge-admin" },
+            { title: "體育組長", name: "卓峻价", email: "alwayssupa@tn.edu.tw", types: ["行政人員"], badge: "badge-admin" },
+            { title: "衛生組長", name: "張芳瑜", email: "achang538@tn.edu.tw", types: ["行政人員"], badge: "badge-admin" },
+            { title: "出納組長", name: "陳霂亭", email: "r59417@tn.edu.tw", types: ["行政人員"], badge: "badge-admin" },
+            { title: "事務組長", name: "邱銘健", email: "akenworld@tn.edu.tw", types: ["行政人員"], badge: "badge-admin" },
+            { title: "輔導組長", name: "蔡維芬", email: "winfen241535@tn.edu.tw", types: ["行政人員"], badge: "badge-admin" },
+            { title: "特教組長", name: "鄭伊均", email: "eve860119@tn.edu.tw", types: ["行政人員"], badge: "badge-admin" },
+            { title: "資料組長", name: "劉嬙", email: "chiongliou@tn.edu.tw", types: ["行政人員"], badge: "badge-admin" },
+            { title: "教保組長", name: "王淑玲", email: "sulin2121@tn.edu.tw", types: ["行政人員"], badge: "badge-admin" },
+            { title: "學年主任-一年戊班", name: "林嘉鳳", email: "ab844115@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "學年主任-二年戊班", name: "沈俞君", email: "seashell@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "學年主任-三年庚班", name: "林智慧", email: "lch8375@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "學年主任-四年戊班", name: "白絜侑", email: "lydiabai@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "學年主任-五年乙班", name: "卓玉棋", email: "issey@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "學年主任-六年丁班", name: "張振宇", email: "luxgen1006@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-一年甲班", name: "蔡玗瑾", email: "yuchin0405@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-一年乙班", name: "黃纖淑", email: "hong6324243@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-一年丙班", name: "翁聰慧", email: "hui58111@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-一年丁班", name: "陳宜真", email: "eugenie0406@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-一年己班", name: "林珮綺", email: "p9629313@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-二年乙班", name: "洪妮均", email: "chun75@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-二年丙班", name: "曹蕙雯", email: "twatjipmbyk@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-二年丁班", name: "謝素真", email: "sujing0529@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-二年己班", name: "張紋綺", email: "viena77@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-二年庚班", name: "黃郁雯", email: "bluebayou@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-三年甲班", name: "邱郁文", email: "puppy2005204@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-三年乙班", name: "李妍慧", email: "yhli1@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-三年丙班", name: "黃佩珩", email: "fflute@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-三年丁班", name: "吳秀美", email: "s221mei@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-三年戊班", name: "鄭惠文", email: "catmissiq@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-三年己班", name: "黃文君", email: "anitajill200@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-四年甲班", name: "周佳燕", email: "swallow2006@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-四年乙班", name: "蔡育芳", email: "t6377065@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-四年丙班", name: "蘇郁容", email: "alohasue65@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-四年丁班", name: "林怡華", email: "ihlin@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-四年己班", name: "林宮嫚", email: "eslite0131@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-四年庚班", name: "李孟洙", email: "li5413@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-四年辛班", name: "林云莉", email: "teresa11@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-五年甲班", name: "李宜翰", email: "besta1b2c3d4@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-五年丙班", name: "何翊禎", email: "eijan1128@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-五年丁班", name: "黃建賓", email: "s861200930@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-五年戊班", name: "蔡宜緁", email: "littlerabbit@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-五年己班", name: "王仁宏", email: "jenhunwang@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-五年庚班", name: "廖豁榮", email: "lau6872@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-五年辛班", name: "林家好", email: "dolphin6511@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-六年甲班", name: "宋予芸", email: "yunsung@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-六年乙班", name: "陳宜暄", email: "a0976289948@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-六年丙班", name: "陳春月", email: "buddy1107@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-六年戊班", name: "賴昭光", email: "sansan021@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "級任教師-六年己班", name: "王友美", email: "vlswang@tn.edu.tw", types: ["級任教師"], badge: "badge-class" },
+            { title: "科任教師", name: "周姿妤", email: "alicechoue@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "科任教師", name: "張恩綺", email: "execomba@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "科任教師", name: "林富美", email: "mayer@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "科任教師", name: "柳怡芬", email: "angel2024@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "科任教師", name: "楊佩頴", email: "ying0805@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "科任教師", name: "楊蕙如", email: "doborah001@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "科任教師", name: "沈美瑤", email: "mei635@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "科任教師", name: "洪容貞", email: "phyllishung@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "科任教師", name: "洪玉玲", email: "kerryhong@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "科任教師", name: "簡榮亮", email: "wronging@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "科任教師", name: "簡綺俐", email: "monica0517@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "科任教師", name: "莊詠涵", email: "caede1025@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "科任教師", name: "蘇佩妤", email: "anna210085@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "科任教師", name: "謝佳穎", email: "irenehsieh09@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "科任教師", name: "邵郁雯", email: "shao0924@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "科任教師", name: "陳姵樺", email: "vivian101@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "科任教師", name: "陳宜君", email: "l591113@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "科任教師", name: "陳宜婷", email: "tinachen1218@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "科任教師", name: "陳瑩祝", email: "peace520@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "科任教師", name: "陳鑌楷", email: "jikt0000@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "科任教師", name: "高宇亭", email: "loveofmusic@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "科任教師", name: "黃俊富", email: "rmp4zj4@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "特教教師", name: "尤思越", email: "viet9488@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "特教教師", name: "林佳昕", email: "mavis8817016@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "特教教師", name: "林宜勤", email: "iouaei017@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "特教教師", name: "江彩鳳", email: "jinag@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "特教教師", name: "王心怡", email: "t845075@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "特教教師", name: "許育榮", email: "ivery@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "特教教師", name: "趙淑娥", email: "tnsophi@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "特教教師", name: "鄭文蓉", email: "icegreen872@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "特教教師", name: "陳慧鴻", email: "angiechen@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "特教教師", name: "陳靜馨", email: "ch6568540@tn.edu.tw", types: ["科任/特教"], badge: "badge-subject" },
+            { title: "實習教師", name: "劉星妤", email: "kate920513@tn.edu.tw", types: ["其他人員"], badge: "badge-other" },
+            { title: "實習教師", name: "江盈霆", email: "jiangjiang43@tn.edu.tw", types: ["其他人員"], badge: "badge-other" },
+            { title: "實習教師", name: "葉宸瑋", email: "ccb0803@tn.edu.tw", types: ["其他人員"], badge: "badge-other" },
+            { title: "實習教師", name: "鍾姍芸", email: "ccb110217@tn.edu.tw", types: ["其他人員"], badge: "badge-other" },
+            { title: "幼兒園教師", name: "林祥如", email: "rain910616@tn.edu.tw", types: ["幼兒園"], badge: "badge-kind" },
+            { title: "幼兒園教師", name: "林靜宜", email: "kaif1983@tn.edu.tw", types: ["幼兒園"], badge: "badge-kind" },
+            { title: "幼兒園教師", name: "盧億真", email: "joannalu@tn.edu.tw", types: ["幼兒園"], badge: "badge-kind" },
+            { title: "幼兒園教師", name: "蘇雅雯", email: "luckygl0922@tn.edu.tw", types: ["幼兒園"], badge: "badge-kind" },
+            { title: "幼兒園教師", name: "許藝馨", email: "orangutan@tn.edu.tw", types: ["幼兒園"], badge: "badge-kind" },
+            { title: "幼兒園教師", name: "顏郁潔", email: "uj0709@tn.edu.tw", types: ["幼兒園"], badge: "badge-kind" },
+            { title: "幼兒園教師", name: "黃伊君", email: "ejing139@tn.edu.tw", types: ["幼兒園"], badge: "badge-kind" },
+            { title: "護理師", name: "盧品秀", email: "glendamoo@tn.edu.tw", types: ["開課人員", "其他人員"], badge: "badge-other" },
+            { title: "護理師", name: "黃子娟", email: "melody1111@tn.edu.tw", types: ["開課人員", "其他人員"], badge: "badge-other" },
+            { title: "幹事", name: "沈建佑", email: "se74104@tn.edu.tw", types: ["其他人員"], badge: "badge-other" },
+            { title: "幹事", name: "陳彥君", email: "xxww0112@tn.edu.tw", types: ["其他人員"], badge: "badge-other" },
+            { title: "營養師", name: "向怡曄", email: "ivy92500@tn.edu.tw", types: ["其他人員"], badge: "badge-other" },
+            { title: "專輔教師", name: "蕭曼玲", email: "sml1007@tn.edu.tw", types: ["其他人員"], badge: "badge-other" },
+            { title: "專輔教師", name: "蕭舒婷", email: "lily52134678@tn.edu.tw", types: ["其他人員"], badge: "badge-other" },
+            { title: "專輔教師", name: "陳珮甄", email: "hd153672@tn.edu.tw", types: ["其他人員"], badge: "badge-other" },
+            { title: "雇員", name: "李秀蔭", email: "n2200@tn.edu.tw", types: ["其他人員"], badge: "badge-other" },
+            { title: "雇員", name: "蔡文瑞", email: "無資料", types: ["其他人員"], badge: "badge-other" }
+        ];
+
+        const searchInput = document.getElementById('searchInput');
+        const clearBtn = document.getElementById('clearBtn');
+        const resultsDiv = document.getElementById('results');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+
+        let currentFilter = 'all';
+
+        // 繁體中文註解：即時監聽輸入框變化
+        searchInput.addEventListener('input', () => {
+            clearBtn.style.display = searchInput.value ? 'block' : 'none';
+            performSearch();
+        });
+
+        clearBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            clearBtn.style.display = 'none';
+            searchInput.focus();
+            performSearch();
+        });
+
+        // 繁體中文註解：切換分類標籤功能
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                currentFilter = e.target.dataset.type;
+                performSearch();
+            });
+        });
+
+        // 繁體中文註解：關鍵字高亮邏輯
+        function highlightText(text, query) {
+            if (!query) return text;
+            const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const re = new RegExp(`(${escapedQuery})`, 'gi');
+            return text.replace(re, '<span class="highlight">$1</span>');
+        }
+
+        // 繁體中文註解：調整為一鍵複製「教師姓名」到剪貼簿
+        function copyToClipboard(text, btnElement) {
+            navigator.clipboard.writeText(text).then(() => {
+                btnElement.innerHTML = '✔️ 已複製';
+                btnElement.classList.add('copied');
+                setTimeout(() => {
+                    btnElement.innerHTML = '📋 複製姓名';
+                    btnElement.classList.remove('copied');
+                }, 2000);
+            }).catch(() => {
+                // 相容部分特殊環境的替代方案
+                const el = document.createElement('textarea');
+                el.value = text;
+                document.body.appendChild(el);
+                el.select();
+                document.execCommand('copy');
+                document.body.removeChild(el);
+                btnElement.innerHTML = '✔️ 已複製';
+                setTimeout(() => btnElement.innerHTML = '📋 複製姓名', 2000);
+            });
+        }
+
+        // 繁體中文註解：執行搜尋核心邏輯
+        function performSearch() {
+            const query = searchInput.value.trim().toLowerCase();
+            resultsDiv.innerHTML = '';
+
+            // 1. 分類過濾
+            let filteredDB = database;
+            if (currentFilter !== 'all') {
+                filteredDB = database.filter(item => item.types.includes(currentFilter));
+            }
+
+            // 2. 關鍵字過濾
+            let finalResults = filteredDB;
+            if (query) {
+                finalResults = filteredDB.filter(item => {
+                    return item.name.toLowerCase().includes(query) || 
+                           item.title.toLowerCase().includes(query) || 
+                           item.email.toLowerCase().includes(query);
+                });
+            }
+
+            // 3. 渲染畫面
+            if (finalResults.length === 0) {
+                resultsDiv.innerHTML = '<div class="no-results">❌ 找不到匹配的教職員項目</div>';
+                return;
+            }
+
+            finalResults.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'result-card';
+                // 依據主分類給予左側邊框顏色
+                card.style.borderLeftColor = `var(--text-${item.badge.split('-')[1]})`;
+
+                const displayType = item.types[0];
+
+                // 核心修改點：將 copyToClipboard 的參數改為 item.name
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span class="category-badge ${item.badge}">${displayType}</span>
+                    </div>
+                    <div class="teacher-info-row">
+                        <div class="teacher-name-box">
+                            <span class="teacher-name">${highlightText(item.name, query)}</span>
+                            <span class="teacher-title">${highlightText(item.title, query)}</span>
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('${item.name}', this)">📋 複製姓名</button>
+                    </div>
+                    <div class="email-box">📧 ${highlightText(item.email, query)}</div>
+                `;
+                resultsDiv.appendChild(card);
+            });
+        }
+
+        // 初始化第一次渲染
+        performSearch();
+    </script>
+</body>
+</html>
