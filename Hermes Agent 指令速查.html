@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hermes Agent 指令速查 — 完整操作指南</title>
+<style>
+/* ===== DESIGN TOKENS (from DESIGN.md) ===== */
+:root {
+  --primary: #cc785c;
+  --primary-active: #a9583e;
+  --primary-disabled: #e6dfd8;
+  --ink: #141413;
+  --body: #3d3d3a;
+  --body-strong: #252523;
+  --muted: #6c6a64;
+  --muted-soft: #8e8b82;
+  --hairline: #e6dfd8;
+  --hairline-soft: #ebe6df;
+  --canvas: #faf9f5;
+  --surface-soft: #f5f0e8;
+  --surface-card: #efe9de;
+  --surface-cream-strong: #e8e0d2;
+  --surface-dark: #181715;
+  --surface-dark-elevated: #252320;
+  --surface-dark-soft: #1f1e1b;
+  --on-dark: #faf9f5;
+  --on-dark-soft: #a09d96;
+  --accent-teal: #5db8a6;
+  --accent-amber: #e8a55a;
+  --success: #5db872;
+  --warning: #d4a017;
+  --error: #c64545;
+}
+
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--canvas);
+  color: var(--body);
+  font-family: "StyreneB", "Inter", -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== TYPOGRAPHY ===== */
+h1, h2, h3 {
+  font-family: "Copernicus", "Tiempos Headline", "Georgia", serif;
+  color: var(--ink);
+  font-weight: 400;
+}
+h1 { font-size: 48px; line-height: 1.1; letter-spacing: -1px; }
+h2 { font-size: 36px; line-height: 1.15; letter-spacing: -0.5px; }
+h3 { font-size: 28px; line-height: 1.2; letter-spacing: -0.3px; }
+
+.subtitle {
+  font-family: "StyreneB", "Inter", sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-top: 12px;
+}
+
+/* ===== LAYOUT ===== */
+.container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+
+/* ===== STICKY TOC NAVIGATION ===== */
+.toc-nav {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: var(--canvas);
+  border-bottom: 1px solid var(--hairline);
+  box-shadow: 0 1px 0 var(--hairline-soft);
+  transition: box-shadow .2s;
+}
+.toc-nav.scrolled {
+  box-shadow: 0 2px 12px rgba(20,20,19,0.08);
+}
+
+.toc-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 64px;
+}
+
+.toc-nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: "StyreneB", "Inter", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.2px;
+}
+.toc-nav-brand .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.toc-nav-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-card);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-family: "StyreneB", "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+  user-select: none;
+}
+.toc-nav-toggle:hover {
+  background: var(--surface-cream-strong);
+  border-color: var(--primary-disabled);
+}
+.toc-nav-toggle.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.toc-nav-toggle svg {
+  width: 14px;
+  height: 14px;
+  transition: transform .25s;
+}
+.toc-nav-toggle.active svg {
+  transform: rotate(180deg);
+}
+
+/* TOC panel (collapsible) */
+.toc-nav-panel {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .35s cubic-bezier(.4,0,.2,1);
+  background: var(--surface-soft);
+  border-top: 1px solid var(--hairline-soft);
+}
+.toc-nav-panel.open {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.toc-nav-panel-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 20px 24px 24px;
+}
+
+.toc-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 6px 24px;
+}
+
+.toc-nav-grid a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "StyreneB", "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--body);
+  text-decoration: none;
+  padding: 7px 10px;
+  border-radius: 6px;
+  transition: background .12s, color .12s;
+}
+.toc-nav-grid a:hover {
+  background: var(--surface-card);
+  color: var(--ink);
+}
+.toc-nav-grid a.active-section {
+  background: var(--surface-card);
+  color: var(--primary);
+  font-weight: 600;
+}
+.toc-nav-grid a .num {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  color: var(--muted-soft);
+  min-width: 22px;
+}
+.toc-nav-grid a.active-section .num {
+  color: var(--primary);
+}
+
+/* progress bar under nav */
+.toc-nav-progress {
+  height: 2px;
+  background: var(--hairline);
+  position: relative;
+}
+.toc-nav-progress-bar {
+  height: 100%;
+  background: var(--primary);
+  width: 0%;
+  transition: width .15s linear;
+}
+
+/* ===== HERO BAND ===== */
+.hero {
+  background: var(--canvas);
+  padding: 80px 24px 64px;
+  text-align: center;
+  border-bottom: 1px solid var(--hairline);
+}
+.hero h1 { font-size: 64px; letter-spacing: -1.5px; }
+.hero .subtitle { font-size: 20px; max-width: 640px; margin: 16px auto 0; }
+
+/* ===== INLINE TOC (below hero, for first paint) ===== */
+.toc {
+  background: var(--surface-card);
+  border-radius: 12px;
+  padding: 32px;
+  margin: 48px auto;
+  max-width: 960px;
+}
+.toc h3 { margin-bottom: 16px; font-size: 22px; }
+.toc ol {
+  columns: 2;
+  column-gap: 32px;
+  padding-left: 20px;
+}
+.toc li {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--body);
+  margin-bottom: 6px;
+  line-height: 1.6;
+}
+.toc li a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+.toc li a:hover { text-decoration: underline; }
+
+/* ===== SECTION ===== */
+.section {
+  margin: 64px 0;
+  scroll-margin-top: 80px;
+}
+.section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 32px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--hairline);
+}
+.section-number {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--primary);
+  background: var(--surface-card);
+  border-radius: 6px;
+  padding: 4px 12px;
+  white-space: nowrap;
+}
+
+/* ===== COMMAND CARD ===== */
+.cmd-card {
+  background: var(--surface-card);
+  border-radius: 12px;
+  padding: 24px 32px;
+  margin-bottom: 16px;
+  border: 1px solid var(--hairline-soft);
+  transition: border-color .15s;
+}
+.cmd-card:hover { border-color: var(--primary-disabled); }
+
+.cmd-title {
+  font-family: "StyreneB", "Inter", sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.cmd-desc {
+  font-size: 15px;
+  color: var(--body);
+  line-height: 1.55;
+  margin-bottom: 12px;
+}
+
+/* ===== CODE WINDOW (dark surface, per DESIGN.md code-window-card) ===== */
+.code-window {
+  background: var(--surface-dark);
+  color: var(--on-dark);
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  border-radius: 12px;
+  padding: 24px;
+  overflow-x: auto;
+  position: relative;
+}
+.code-window .comment { color: var(--on-dark-soft); }
+.code-window .cmd-keyword { color: var(--accent-teal); }
+.code-window .flag { color: var(--accent-amber); }
+.code-window .string { color: var(--primary); }
+
+/* ===== SUBSECTION (for Telegram etc.) ===== */
+.subsection {
+  margin: 32px 0 16px;
+  padding: 24px 32px;
+  background: var(--surface-soft);
+  border-radius: 12px;
+  border-left: 3px solid var(--primary);
+}
+.subsection h4 {
+  font-family: "StyreneB", "Inter", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+/* ===== CALLOUT / WARNING CARDS ===== */
+.callout {
+  border-radius: 12px;
+  padding: 24px 32px;
+  margin: 24px 0;
+  font-size: 15px;
+  line-height: 1.55;
+}
+.callout-coral {
+  background: var(--primary);
+  color: var(--on-dark);
+}
+.callout-coral strong { color: #fff; }
+.callout-warn {
+  background: var(--surface-soft);
+  border-left: 4px solid var(--warning);
+  color: var(--body);
+}
+.callout-danger {
+  background: #fdf2f2;
+  border-left: 4px solid var(--error);
+  color: var(--body);
+}
+.callout-info {
+  background: var(--surface-soft);
+  border-left: 4px solid var(--accent-teal);
+  color: var(--body);
+}
+
+/* ===== BADGE ===== */
+.badge {
+  display: inline-block;
+  font-family: "StyreneB", "Inter", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  border-radius: 9999px;
+  padding: 4px 12px;
+}
+.badge-coral {
+  background: var(--primary);
+  color: #fff;
+}
+.badge-neutral {
+  background: var(--surface-card);
+  color: var(--ink);
+}
+
+/* ===== DIVIDER ===== */
+.divider {
+  border: none;
+  border-top: 1px solid var(--hairline);
+  margin: 64px 0;
+}
+
+/* ===== FOOTER ===== */
+.footer {
+  background: var(--surface-dark);
+  color: var(--on-dark-soft);
+  padding: 48px 24px;
+  text-align: center;
+  font-size: 14px;
+  margin-top: 96px;
+}
+.footer a { color: var(--primary); text-decoration: none; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 640px) {
+  .hero h1 { font-size: 36px; }
+  .toc ol { columns: 1; }
+  .cmd-card { padding: 20px; }
+  .code-window { font-size: 13px; padding: 16px; }
+  .toc-nav-grid { grid-template-columns: 1fr; }
+  .toc-nav-bar { height: 56px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ========== STICKY TOC NAV ========== -->
+<nav class="toc-nav" id="tocNav">
+  <div class="toc-nav-bar">
+    <div class="toc-nav-brand">
+      <span class="dot"></span>
+      Hermes Agent 指令速查
+    </div>
+    <button class="toc-nav-toggle" id="tocToggle" aria-expanded="false" aria-controls="tocPanel">
+      目錄
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M4 6l4 4 4-4"/>
+      </svg>
+    </button>
+  </div>
+  <div class="toc-nav-progress">
+    <div class="toc-nav-progress-bar" id="tocProgress"></div>
+  </div>
+  <div class="toc-nav-panel" id="tocPanel">
+    <div class="toc-nav-panel-inner">
+      <div class="toc-nav-grid">
+        <a href="#s1"><span class="num">01</span>進入 WSL 環境</a>
+        <a href="#s2"><span class="num">02</span>啟動與基本使用</a>
+        <a href="#s3"><span class="num">03</span>查看狀態與診斷</a>
+        <a href="#s4"><span class="num">04</span>模型與 Provider 設定</a>
+        <a href="#s5"><span class="num">05</span>API Key 與環境變數</a>
+        <a href="#s6"><span class="num">06</span>Skills 管理指令</a>
+        <a href="#s7"><span class="num">07</span>工具 Toolsets 管理</a>
+        <a href="#s8"><span class="num">08</span>Session 管理</a>
+        <a href="#s9"><span class="num">09</span>Memory 記憶功能</a>
+        <a href="#s10"><span class="num">10</span>Telegram 綁定流程</a>
+        <a href="#s11"><span class="num">11</span>Pairing 使用者授權</a>
+        <a href="#s12"><span class="num">12</span>Cron 排程任務</a>
+        <a href="#s13"><span class="num">13</span>MCP 與外部工具整合</a>
+        <a href="#s14"><span class="num">14</span>Plugins 管理</a>
+        <a href="#s15"><span class="num">15</span>Logs 與故障排查</a>
+        <a href="#s16"><span class="num">16</span>備份與重設</a>
+        <a href="#s17"><span class="num">17</span>更新與解除安裝</a>
+        <a href="#s18"><span class="num">18</span>建議日常工作流</a>
+        <a href="#s19"><span class="num">19</span>安全建議</a>
+        <a href="#s20"><span class="num">20</span>總結與 FAQ</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ========== HERO ========== -->
+<header class="hero">
+  <span class="badge badge-coral">Command Reference</span>
+  <h1 style="margin-top:20px">Hermes Agent<br>指令速查</h1>
+  <p class="subtitle">
+    一套可在 WSL / Linux / 伺服器環境執行的 AI Agent 工具。涵蓋模型切換、工具呼叫、Skills、記憶、
+    Session、Telegram Gateway、排程任務與開發輔助能力。
+  </p>
+</header>
+
+<!-- ========== INLINE TOC (below hero) ========== -->
+<nav class="toc">
+  <h3>目錄</h3>
+  <ol>
+    <li><a href="#s1">進入 WSL 環境</a></li>
+    <li><a href="#s2">啟動與基本使用</a></li>
+    <li><a href="#s3">查看狀態與診斷</a></li>
+    <li><a href="#s4">模型與 Provider 設定</a></li>
+    <li><a href="#s5">API Key 與環境變數</a></li>
+    <li><a href="#s6">Skills 管理指令</a></li>
+    <li><a href="#s7">工具 Toolsets 管理</a></li>
+    <li><a href="#s8">Session 管理</a></li>
+    <li><a href="#s9">Memory 記憶功能</a></li>
+    <li><a href="#s10">Telegram 綁定流程</a></li>
+    <li><a href="#s11">Pairing 使用者授權</a></li>
+    <li><a href="#s12">Cron 排程任務</a></li>
+    <li><a href="#s13">MCP 與外部工具整合</a></li>
+    <li><a href="#s14">Plugins 管理</a></li>
+    <li><a href="#s15">Logs 與故障排查</a></li>
+    <li><a href="#s16">備份與重設</a></li>
+    <li><a href="#s17">更新與解除安裝</a></li>
+    <li><a href="#s18">建議日常工作流</a></li>
+    <li><a href="#s19">安全建議</a></li>
+    <li><a href="#s20">總結與 FAQ</a></li>
+  </ol>
+</nav>
+
+<main class="container">
+
+<!-- ========== 1. 進入 WSL 環境 ========== -->
+<section class="section" id="s1">
+  <div class="section-header">
+    <span class="section-number">01</span>
+    <h2>進入 WSL 環境</h2>
+  </div>
+
+  <p class="cmd-desc" style="margin-bottom:24px">
+    Hermes 通常安裝在 WSL 的 <strong>HermesAgent</strong> 發行版中。在開始任何操作前，
+    需從 Windows 端進入 WSL 並確認環境正常。
+  </p>
+
+  <div class="cmd-card">
+    <div class="cmd-title">進入 WSL HermesAgent 發行版</div>
+    <div class="cmd-desc">
+      從 Windows PowerShell 或 CMD 執行，切換至 WSL 中名為 <code>HermesAgent</code> 的 Linux 發行版。
+      若尚未安裝該發行版，請先在 <code>wsl --list --online</code> 中搜尋並安裝。
+    </div>
+    <div class="code-window"><span class="cmd-keyword">wsl</span> -d HermesAgent</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">確認使用者與系統資訊</div>
+    <div class="cmd-desc">
+      進入 WSL 後，執行以下三條命令確認目前使用者、工作目錄與核心版本，確保環境無異常。
+    </div>
+    <div class="code-window">
+<span class="comment"># 查看目前使用者</span>
+<span class="cmd-keyword">whoami</span>
+
+<span class="comment"># 查看目前工作目錄</span>
+<span class="cmd-keyword">pwd</span>
+
+<span class="comment"># 查看系統核心與架構資訊</span>
+<span class="cmd-keyword">uname</span> -a
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">確認 Hermes 指令是否存在</div>
+    <div class="cmd-desc">
+      使用 <code>command -v</code> 檢查 <code>hermes</code> 是否在 PATH 中；
+      再用 <code>--version</code> 確認已安裝的版本號碼。
+    </div>
+    <div class="code-window">
+<span class="cmd-keyword">command</span> -v hermes
+<span class="cmd-keyword">hermes</span> --version
+    </div>
+  </div>
+</section>
+
+<!-- ========== 2. 啟動與基本使用 ========== -->
+<section class="section" id="s2">
+  <div class="section-header">
+    <span class="section-number">02</span>
+    <h2>啟動與基本使用</h2>
+  </div>
+
+  <p class="cmd-desc" style="margin-bottom:24px">
+    以下為 Hermes 最核心的啟動方式，涵蓋互動式聊天、單次問答、Session 續接、
+    預載 Skills 與隔離 worktree 等場景。
+  </p>
+
+  <div class="cmd-card">
+    <div class="cmd-title">啟動互動式聊天</div>
+    <div class="cmd-desc">
+      最基礎的啟動方式。進入後可與 Agent 進行多輪對話，輸入 <code>exit</code> 或 <code>Ctrl+D</code> 結束。
+    </div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span></div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">單次問答模式</div>
+    <div class="cmd-desc">
+      使用 <code>-q</code> 旗標後接引號包圍的問題，Hermes 會執行一次推理後立即輸出結果並退出，
+      適合腳本整合或快速測試。
+    </div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> chat -q <span class="string">"你好，請確認目前模型設定"</span></div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">繼續上一個 Session</div>
+    <div class="cmd-desc">
+      使用 <code>-c</code>（continue）自動載入最近一次 Session 的對話歷史，讓 Agent 保有上下文。
+      適合中斷後繼續同一工作情境。
+    </div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> -c</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">指定回復某個 Session</div>
+    <div class="cmd-desc">
+      透過 <code>--resume SESSION_ID</code> 可精確載入指定 Session。
+      可用 <code>hermes sessions list</code> 查詢 ID。
+    </div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> --resume <span class="flag">SESSION_ID</span></div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">啟動時預載 Skills</div>
+    <div class="cmd-desc">
+      使用 <code>-s</code> 以逗號分隔的方式預載多個 Skill 模組，
+      Agent 會在該 Session 中自動套用這些專長流程。
+    </div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> -s codebase-inspection,systematic-debugging,test-driven-development</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">Git worktree 隔離執行</div>
+    <div class="cmd-desc">
+      <code>-w</code> 讓 Hermes 在 Git 專案中建立隔離的 worktree，
+      避免 Agent 操作影響主分支，適合實驗性修改或並行開發。
+    </div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> -w</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">略過危險命令確認（YOLO 模式）</div>
+    <div class="cmd-desc">
+      <code>--yolo</code> 會略過所有危險操作（如刪除檔案、執行 shell 命令）的確認提示。
+      <strong>僅建議在完全信任的隔離環境中使用</strong>，否則可能造成資料遺失。
+    </div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> --yolo</div>
+    <div class="callout callout-danger" style="margin-top:12px;margin-bottom:0">
+      ⚠️ 此模式會自動執行所有指令而不詢問，請務必在沙箱或備份完成後使用。
+    </div>
+  </div>
+</section>
+
+<!-- ========== 3. 查看狀態與診斷 ========== -->
+<section class="section" id="s3">
+  <div class="section-header">
+    <span class="section-number">03</span>
+    <h2>查看狀態與診斷</h2>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">查看 Hermes 狀態</div>
+    <div class="cmd-desc">
+      顯示目前安裝狀態、模型設定、活躍 Gateway、Session 數量等摘要資訊，
+      適合快速確認整體健康狀態。
+    </div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> status</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">執行環境診斷</div>
+    <div class="cmd-desc">
+      <code>doctor</code> 會自動檢查 API Key 有效性、模型連線、Skills 狀態、
+      Gateway 行程、設定檔權限等多項項目，並輸出通過／失敗清單。
+    </div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> doctor</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">輸出除錯摘要</div>
+    <div class="cmd-desc">
+      產生一份包含版本、環境、設定、最近錯誤的完整 dump 檔案，
+      方便貼給技術支援團隊排查問題。
+    </div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> dump</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">查看版本資訊</div>
+    <div class="cmd-desc">以下兩條指令效果相同，都會輸出當前 Hermes 版本號碼。</div>
+    <div class="code-window">
+<span class="cmd-keyword">hermes</span> version
+<span class="cmd-keyword">hermes</span> --version
+    </div>
+  </div>
+</section>
+
+<!-- ========== 4. 模型與 Provider 設定 ========== -->
+<section class="section" id="s4">
+  <div class="section-header">
+    <span class="section-number">04</span>
+    <h2>模型與 Provider 設定</h2>
+  </div>
+
+  <p class="cmd-desc" style="margin-bottom:24px">
+    Hermes 支援多種模型 Provider（OpenAI、Google Gemini、Anthropic 等）。
+    以下指令用於查看、編輯與切換模型設定。
+  </p>
+
+  <div class="cmd-card">
+    <div class="cmd-title">進入互動式模型選擇器</div>
+    <div class="cmd-desc">啟動 TUI 介面，可圖形化選擇 Provider 與模型，並即時測試連線。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> model</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">查看目前設定</div>
+    <div class="cmd-desc">印出 <code>~/.hermes/config.yaml</code> 中所有已設定的欄位，包含 model、provider、tools 等。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> config show</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">查看設定檔路徑</div>
+    <div class="cmd-desc">輸出 <code>config.yaml</code> 與 <code>.env</code> 的絕對路徑，方便快速定位檔案。</div>
+    <div class="code-window">
+<span class="cmd-keyword">hermes</span> config path
+<span class="cmd-keyword">hermes</span> config env-path
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">編輯主設定檔</div>
+    <div class="cmd-desc">以系統預設文字編輯器（$EDITOR / $VISUAL）打開 <code>config.yaml</code>，可手動調整任何設定項目。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> config edit</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">設定 Google Gemini Provider</div>
+    <div class="cmd-desc">將 model.provider 設為 <code>gemini</code>，之後所有請求將走 Google Generative Language API。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> config set model.provider gemini</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">設定 Gemma 4 31B 模型</div>
+    <div class="cmd-desc">在 provider 已設為 gemini 的前提下，將預設模型設為 <code>gemma-4-31b-it</code>。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> config set model.default gemma-4-31b-it</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">設定 Google OpenAI-compatible endpoint</div>
+    <div class="cmd-desc">指定 Gemini 的 OpenAI 相容端點，讓 Hermes 可用 OpenAI 格式呼叫 Gemini 模型。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> config set model.base_url <span class="string">https://generativelanguage.googleapis.com/v1beta/openai</span></div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">查看模型設定片段</div>
+    <div class="cmd-desc">用 <code>grep</code> 快速印出 <code>config.yaml</code> 中 <code>model:</code> 段落，確認設定是否已正確寫入。</div>
+    <div class="code-window"><span class="cmd-keyword">grep</span> -A4 <span class="string">'^model:'</span> ~/.hermes/config.yaml</div>
+  </div>
+</section>
+
+<!-- ========== 5. API Key 與環境變數 ========== -->
+<section class="section" id="s5">
+  <div class="section-header">
+    <span class="section-number">05</span>
+    <h2>API Key 與環境變數</h2>
+  </div>
+
+  <p class="cmd-desc" style="margin-bottom:24px">
+    Hermes 的 API Key 統一存放在 <code>~/.hermes/.env</code>。
+    編輯後需重新載入 shell 或重開 Terminal 才會生效。
+  </p>
+
+  <div class="cmd-card">
+    <div class="cmd-title">編輯 .env 檔案</div>
+    <div class="cmd-desc">使用 <code>nano</code>（或 $EDITOR）打開環境變數檔案，可加入 / 修改任意 Provider 的 API Key。</div>
+    <div class="code-window"><span class="cmd-keyword">nano</span> ~/.hermes/.env</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">Google AI Studio / Gemini 常用設定</div>
+    <div class="cmd-desc">
+      以下三行是最常見的 Gemini 設定。
+      <code>GEMINI_BASE_URL</code> 指向 OpenAI 相容端點，讓 Hermes 可用統一的 chat/completions 格式呼叫。
+    </div>
+    <div class="code-window">
+GOOGLE_API_KEY=<span class="string">你的_google_api_key</span>
+GEMINI_API_KEY=<span class="string">你的_google_api_key</span>
+GEMINI_BASE_URL=<span class="string">https://generativelanguage.googleapis.com/v1beta/openai</span>
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">設定 .env 權限為 600</div>
+    <div class="cmd-desc"><code>chmod 600</code> 確保只有檔案擁有者可讀寫，防止其他使用者或服務讀取 API Key。</div>
+    <div class="code-window"><span class="cmd-keyword">chmod</span> 600 ~/.hermes/.env</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">測試 Google 模型清單是否可讀取</div>
+    <div class="cmd-desc">先用 <code>set -a</code> + <code>. .env</code> 載入環境變數，再以 <code>curl</code> 呼叫 models 端點，確認 API Key 有效且可列出可用模型。</div>
+    <div class="code-window">
+<span class="cmd-keyword">set</span> -a
+<span class="cmd-keyword">.</span> ~/.hermes/.env
+<span class="cmd-keyword">set</span> +a
+<span class="cmd-keyword">curl</span> -sS -H <span class="string">"x-goog-api-key: ${GOOGLE_API_KEY}"</span> \
+  https://generativelanguage.googleapis.com/v1beta/models | head
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">測試 Gemma 4 31B 聊天請求</div>
+    <div class="cmd-desc">以 OpenAI chat/completions 格式發送一條最小請求，若回傳 <code>"OK"</code> 即代表模型與 API Key 均正常。</div>
+    <div class="code-window">
+<span class="cmd-keyword">set</span> -a
+<span class="cmd-keyword">.</span> ~/.hermes/.env
+<span class="cmd-keyword">set</span> +a
+<span class="cmd-keyword">curl</span> -sS \
+   -H <span class="string">"Authorization: Bearer ${GOOGLE_API_KEY}"</span> \
+   -H <span class="string">"Content-Type: application/json"</span> \
+  https://generativelanguage.googleapis.com/v1beta/openai/chat/completions \
+   -d <span class="string">'{"model":"gemma-4-31b-it","messages":[{"role":"user","content":"Reply OK only."}],"max_tokens":8}'</span>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 6. Skills 管理 ========== -->
+<section class="section" id="s6">
+  <div class="section-header">
+    <span class="section-number">06</span>
+    <h2>Skills 管理指令</h2>
+  </div>
+
+  <p class="cmd-desc" style="margin-bottom:24px">
+    Skills 是任務專長模組，讓 Agent 在程式碼檢查、GitHub 工作流、研究論文、PDF、Notion、
+    Google Workspace、MLOps 等情境中套用更精準的流程。
+  </p>
+
+  <div class="cmd-card">
+    <div class="cmd-title">列出已安裝 Skills</div>
+    <div class="cmd-desc">印出目前所有已安裝的 Skill 名稱、版本與狀態。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> skills list</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">互動式開關 Skills</div>
+    <div class="cmd-desc">啟動 TUI，可逐一啟用 / 停用每個 Skill，並即時預覽效果。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> skills config</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">搜尋 Skills Hub</div>
+    <div class="cmd-desc">在遠端 Skills Hub 中依關鍵字搜尋可用 Skill。以下為四個常見搜尋範例。</div>
+    <div class="code-window">
+<span class="cmd-keyword">hermes</span> skills search github
+<span class="cmd-keyword">hermes</span> skills search pdf
+<span class="cmd-keyword">hermes</span> skills search research
+<span class="cmd-keyword">hermes</span> skills search notion
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">預覽 Skill 內容</div>
+    <div class="cmd-desc">顯示指定 Skill 的描述、包含的工具、預設參數等資訊，安裝前可先 inspect。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> skills inspect <span class="flag">IDENTIFIER</span></div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">安裝 / 強制安裝 / 跳過確認</div>
+    <div class="cmd-desc">
+      基本安裝會先詢問確認；加 <code>--force</code> 可覆蓋已存在版本；
+      <code>--yes</code> 則完全跳過互動確認，適合腳本自動化。
+    </div>
+    <div class="code-window">
+<span class="cmd-keyword">hermes</span> skills install <span class="flag">IDENTIFIER</span>
+<span class="cmd-keyword">hermes</span> skills install <span class="flag">IDENTIFIER</span> --force
+<span class="cmd-keyword">hermes</span> skills install <span class="flag">IDENTIFIER</span> --yes
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">檢查 / 更新 / 移除 Skills</div>
+    <div class="cmd-desc">
+      <code>check</code> 檢查有無新版本；<code>update</code> 批量更新至最新版；
+      <code>uninstall</code> 移除由 hub 安裝的 Skill。
+    </div>
+    <div class="code-window">
+<span class="cmd-keyword">hermes</span> skills check
+<span class="cmd-keyword">hermes</span> skills update
+<span class="cmd-keyword">hermes</span> skills uninstall <span class="flag">IDENTIFIER</span>
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">常用 Skills 組合推薦</div>
+    <div class="cmd-desc">以下為三種高頻使用情境的 Skill 組合，可搭配 <code>-s</code> 啟動。</div>
+    <div class="code-window">
+<span class="comment"># 開發工作</span>
+<span class="cmd-keyword">hermes</span> -s codebase-inspection,systematic-debugging,test-driven-development
+
+<span class="comment"># GitHub 協作</span>
+<span class="cmd-keyword">hermes</span> -s github-auth,github-pr-workflow,github-code-review,github-issues
+
+<span class="comment"># 研究寫作</span>
+<span class="cmd-keyword">hermes</span> -s arxiv,research-paper-writing,llm-wiki
+    </div>
+  </div>
+</section>
+
+<!-- ========== 7. 工具 Toolsets 管理 ========== -->
+<section class="section" id="s7">
+  <div class="section-header">
+    <span class="section-number">07</span>
+    <h2>工具 Toolsets 管理</h2>
+  </div>
+
+  <p class="cmd-desc" style="margin-bottom:24px">
+    Tools 控制 Agent 能使用哪些能力，例如終端機、檔案操作、瀏覽器、記憶、TTS、排程、圖片分析等。
+    不同平台（CLI / Telegram / Discord / WhatsApp）可各自套用不同工具集。
+  </p>
+
+  <div class="cmd-card">
+    <div class="cmd-title">查看工具清單</div>
+    <div class="cmd-desc">列出所有可用工具及其目前的啟用 / 停用狀態。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> tools list</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">互動式設定工具</div>
+    <div class="cmd-desc">啟動 TUI 逐項開關工具，支援按平台分組設定。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> tools</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">啟用常用工具</div>
+    <div class="cmd-desc">一次啟用多個工具，以空格分隔。以下為一般使用與開發情境的兩組推薦。</div>
+    <div class="code-window">
+<span class="comment"># 一般使用</span>
+<span class="cmd-keyword">hermes</span> tools enable web browser terminal file memory skills todo
+
+<span class="comment"># 開發常用</span>
+<span class="cmd-keyword">hermes</span> tools enable terminal file code_execution browser skills memory session_search
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">停用暫時不用或敏感工具</div>
+    <div class="cmd-desc">
+      停用如 <code>rl</code>（強化學習）、<code>moa</code>（混合 Agent）、
+      <code>homeassistant</code>（智慧家居）等較具風險或暫不需用的工具。
+    </div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> tools disable rl moa homeassistant</div>
+  </div>
+
+  <div class="callout callout-info">
+    💡 不同平台（CLI、Telegram、Discord、WhatsApp）可各自套用預設工具集或自訂工具，
+    避免在社群平台暴露敏感操作能力。
+  </div>
+</section>
+
+<!-- ========== 8. Session 管理 ========== -->
+<section class="section" id="s8">
+  <div class="section-header">
+    <span class="section-number">08</span>
+    <h2>Session 管理</h2>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">列出歷史 Session</div>
+    <div class="cmd-desc">印出所有歷史 Session 的 ID、標題、最後更新時間。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> sessions list</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">互動式瀏覽 Session</div>
+    <div class="cmd-desc">以 TUI 介面翻閱 Session，可搜尋、預覽摘要後選擇載入。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> sessions browse</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">重新命名 Session</div>
+    <div class="cmd-desc">為指定 Session 設定更有意義的標題，方便日後查找。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> sessions rename <span class="flag">SESSION_ID</span> <span class="string">"新的標題"</span></div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">匯出 Session</div>
+    <div class="cmd-desc">將指定 Session 的完整對話歷史匯出為 JSON / Markdown 檔案。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> sessions export <span class="flag">SESSION_ID</span></div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">刪除 / 清理 Session</div>
+    <div class="cmd-desc"><code>delete</code> 刪除單一 Session；<code>prune</code> 批量清理舊 Session（可依時間或數量）。</div>
+    <div class="code-window">
+<span class="cmd-keyword">hermes</span> sessions delete <span class="flag">SESSION_ID</span>
+<span class="cmd-keyword">hermes</span> sessions prune
+    </div>
+  </div>
+</section>
+
+<!-- ========== 9. Memory 記憶 ========== -->
+<section class="section" id="s9">
+  <div class="section-header">
+    <span class="section-number">09</span>
+    <h2>Memory 記憶功能</h2>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">查看 Memory 設定</div>
+    <div class="cmd-desc">顯示記憶系統目前狀態、已記錄條數、記憶檔路徑等資訊。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> memory</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">查看記憶資料夾</div>
+    <div class="cmd-desc">
+      記憶資料通常位於 <code>~/.hermes/memories/</code>。
+      若尚未產生 <code>MEMORY.md</code> 或 <code>USER.md</code>，代表 Agent 尚未寫入記憶，屬正常狀態。
+    </div>
+    <div class="code-window"><span class="cmd-keyword">ls</span> -la ~/.hermes/memories/</div>
+  </div>
+</section>
+
+<!-- ========== 10. Telegram 綁定流程 ========== -->
+<section class="section" id="s10">
+  <div class="section-header">
+    <span class="section-number">10</span>
+    <h2>Telegram 綁定流程</h2>
+  </div>
+
+  <p class="cmd-desc" style="margin-bottom:24px">
+    Hermes 可透過 Gateway 連接 Telegram。建議先用前台模式測試，
+    確認可用後再安裝背景服務（systemd / user service）。
+  </p>
+
+  <div class="subsection">
+    <h4>步驟 1：建立 Telegram Bot</h4>
+    <p style="font-size:15px;color:var(--body);line-height:1.6;margin-bottom:12px">
+      在 Telegram 中找到 <strong>@BotFather</strong>，輸入 <code>/newbot</code> 建立新 bot。
+      完成後 BotFather 會回傳一組 token，格式類似：
+    </p>
+    <div class="code-window" style="margin:0"><span class="string">1234567890:AAxxxxxxxxxxxxxxxxxxxxxxxxxxxx</span></div>
+  </div>
+
+  <div class="subsection">
+    <h4>步驟 2：取得自己的 Telegram User ID</h4>
+    <p style="font-size:15px;color:var(--body);line-height:1.6;margin-bottom:12px">
+      在 Telegram 中找到 <strong>@userinfobot</strong>，傳任意訊息後它會回覆你的 numeric user ID，例如：
+    </p>
+    <div class="code-window" style="margin:0"><span class="string">123456789</span></div>
+  </div>
+
+  <div class="subsection">
+    <h4>步驟 3：使用 Hermes 互動式設定</h4>
+    <div class="code-window" style="margin-bottom:12px"><span class="cmd-keyword">hermes</span> setup gateway</div>
+    <p style="font-size:15px;color:var(--body);line-height:1.6">
+      設定時需填入：<br>
+      • <code>TELEGRAM_BOT_TOKEN</code>：BotFather 給的 token<br>
+      • <code>TELEGRAM_ALLOWED_USERS</code>：你的 Telegram numeric user ID<br>
+      • <code>TELEGRAM_HOME_CHANNEL</code>：你的 Telegram numeric user ID
+    </p>
+  </div>
+
+  <div class="subsection">
+    <h4>步驟 4：手動設定 .env</h4>
+    <div class="code-window" style="margin-bottom:12px"><span class="cmd-keyword">nano</span> ~/.hermes/.env</div>
+    <div class="code-window" style="margin-bottom:12px">
+TELEGRAM_BOT_TOKEN=<span class="string">你的_bot_token</span>
+TELEGRAM_ALLOWED_USERS=<span class="string">你的_telegram_user_id</span>
+TELEGRAM_HOME_CHANNEL=<span class="string">你的_telegram_user_id</span>
+    </div>
+    <div class="callout callout-warn" style="margin:0">
+      ⚠️ <strong>TELEGRAM_ALLOWED_USERS 不建議留空</strong>，
+      否則任何找到 bot 的人都有機會使用你的 Hermes 與 API 額度。
+    </div>
+  </div>
+
+  <div class="subsection">
+    <h4>步驟 5：前台測試 Gateway</h4>
+    <div class="code-window" style="margin-bottom:12px"><span class="cmd-keyword">hermes</span> gateway run</div>
+    <p style="font-size:15px;color:var(--body);line-height:1.6;margin-bottom:12px">
+      接著到 Telegram 對 bot 傳 <code>/start</code>，再測試：「你好，請告訴我目前使用的模型」
+    </p>
+    <p style="font-size:14px;color:var(--muted)">前台模式下可即時看到 log 輸出，確認無誤後按 <code>Ctrl+C</code> 結束。</p>
+  </div>
+
+  <div class="subsection">
+    <h4>步驟 6：安裝背景服務</h4>
+    <div class="code-window">
+<span class="comment"># 安裝背景服務（systemd user service）</span>
+<span class="cmd-keyword">hermes</span> gateway install
+
+<span class="comment"># 啟動</span>
+<span class="cmd-keyword">hermes</span> gateway start
+
+<span class="comment"># 查看狀態</span>
+<span class="cmd-keyword">hermes</span> gateway status
+
+<span class="comment"># 重啟</span>
+<span class="cmd-keyword">hermes</span> gateway restart
+
+<span class="comment"># 停止</span>
+<span class="cmd-keyword">hermes</span> gateway stop
+
+<span class="comment"># 移除背景服務</span>
+<span class="cmd-keyword">hermes</span> gateway uninstall
+    </div>
+  </div>
+</section>
+
+<!-- ========== 11. Pairing 使用者授權 ========== -->
+<section class="section" id="s11">
+  <div class="section-header">
+    <span class="section-number">11</span>
+    <h2>Pairing 使用者授權</h2>
+  </div>
+
+  <p class="cmd-desc" style="margin-bottom:24px">
+    Hermes 提供 pairing 機制，用於核准或撤銷使用者的存取權，
+    適合多使用者共用同一個 Hermes 實例的場景。
+  </p>
+
+  <div class="cmd-card">
+    <div class="cmd-title">查看 pending 與 approved users</div>
+    <div class="cmd-desc">列出所有待審批（pending）與已核准（approved）的使用者。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> pairing list</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">核准 pairing code</div>
+    <div class="cmd-desc">以使用者提供的 pairing code 完成授權。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> pairing approve <span class="flag">CODE</span></div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">撤銷使用者 / 清除 pending</div>
+    <div class="cmd-desc">
+      <code>revoke</code> 撤銷已核准使用者的存取；
+      <code>clear-pending</code> 清除所有待審批的 pairing code。
+    </div>
+    <div class="code-window">
+<span class="cmd-keyword">hermes</span> pairing revoke <span class="flag">USER_ID</span>
+<span class="cmd-keyword">hermes</span> pairing clear-pending
+    </div>
+  </div>
+</section>
+
+<!-- ========== 12. Cron 排程 ========== -->
+<section class="section" id="s12">
+  <div class="section-header">
+    <span class="section-number">12</span>
+    <h2>Cron 排程任務</h2>
+  </div>
+
+  <p class="cmd-desc" style="margin-bottom:24px">
+    Hermes 支援 cron job，可用於定時執行任務、產出報告或透過 Telegram 傳送通知。
+  </p>
+
+  <div class="cmd-card">
+    <div class="cmd-title">查看 cron 指令說明</div>
+    <div class="cmd-desc">印出 cron 子命令的完整幫助資訊。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> cron --help</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">查看目前排程</div>
+    <div class="cmd-desc">列出所有已設定的排程任務、執行時間與輸出平台。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> cron list</div>
+  </div>
+
+  <div class="callout callout-info">
+    💡 建立或管理排程時，可依 CLI 提示輸入任務內容、執行時間（cron expression）與輸出平台（stdout / Telegram / 檔案等）。
+  </div>
+</section>
+
+<!-- ========== 13. MCP 與外部工具整合 ========== -->
+<section class="section" id="s13">
+  <div class="section-header">
+    <span class="section-number">13</span>
+    <h2>MCP 與外部工具整合</h2>
+  </div>
+
+  <p class="cmd-desc" style="margin-bottom:24px">
+    MCP（Model Context Protocol）可讓 Hermes 與其他工具或服務互通，
+    例如資料庫、檔案系統、第三方 API 等。
+  </p>
+
+  <div class="cmd-card">
+    <div class="cmd-title">查看 MCP 指令說明</div>
+    <div class="cmd-desc">印出 mcp 子命令幫助。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> mcp --help</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">查看 MCP 伺服器設定</div>
+    <div class="cmd-desc">列出目前已配置的 MCP server 清單與連線狀態。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> mcp list</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">執行 Hermes 作為 MCP Server</div>
+    <div class="cmd-desc">
+      將 Hermes 本身作為 MCP server 對外提供服務，
+      讓其他 MCP 相容 client（如 Claude Desktop、Cursor）可呼叫。
+    </div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> mcp serve</div>
+  </div>
+</section>
+
+<!-- ========== 14. Plugins 管理 ========== -->
+<section class="section" id="s14">
+  <div class="section-header">
+    <span class="section-number">14</span>
+    <h2>Plugins 管理</h2>
+  </div>
+
+  <p class="cmd-desc" style="margin-bottom:24px">
+    Plugins 為外掛模組，可擴充 Hermes 的功能，如新增工具、介面、整合等。
+  </p>
+
+  <div class="cmd-card">
+    <div class="cmd-title">查看 / 列出 Plugins</div>
+    <div class="cmd-desc"><code>--help</code> 印出幫助；<code>list</code> 列出已安裝 plugin 與版本。</div>
+    <div class="code-window">
+<span class="cmd-keyword">hermes</span> plugins --help
+<span class="cmd-keyword">hermes</span> plugins list
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">安裝 / 更新 / 移除 Plugin</div>
+    <div class="cmd-desc">
+      以 <code>PLUGIN_IDENTIFIER</code> 指定外掛名稱。
+      <code>update</code> 升級至最新版，<code>remove</code> 完全移除。
+    </div>
+    <div class="code-window">
+<span class="cmd-keyword">hermes</span> plugins install <span class="flag">PLUGIN_IDENTIFIER</span>
+<span class="cmd-keyword">hermes</span> plugins update <span class="flag">PLUGIN_IDENTIFIER</span>
+<span class="cmd-keyword">hermes</span> plugins remove <span class="flag">PLUGIN_IDENTIFIER</span>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 15. Logs 與故障排查 ========== -->
+<section class="section" id="s15">
+  <div class="section-header">
+    <span class="section-number">15</span>
+    <h2>Logs 與故障排查</h2>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">查看最近 Logs</div>
+    <div class="cmd-desc">印出最近一批 log 紀錄。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> logs</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">即時追蹤 Logs</div>
+    <div class="cmd-desc">以 <code>-f</code>（follow）模式即時串流 log 輸出，適合監控 Gateway 或執行中任務。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> logs -f</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">僅查看錯誤 Logs</div>
+    <div class="cmd-desc">過濾出 error 等級以上的 log，快速定位問題。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> logs errors</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">查看最近一小時 Logs</div>
+    <div class="cmd-desc">使用 <code>--since</code> 限定時間範圍，支援 <code>1h</code>、<code>30m</code>、<code>2d</code> 等格式。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> logs --since 1h</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">Telegram Gateway 沒反應排查步驟</div>
+    <div class="cmd-desc">依序執行以下三項，確認 Gateway 狀態、即時 log 與 .env 設定是否正確。</div>
+    <div class="code-window">
+<span class="comment"># 1. 確認 gateway 是否正在執行</span>
+<span class="cmd-keyword">hermes</span> gateway status
+
+<span class="comment"># 2. 即時追蹤 log，看有無錯誤</span>
+<span class="cmd-keyword">hermes</span> logs -f
+
+<span class="comment"># 3. 確認 .env 中 Telegram 相關變數</span>
+<span class="cmd-keyword">grep</span> -E <span class="string">'TELEGRAM_BOT_TOKEN|TELEGRAM_ALLOWED_USERS|TELEGRAM_HOME_CHANNEL'</span> ~/.hermes/.env
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">Gemini API 回 403 常見原因</div>
+    <div class="cmd-desc">
+      若 Gemini 回傳 403，常見原因包括：
+      billing 未啟用、project 被拒絕存取、API key 權限限制錯誤、
+      尚未接受 Gemini API 條款、或使用了不支援的 project。
+    </div>
+    <div class="code-window">
+<span class="comment"># 測試生成是否成功</span>
+<span class="cmd-keyword">set</span> -a
+<span class="cmd-keyword">.</span> ~/.hermes/.env
+<span class="cmd-keyword">set</span> +a
+<span class="cmd-keyword">curl</span> -sS \
+   -H <span class="string">"Authorization: Bearer ${GOOGLE_API_KEY}"</span> \
+   -H <span class="string">"Content-Type: application/json"</span> \
+  https://generativelanguage.googleapis.com/v1beta/openai/chat/completions \
+   -d <span class="string">'{"model":"gemma-4-31b-it","messages":[{"role":"user","content":"Reply OK only."}],"max_tokens":8}'</span>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 16. 備份與重設 ========== -->
+<section class="section" id="s16">
+  <div class="section-header">
+    <span class="section-number">16</span>
+    <h2>備份與重設</h2>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">備份 Hermes 設定與資料</div>
+    <div class="cmd-desc">
+      將 <code>~/.hermes</code> 與 <code>~/.local/bin/hermes</code> 打包為帶時間戳的 tar.gz，方便日後還原。
+    </div>
+    <div class="code-window">
+<span class="cmd-keyword">mkdir</span> -p ~/hermes-backups
+backup=~/hermes-backups/hermes-backup-$(<span class="cmd-keyword">date</span> +%Y%m%d-%H%M%S).tar.gz
+<span class="cmd-keyword">tar</span> -czf <span class="string">"$backup"</span> --ignore-failed-read ~/.hermes ~/.local/bin/hermes
+<span class="cmd-keyword">ls</span> -lh <span class="string">"$backup"</span>
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">停止 Gateway（重設前）</div>
+    <div class="cmd-desc">重設前務必先停止 Gateway，避免執行中服務干擾。以下指令會嘗試多種方式停止，忽略不存在的行程。</div>
+    <div class="code-window">
+<span class="cmd-keyword">hermes</span> gateway stop 2>/dev/null || true
+<span class="cmd-keyword">systemctl</span> --user disable --now hermes-gateway 2>/dev/null || true
+<span class="cmd-keyword">pkill</span> -f <span class="string">"hermes.*gateway"</span> 2>/dev/null || true
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">刪除 Hermes（重設）</div>
+    <div class="cmd-desc">刪除執行檔與資料目錄。<strong>重設前請務必確認已備份。</strong></div>
+    <div class="code-window">
+<span class="cmd-keyword">rm</span> -f ~/.local/bin/hermes
+<span class="cmd-keyword">rm</span> -rf ~/.hermes
+    </div>
+    <div class="callout callout-danger" style="margin-top:12px;margin-bottom:0">
+      ⚠️ 此操作不可逆，所有設定、Session、Memory 都會被清除。
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">重新安裝 Hermes</div>
+    <div class="cmd-desc">
+      從 GitHub 原始碼下載安裝腳本。
+      加 <code>--skip-setup</code> 可跳過互動式設定，之後再手動 <code>hermes setup</code>。
+    </div>
+    <div class="code-window">
+<span class="comment"># 一般安裝</span>
+<span class="cmd-keyword">curl</span> -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | <span class="cmd-keyword">bash</span>
+
+<span class="comment"># 跳過互動式 setup</span>
+<span class="cmd-keyword">curl</span> -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | <span class="cmd-keyword">bash</span> -s -- --skip-setup
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">重新載入 shell 設定</div>
+    <div class="cmd-desc">安裝後需重新載入 <code>.bashrc</code>，讓 <code>hermes</code> 指令在當前 terminal 生效。</div>
+    <div class="code-window"><span class="cmd-keyword">source</span> ~/.bashrc</div>
+  </div>
+</section>
+
+<!-- ========== 17. 更新與解除安裝 ========== -->
+<section class="section" id="s17">
+  <div class="section-header">
+    <span class="section-number">17</span>
+    <h2>更新與解除安裝</h2>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">更新 Hermes</div>
+    <div class="cmd-desc">拉取最新版本並更新執行檔，設定檔與資料會保留。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> update</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">檢查更新後狀態</div>
+    <div class="cmd-desc">更新後執行 <code>version</code> 確認版本，再執行 <code>doctor</code> 確認環境正常。</div>
+    <div class="code-window">
+<span class="cmd-keyword">hermes</span> version
+<span class="cmd-keyword">hermes</span> doctor
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">解除安裝 Hermes</div>
+    <div class="cmd-desc">
+      使用內建 <code>uninstall</code> 可安全移除執行檔與背景服務。
+      若要手動刪除完整資料，請先備份再執行 <code>rm</code>。
+    </div>
+    <div class="code-window">
+<span class="comment"># 內建解除安裝</span>
+<span class="cmd-keyword">hermes</span> uninstall
+
+<span class="comment"># 手動刪除（先備份！）</span>
+<span class="cmd-keyword">rm</span> -f ~/.local/bin/hermes
+<span class="cmd-keyword">rm</span> -rf ~/.hermes
+    </div>
+  </div>
+</section>
+
+<!-- ========== 18. 建議日常工作流 ========== -->
+<section class="section" id="s18">
+  <div class="section-header">
+    <span class="section-number">18</span>
+    <h2>建議日常工作流</h2>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">一般使用者每日啟動</div>
+    <div class="cmd-desc">進入 WSL 後直接啟動 Hermes 互動式聊天。</div>
+    <div class="code-window">wsl -d HermesAgent
+<span class="cmd-keyword">hermes</span>
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">開發工作建議</div>
+    <div class="cmd-desc">進入專案目錄後，預載程式碼檢查、除錯、TDD 相關 Skills。</div>
+    <div class="code-window">wsl -d HermesAgent
+<span class="cmd-keyword">cd</span> /path/to/project
+<span class="cmd-keyword">hermes</span> -s codebase-inspection,systematic-debugging,test-driven-development
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">GitHub 協作建議</div>
+    <div class="cmd-desc">預載 GitHub 認證、PR 工作流、Code Review、Issue 管理 Skills。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> -s github-auth,github-pr-workflow,github-code-review,github-issues</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">研究寫作建議</div>
+    <div class="cmd-desc">預載 arXiv 搜尋、研究論文寫作、LLM Wiki 等 Skills。</div>
+    <div class="code-window"><span class="cmd-keyword">hermes</span> -s arxiv,research-paper-writing,llm-wiki</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">Telegram 常駐監控建議</div>
+    <div class="cmd-desc">定期檢查 Gateway 狀態與近一小時 log，確保背景服務正常運作。</div>
+    <div class="code-window">
+<span class="cmd-keyword">hermes</span> gateway status
+<span class="cmd-keyword">hermes</span> logs --since 1h
+    </div>
+  </div>
+</section>
+
+<!-- ========== 19. 安全建議 ========== -->
+<section class="section" id="s19">
+  <div class="section-header">
+    <span class="section-number">19</span>
+    <h2>安全建議</h2>
+  </div>
+
+  <div class="callout callout-danger">
+    <strong>API Key 不應公開</strong>：不要將 Key 貼在聊天、文件或 GitHub repo 中。
+    建議只存放於 <code>~/.hermes/.env</code> 並將權限設為 600。
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">設定 .env 權限</div>
+    <div class="code-window"><span class="cmd-keyword">chmod</span> 600 ~/.hermes/.env</div>
+  </div>
+
+  <div class="callout callout-warn">
+    若 API Key 曾經公開，請立即到 <strong>Google AI Studio</strong> 或
+    <strong>Google Cloud Console</strong> 重新產生 Key 並撤銷舊 Key。
+  </div>
+
+  <div class="callout callout-warn">
+    <strong>Telegram Bot Token 等同密碼</strong>，應避免公開。
+    若曾曝光，請到 <strong>@BotFather</strong> 執行 <code>/token</code> 重新產生。
+  </div>
+</section>
+
+<!-- ========== 20. 總結與 FAQ ========== -->
+<section class="section" id="s20">
+  <div class="section-header">
+    <span class="section-number">20</span>
+    <h2>總結與 FAQ</h2>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">核心操作五類</div>
+    <div class="cmd-desc">
+      Hermes Agent 的核心操作可分為：<strong>模型設定、工具權限、Skills、Gateway、維護診斷</strong>。
+      日常使用只需掌握以下幾組指令即可完成大多數工作：
+    </div>
+    <div class="code-window">
+<span class="comment"># 啟動</span>
+<span class="cmd-keyword">hermes</span>
+
+<span class="comment"># 診斷</span>
+<span class="cmd-keyword">hermes</span> doctor
+
+<span class="comment"># 模型設定</span>
+<span class="cmd-keyword">hermes</span> config
+
+<span class="comment"># Skills</span>
+<span class="cmd-keyword">hermes</span> skills
+
+<span class="comment"># 工具</span>
+<span class="cmd-keyword">hermes</span> tools
+
+<span class="comment"># Gateway</span>
+<span class="cmd-keyword">hermes</span> gateway
+    </div>
+  </div>
+
+  <div class="callout callout-info" style="margin-top:32px">
+    <strong>穩定長期使用建議：</strong><br>
+    1. 先確認模型 API 可正常生成<br>
+    2. 再設定 Telegram allowlist（TELEGRAM_ALLOWED_USERS）<br>
+    3. 最後才啟用 Gateway 背景服務<br>
+    這樣可避免 API 額度外洩、bot 被陌生人使用，或背景化後不易排查問題。
+  </div>
+
+  <h3 style="margin-top:48px;margin-bottom:20px">常見問題 FAQ</h3>
+
+  <div class="cmd-card">
+    <div class="cmd-title">Q：Hermes Agent 要如何啟動？</div>
+    <div class="cmd-desc">若安裝在 WSL HermesAgent 中，先執行 <code>wsl -d HermesAgent</code>，進入後執行 <code>hermes</code> 即可啟動互動式聊天。</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">Q：如何設定 Hermes 使用 Gemma 4 31B？</div>
+    <div class="cmd-desc">執行以下三條指令：</div>
+    <div class="code-window">
+<span class="cmd-keyword">hermes</span> config set model.provider gemini
+<span class="cmd-keyword">hermes</span> config set model.default gemma-4-31b-it
+<span class="cmd-keyword">hermes</span> config set model.base_url <span class="string">https://generativelanguage.googleapis.com/v1beta/openai</span>
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">Q：Hermes 的 API key 放在哪裡？</div>
+    <div class="cmd-desc">
+      通常放在 <code>~/.hermes/.env</code>。
+      Google Gemini 可設定 <code>GOOGLE_API_KEY</code>、<code>GEMINI_API_KEY</code> 與 <code>GEMINI_BASE_URL</code>。
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">Q：如何綁定 Telegram？</div>
+    <div class="cmd-desc">
+      先用 @BotFather 建立 bot 並取得 token，再用 @userinfobot 取得自己的 Telegram user ID，
+      接著執行 <code>hermes setup gateway</code> 或手動設定
+      <code>TELEGRAM_BOT_TOKEN</code>、<code>TELEGRAM_ALLOWED_USERS</code>、<code>TELEGRAM_HOME_CHANNEL</code>。
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">Q：為什麼 Telegram Allowed Users 很重要？</div>
+    <div class="cmd-desc">若 <code>TELEGRAM_ALLOWED_USERS</code> 留空，任何找到 bot 的人都有可能使用你的 Hermes 與 API 額度。建議一定要填入自己的 Telegram numeric user ID。</div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-title">Q：Hermes Skills 是什麼？</div>
+    <div class="cmd-desc">Skills 是任務專長模組，可讓 Hermes 在程式碼檢查、GitHub 工作流、研究寫作、PDF、MLOps 等任務中套用更精準的流程。</div>
+  </div>
+</section>
+
+</main>
+
+<!-- ========== FOOTER ========== -->
+<footer class="footer">
+  <p style="font-size:16px;color:var(--on-dark);font-weight:500;margin-bottom:8px">
+    Hermes Agent 指令速查
+  </p>
+  <p style="margin-bottom:4px">
+    參考資料：
+    <a href="https://interact-vision.com.tw/news/hermes-agent-command-reference-guide-371"
+       target="_blank" rel="noopener">
+      英特艾 · AI 工具教學 — Hermes Agent 指令集完整指南
+    </a>
+  </p>
+  <p style="font-size:13px;opacity:0.7">
+    設計風格依據 DESIGN.md（Claude warm-canvas editorial system）
+  </p>
+</footer>
+
+<!-- ========== JAVASCRIPT ========== -->
+<script>
+(function() {
+  const nav = document.getElementById('tocNav');
+  const toggle = document.getElementById('tocToggle');
+  const panel = document.getElementById('tocPanel');
+  const progress = document.getElementById('tocProgress');
+  const links = panel.querySelectorAll('a');
+  const sections = document.querySelectorAll('.section');
+
+  // Toggle panel
+  toggle.addEventListener('click', function() {
+    const open = panel.classList.toggle('open');
+    toggle.classList.toggle('active', open);
+    toggle.setAttribute('aria-expanded', open);
+  });
+
+  // Close panel on link click
+  links.forEach(function(link) {
+    link.addEventListener('click', function() {
+      panel.classList.remove('open');
+      toggle.classList.remove('active');
+      toggle.setAttribute('aria-expanded', 'false');
+    });
+  });
+
+  // Scroll: progress bar + active section highlight + shadow
+  function onScroll() {
+    // progress
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    progress.style.width = pct + '%';
+
+    // shadow when scrolled
+    nav.classList.toggle('scrolled', scrollTop > 10);
+
+    // active section
+    let current = '';
+    sections.forEach(function(sec) {
+      const top = sec.offsetTop - 100;
+      if (window.scrollY >= top) {
+        current = sec.id;
+      }
+    });
+    links.forEach(function(link) {
+      const target = link.getAttribute('href').slice(1);
+      link.classList.toggle('active-section', target === current);
+    });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+})();
+</script>
+
+</body>
+</html>
