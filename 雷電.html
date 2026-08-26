@@ -35,11 +35,7 @@ html, body {
   -webkit-user-select: none;
 }
 #gameContainer { position: relative; }
-canvas {
-  display: block;
-  background: #000;
-  touch-action: none;
-}
+canvas { display: block; background: #000; touch-action: none; }
 #ui {
   position: absolute;
   top: 0; left: 0; right: 0;
@@ -52,6 +48,10 @@ canvas {
   text-shadow: 0 0 10px #0ff;
   z-index: 10;
 }
+#leftUi { text-align: left; }
+#weaponDisplay { color: #ff0; font-size: clamp(9px, 2.6vw, 12px); }
+#stageDisplay { text-align: center; color: #ff0; text-shadow: 0 0 10px #ff0; font-weight: bold; }
+#lifeDisplay { text-align: right; }
 #pauseBtn {
   position: absolute;
   right: 10px; bottom: 10px;
@@ -98,41 +98,51 @@ canvas {
 }
 #overlay .key { color: #ff0; }
 #overlay .start-btn {
-  margin-top: 20px;
-  padding: 12px 40px;
-  font-size: clamp(16px, 5vw, 20px);
+  margin: 6px;
+  padding: 12px 30px;
+  font-size: clamp(15px, 4.5vw, 19px);
   background: transparent;
   border: 2px solid #0ff;
   color: #0ff;
   cursor: pointer;
   font-family: 'Courier New', monospace;
   transition: all 0.3s;
-  letter-spacing: 3px;
+  letter-spacing: 2px;
   touch-action: manipulation;
 }
-#overlay .start-btn:active {
-  background: #0ff;
-  color: #000;
-  box-shadow: 0 0 30px #0ff;
+#overlay .start-btn:active { background: #0ff; color: #000; box-shadow: 0 0 30px #0ff; }
+.diff-btn {
+  margin: 5px;
+  padding: 10px 20px;
+  font-size: clamp(13px, 4vw, 17px);
+  background: transparent;
+  border: 2px solid #0ff;
+  color: #0ff;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
+  touch-action: manipulation;
 }
+.diff-btn:active { background: #0ff; color: #000; }
+.diff-btn.easy { border-color: #0f0; color: #0f0; }
+.diff-btn.easy:active { background: #0f0; color: #000; }
+.diff-btn.hard { border-color: #f44; color: #f44; }
+.diff-btn.hard:active { background: #f44; color: #000; }
 </style>
 </head>
 <body>
 <div id="gameContainer">
-  <canvas id="game"></canvas>
-  <div id="ui">
-     <div id="scoreDisplay">SCORE: 0</div>
-     <div id="weaponDisplay">WEAPON: P1</div>
-     <div id="lifeDisplay">LIVES: ♥♥♥</div>
-   </div>
-   <div id="pauseBtn" style="display:none" onclick="togglePause()">⏸</div>
-   <div id="overlay">
-     <h1>⚡ 雷 電 ⚡</h1>
-     <h2>R A I D E N</h2>
-     <div id="ctrlHint"></div>
-     <p style="margin-top:12px; color:#0f8;">吃 <span class="key">P</span> 升級武器 | 吃 <span class="key">S</span> 補護盾 | 吃 <span class="key">L</span> 加命</p>
-     <button class="start-btn" onclick="startGame()">START</button>
-   </div>
+   <canvas id="game"></canvas>
+   <div id="ui">
+      <div id="leftUi">
+        <div id="scoreDisplay">SCORE: 0</div>
+        <div id="weaponDisplay">WEAPON: P1</div>
+      </div>
+      <div id="stageDisplay">STAGE 1-1</div>
+      <div id="lifeDisplay">LIVES: ♥♥♥</div>
+    </div>
+    <div id="pauseBtn" style="display:none" onclick="togglePause()">⏸</div>
+    <div id="overlay"></div>
 </div>
 
 <script>
@@ -156,14 +166,43 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
+// ═══════════════════════════════════════════
+// 難度 & 關卡主題設定
+// ═══════════════════════════════════════════
+const DIFFICULTIES = {
+  easy:    { name:'EASY',   lives:5, enemyHp:0.7, enemySpeed:0.85, enemyFire:1.3, powerupRate:1.4, waveCount:3, bonusMul:0.5 },
+  normal: { name:'NORMAL', lives:3, enemyHp:1.0, enemySpeed:1.0,  enemyFire:1.0, powerupRate:1.0, waveCount:4, bonusMul:1.0 },
+  hard:    { name:'HARD',   lives:2, enemyHp:1.3, enemySpeed:1.2,  enemyFire:0.7, powerupRate:0.7, waveCount:5, bonusMul:3.0 }
+};
+const STAGE_THEMES = [
+  { name:'CITY',    sky:'#0a0a18', city:'#0a0a15', star:'128,144,255' },
+  { name:'DESERT',  sky:'#1a0f08', city:'#2a1a0a', star:'255,221,136' },
+  { name:'OCEAN',   sky:'#08101a', city:'#0a1a2a', star:'136,204,255' },
+  { name:'SPACE',   sky:'#05050f', city:'#0a0a1f', star:'204,136,255' },
+  { name:'VOLCANO', sky:'#1a0808', city:'#2a0a0a', star:'255,136,136' }
+];
+
 const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
-document.getElementById('ctrlHint').innerHTML = isTouch
-  ? '<p><span class="key">左手</span>（螢幕左半）滑動 = 移動</p>'
-   + '<p><span class="key">右手</span>（螢幕右半）按住 = 射擊</p>'
-   + '<p>可單指或雙指同用 | 右下角 <span class="key">⏸</span> 暫停</p>'
-   : '<p>操作：<span class="key">WASD</span> / <span class="key">方向鍵</span> / <span class="key">滑鼠</span> 移動</p>'
-   + '<p>射擊：<span class="key">J</span> / <span class="key">空白鍵</span>（按住連射）</p>'
-   + '<p>切換武器：<span class="key">K</span> / <span class="key">Shift</span> | 暫停：<span class="key">P</span></p>';
+let difficulty = 'normal';
+function getDiff() { return DIFFICULTIES[difficulty]; }
+function getTheme() { return STAGE_THEMES[themeIndex % STAGE_THEMES.length]; }
+
+function menuHTML() {
+  return `
+     <h1>⚡ 雷 電 ⚡</h1>
+     <h2>R A I D E N</h2>
+     <p style="color:#ff0;">選擇難度</p>
+     <div style="display:flex; flex-wrap:wrap; justify-content:center;">
+       <button class="diff-btn easy" onclick="startGame('easy')">EASY</button>
+       <button class="diff-btn" onclick="startGame('normal')">NORMAL</button>
+       <button class="diff-btn hard" onclick="startGame('hard')">HARD</button>
+     </div>
+     <p style="margin-top:12px; color:#888;">${isTouch ? '左手移動 / 右手射擊 / 右上切換武器' : 'WASD 移動 / J 或空白 射擊 / K 切換武器'}</p>
+     <p style="color:#0f8;">吃 <span class="key">P</span> 升級 | <span class="key">S</span> 護盾 | <span class="key">L</span> 加命</p>
+     <p style="color:#666; font-size:11px; margin-top:8px;">EASY 5命 / NORMAL 3命 / HARD 2命 · 關底有 Boss</p>
+   `;
+}
+document.getElementById('overlay').innerHTML = menuHTML();
 
 // ═══════════════════════════════════════════
 // 音效
@@ -207,11 +246,17 @@ function playSound(type) {
       o.frequency.exponentialRampToValueAtTime(60,t+1);
       g.gain.setValueAtTime(0.12,t); g.gain.exponentialRampToValueAtTime(0.001,t+1);
       o.start(t); o.stop(t+1); break;
-   }
+    case 'clear':
+      o.type='sine'; o.frequency.setValueAtTime(523,t);
+      o.frequency.setValueAtTime(659,t+0.12); o.frequency.setValueAtTime(784,t+0.24);
+      o.frequency.setValueAtTime(1047,t+0.36);
+      g.gain.setValueAtTime(0.12,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.6);
+      o.start(t); o.stop(t+0.6); break;
+    }
 }
 
 // ═══════════════════════════════════════════
-// 輸入（鍵盤 + 滑鼠 + 左右分區觸控）
+// 輸入（鍵盤 + 滑鼠 + 左右分區觸控 + 切換按鈕）
 // ═══════════════════════════════════════════
 const keys = {};
 let mouseX = W/2, mouseY = H/2, mouseActive = false;
@@ -231,53 +276,67 @@ canvas.addEventListener('mousedown', () => { initAudio(); keys['Space'] = true; 
 canvas.addEventListener('mouseup', () => keys['Space'] = false);
 canvas.addEventListener('mouseleave', () => { mouseActive = false; });
 
-// ── 觸控：左半=搖桿移動 / 右半=射擊按鈕 ──
-const JOY_FACTOR = 1.6;   // 搖桿靈敏度，越大移動越遠
-let leftTouchId  = -1, leftOriginX = 0, leftOriginY = 0, leftCurX = 0, leftCurY = 0;
-let leftShipBaseX = 0, leftShipBaseY = 0;
-let rightTouchId = -1, rightCurX = 0, rightCurY = 0;
+const JOY_FACTOR = 1.6;
+let leftTouchId=-1, leftOriginX=0, leftOriginY=0, leftCurX=0, leftCurY=0;
+let leftShipBaseX=0, leftShipBaseY=0;
+let rightTouchId=-1, rightCurX=0, rightCurY=0;
+// 切換武器按鈕
+const WBTN_X = W - 52, WBTN_Y = 120, WBTN_R = 34;
+let weaponBtnTouchId = -1, weaponSwitchPressed = false;
 
 function getTouchPos(t) {
   const r = canvas.getBoundingClientRect();
   return { x: (t.clientX - r.left) * (W / r.width),
-           y: (t.clientY - r.top)  * (H / r.height) };
+           y: (t.clientY - r.top)    * (H / r.height) };
+}
+function inWeaponBtn(p) {
+  const dx = p.x - WBTN_X, dy = p.y - WBTN_Y;
+  return dx*dx + dy*dy <= WBTN_R*WBTN_R;
 }
 function touchStart(e) {
-  e.preventDefault();
-  initAudio();
+  e.preventDefault(); initAudio();
   for (const t of e.changedTouches) {
     const p = getTouchPos(t);
+     // 1) 先判斷切換武器按鈕（優先，按到就不射擊）
+    if (inWeaponBtn(p) && weaponBtnTouchId === -1) {
+      weaponBtnTouchId = t.identifier;
+      weaponSwitchPressed = true;
+      continue;
+     }
+     // 2) 左半 = 搖桿
     if (p.x < W/2 && leftTouchId === -1) {
       leftTouchId = t.identifier;
       leftOriginX = leftCurX = p.x;
       leftOriginY = leftCurY = p.y;
       leftShipBaseX = player ? player.x : W/2;
       leftShipBaseY = player ? player.y : H - 100;
-    } else if (p.x >= W/2 && rightTouchId === -1) {
+     // 3) 右半（按鈕以外）= 射擊
+     } else if (p.x >= W/2 && rightTouchId === -1) {
       rightTouchId = t.identifier;
       rightCurX = p.x; rightCurY = p.y;
+     }
     }
-   }
 }
 function touchMove(e) {
   e.preventDefault();
   for (const t of e.changedTouches) {
     const p = getTouchPos(t);
-    if (t.identifier === leftTouchId)  { leftCurX = p.x;  leftCurY = p.y;  }
-    else if (t.identifier === rightTouchId) { rightCurX = p.x; rightCurY = p.y; }
-   }
+    if (t.identifier === leftTouchId)         { leftCurX = p.x;  leftCurY = p.y;    }
+    else if (t.identifier === rightTouchId)   { rightCurX = p.x; rightCurY = p.y; }
+     }
 }
 function touchEnd(e) {
   e.preventDefault();
   for (const t of e.changedTouches) {
-    if (t.identifier === leftTouchId)  leftTouchId = -1;
-    else if (t.identifier === rightTouchId) rightTouchId = -1;
-   }
+    if (t.identifier === weaponBtnTouchId)    weaponBtnTouchId = -1;
+    else if (t.identifier === leftTouchId)    leftTouchId = -1;
+    else if (t.identifier === rightTouchId)   rightTouchId = -1;
+     }
 }
 canvas.addEventListener('touchstart', touchStart, { passive: false });
-canvas.addEventListener('touchmove',  touchMove,  { passive: false });
-canvas.addEventListener('touchend',   touchEnd,   { passive: false });
-canvas.addEventListener('touchcancel',touchEnd,   { passive: false });
+canvas.addEventListener('touchmove',  touchMove,    { passive: false });
+canvas.addEventListener('touchend',   touchEnd,     { passive: false });
+canvas.addEventListener('touchcancel',touchEnd,     { passive: false });
 
 function togglePause() {
   if (gameState === 'playing') pauseGame();
@@ -289,12 +348,12 @@ function togglePause() {
 // ═══════════════════════════════════════════
 let gameState = 'menu';
 let score = 0, highScore = 0, lives = 3, weaponLevel = 1;
-let currentWave = 0, waveTimer = 0;
-let frameCount = 0, shakeAmount = 0;
+let stage = 1, waveInStage = 0, stagePhase = 'waves', waveTimer = 0, clearTimer = 0;
+let frameCount = 0, shakeAmount = 0, themeIndex = 0, banner = null;
 let player, playerBullets, enemyBullets, enemies, powerups, particles, stars;
 
 // ═══════════════════════════════════════════
-// 星空背景
+// 星空 & 城市背景
 // ═══════════════════════════════════════════
 function initStars() {
   stars = [];
@@ -302,33 +361,35 @@ function initStars() {
     stars.push({ x: Math.random()*W, y: Math.random()*H,
       speed: 0.5 + Math.random()*3, size: Math.random()*2 + 0.5,
       brightness: 0.3 + Math.random()*0.7 });
-   }
+     }
 }
 function updateStars() {
   for (let s of stars) {
     s.y += s.speed;
     if (s.y > H) { s.y = 0; s.x = Math.random()*W; }
-   }
+     }
 }
 function drawStars() {
+  const th = getTheme();
   for (let s of stars) {
-    ctx.fillStyle = `rgba(180,200,255,${s.brightness})`;
+    ctx.fillStyle = `rgba(${th.star},${s.brightness})`;
     ctx.fillRect(s.x, s.y, s.size, s.size);
-   }
+     }
 }
 let cityOffset = 0;
 function drawCityscape() {
+  const th = getTheme();
   cityOffset = (cityOffset + 0.3) % 80;
   for (let i = -1; i < 8; i++) {
     const bx = i*80 - cityOffset;
     const bh = 30 + Math.sin(i*2.5)*20 + Math.cos(i*1.3)*15;
-    ctx.fillStyle = '#0a0a15';
+    ctx.fillStyle = th.city;
     ctx.fillRect(bx, H-bh-20, 60, bh+20);
     ctx.fillStyle = `rgba(255,200,0,${0.1 + Math.sin(i+frameCount*0.05)*0.1})`;
     for (let wy=0; wy<bh-5; wy+=10)
       for (let wx=5; wx<55; wx+=12)
         if (Math.random()>0.3) ctx.fillRect(bx+wx, H-bh-20+wy+5, 5, 5);
-   }
+     }
 }
 
 // ═══════════════════════════════════════════
@@ -344,22 +405,21 @@ function updatePlayer() {
   player.flame += 0.3;
 
   let moved = false;
-   // 優先順序：觸控搖桿 > 滑鼠 > 鍵盤
   if (leftTouchId >= 0) {
     const tx = leftShipBaseX + (leftCurX - leftOriginX) * JOY_FACTOR;
     const ty = leftShipBaseY + (leftCurY - leftOriginY) * JOY_FACTOR;
     player.x += (tx - player.x) * 0.5;
     player.y += (ty - player.y) * 0.5;
     moved = true;
-   } else if (mouseActive) {
+     } else if (mouseActive) {
     const dx = mouseX - player.x, dy = mouseY - player.y;
     const d = Math.sqrt(dx*dx+dy*dy);
     if (d > 5) {
       const s = Math.min(player.speed*1.5, d);
       player.x += (dx/d)*s; player.y += (dy/d)*s;
       moved = true;
-     }
-   } else {
+       }
+     } else {
     let dx=0, dy=0;
     if (keys['ArrowLeft']||keys['KeyA']) dx=-1;
     if (keys['ArrowRight']||keys['KeyD']) dx=1;
@@ -368,20 +428,22 @@ function updatePlayer() {
     if (dx&&dy){ dx*=0.707; dy*=0.707; }
     player.x += dx*player.speed; player.y += dy*player.speed;
     moved = moved || (dx||dy);
-   }
+     }
   player.x = Math.max(player.w/2, Math.min(W-player.w/2, player.x));
   player.y = Math.max(player.h/2, Math.min(H-player.h/2, player.y));
 
   if (player.invincible > 0) player.invincible--;
   if (player.powerShield > 0) player.powerShield--;
 
-  if (keys['KeyK']||keys['ShiftLeft']||keys['ShiftRight']) {
+   // 切換武器：觸控按鈕 / K / Shift
+  if (weaponSwitchPressed || keys['KeyK']||keys['ShiftLeft']||keys['ShiftRight']) {
     if (player.switchCooldown <= 0) {
       player.weaponIndex = (player.weaponIndex+1) % Math.min(weaponLevel,5);
       player.switchCooldown = 15;
       playSound('hit');
+       }
      }
-   }
+  weaponSwitchPressed = false;   // 每次按下只切一次
   if (player.switchCooldown > 0) player.switchCooldown--;
 
    // 射擊：右半螢幕按鈕 / 鍵盤 J / 空白
@@ -389,7 +451,7 @@ function updatePlayer() {
   if ((rightTouchId >= 0 || keys['KeyJ'] || keys['Space']) && player.fireTimer <= 0) {
     firePlayerWeapon();
     player.fireTimer = player.fireRate;
-   }
+     }
 }
 function drawPlayer() {
   if (!player.alive) return;
@@ -417,54 +479,57 @@ function drawPlayer() {
     ctx.strokeStyle = `rgba(0,255,255,${0.3+Math.sin(frameCount*0.2)*0.2})`;
     ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(0,0,24,0,Math.PI*2); ctx.stroke();
-   }
+     }
   ctx.restore();
 }
 
-// ── 繪製觸控搖桿 & 射擊按鈕 ──
 function drawTouchControls() {
   if (!isTouch) return;
-   // 中線分隔
   ctx.strokeStyle = 'rgba(255,255,255,0.06)';
   ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(W/2, 0); ctx.lineTo(W/2, H); ctx.stroke();
 
-   // 左：搖桿
+  // 左：搖桿
   if (leftTouchId >= 0) {
     ctx.strokeStyle = 'rgba(0,255,255,0.3)';
     ctx.lineWidth = 3;
     ctx.beginPath(); ctx.arc(leftOriginX, leftOriginY, 50, 0, Math.PI*2); ctx.stroke();
-    // 搖桿頭（限制在底盤內）
     let kx = leftOriginX + (leftCurX - leftOriginX);
     let ky = leftOriginY + (leftCurY - leftOriginY);
     const dx = kx-leftOriginX, dy = ky-leftOriginY, d = Math.sqrt(dx*dx+dy*dy);
     if (d > 50) { kx = leftOriginX + dx/d*50; ky = leftOriginY + dy/d*50; }
     ctx.fillStyle = 'rgba(0,255,255,0.45)';
     ctx.beginPath(); ctx.arc(kx, ky, 24, 0, Math.PI*2); ctx.fill();
-   } else {
-     ctx.fillStyle = 'rgba(255,255,255,0.15)';
+     } else {
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
     ctx.font = 'bold 12px Courier New';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('◀ 移動 ▶', W/4, H - 40);
-   }
+     }
 
-   // 右：射擊按鈕
-  if (rightTouchId >= 0) {
-    ctx.fillStyle = 'rgba(255,60,60,0.35)';
-    ctx.beginPath(); ctx.arc(rightCurX, rightCurY, 36, 0, Math.PI*2); ctx.fill();
-    ctx.strokeStyle = 'rgba(255,100,100,0.6)';
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(rightCurX, rightCurY, 36, 0, Math.PI*2); ctx.stroke();
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 13px Courier New';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('FIRE', rightCurX, rightCurY);
-   } else {
-     ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  // 右：射擊提示（未觸控時）
+  if (rightTouchId < 0 && weaponBtnTouchId < 0) {
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
     ctx.font = 'bold 12px Courier New';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('射擊 ▶', 3*W/4, H - 40);
-   }
+     }
+
+  // 切換武器按鈕（固定在右上）
+  const active = weaponBtnTouchId >= 0;
+  ctx.save();
+  ctx.globalAlpha = active ? 1 : 0.55;
+  ctx.fillStyle = active ? 'rgba(255,255,0,0.4)' : 'rgba(255,255,0,0.1)';
+  ctx.beginPath(); ctx.arc(WBTN_X, WBTN_Y, WBTN_R, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = active ? '#ff0' : 'rgba(255,255,0,0.55)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(WBTN_X, WBTN_Y, WBTN_R, 0, Math.PI*2); ctx.stroke();
+  ctx.fillStyle = '#ff0';
+  ctx.font = 'bold 11px Courier New';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('切換', WBTN_X, WBTN_Y - 8);
+  ctx.fillText('P' + Math.min(player.weaponIndex+1, weaponLevel), WBTN_X, WBTN_Y + 9);
+  ctx.restore();
 }
 
 // ═══════════════════════════════════════════
@@ -499,31 +564,40 @@ function firePlayerWeapon() {
       for (let a=-30;a<=30;a+=15) {
         const rad=a*Math.PI/180;
         playerBullets.push({x,y,vx:Math.sin(rad)*12,vy:-Math.cos(rad)*12,w:4,h:10,dmg:2,color:`hsl(${a+200},100%,60%)`,trail:true});
-       }
+         }
       playerBullets.push({x,y:y-10,vx:0,vy:-16,w:6,h:16,dmg:3,color:'#fff',trail:true,pierce:true});
       break;
-   }
+     }
 }
 
 // ═══════════════════════════════════════════
 // 敵人
 // ═══════════════════════════════════════════
 const ENEMY_TYPES = {
-  small:   { w:20, h:20, hp:1, score:100,  color:'#f44', fireRate:0,  bulletSpeed:4 },
+  small:     { w:20, h:20, hp:1, score:100,  color:'#f44', fireRate:0,  bulletSpeed:4 },
   medium: { w:28, h:28, hp:3, score:300,  color:'#fa0', fireRate:60, bulletSpeed:5 },
-  large:   { w:40, h:40, hp:8, score:800,  color:'#f0f', fireRate:45, bulletSpeed:4 },
-  boss:    { w:100, h:80, hp:60, score:5000, color:'#ff0', fireRate:20, bulletSpeed:5 }
+  large:     { w:40, h:40, hp:8, score:800,  color:'#f0f', fireRate:45, bulletSpeed:4 },
+  boss:      { w:100, h:80, hp:60, score:5000, color:'#ff0', fireRate:20, bulletSpeed:5 }
 };
+function stageMul() { return 1 + (stage-1)*0.15; }
 function spawnEnemy(type, x, y, pattern) {
   const t = ENEMY_TYPES[type];
+  const d = getDiff();
+  const sm = stageMul();
   const e = {
     x: x ?? (Math.random()*(W-60)+30), y: y ?? -40,
-    w: t.w, h: t.h, hp: t.hp, maxHp: t.hp, type, color: t.color, score: t.score,
-    fireRate: t.fireRate, fireTimer: Math.random()*t.fireRate, bulletSpeed: t.bulletSpeed,
+    w: t.w, h: t.h,
+    hp: Math.ceil(t.hp * d.enemyHp * sm),
+    maxHp: Math.ceil(t.hp * d.enemyHp * sm),
+    type, color: t.color, score: Math.round(t.score * (1 + (stage-1)*0.2)),
+    fireRate: Math.max(10, t.fireRate * d.enemyFire),
+    fireTimer: Math.random()*t.fireRate,
+    bulletSpeed: t.bulletSpeed,
     pattern: pattern || 'straight', patternTimer: 0, patternPhase: Math.random()*Math.PI*2,
-    vx: 0, vy: 1.5+Math.random(), alive: true, spawnFlash: 15, phase: 0, phaseTimer: 0
-   };
-  if (type==='small') e.vy = 2.5+Math.random()*1.5;
+    vx: 0, vy: (1.5+Math.random()) * d.enemySpeed * (1 + (stage-1)*0.05),
+    alive: true, spawnFlash: 15, phase: 0, phaseTimer: 0
+     };
+  if (type==='small') e.vy = (2.5+Math.random()*1.5) * d.enemySpeed;
   if (type==='boss'){ e.x=W/2; e.y=-60; e.vy=0.8; }
   enemies.push(e);
   return e;
@@ -552,15 +626,15 @@ function updateEnemies() {
           e.x = Math.max(e.w/2, Math.min(W-e.w/2, e.x));
           e.phaseTimer++;
           if (e.phaseTimer > 300){ e.phaseTimer=0; e.phase=(e.phase+1)%3; }
-         } break;
-     }
+           } break;
+       }
     if (e.y > H+50) { enemies.splice(i,1); continue; }
     if (e.x < -50 || e.x > W+50) { enemies.splice(i,1); continue; }
     if (e.type!=='small') {
       e.fireTimer--;
       if (e.fireTimer <= 0 && e.y > 0) { e.fireTimer = e.fireRate; enemyShoot(e); }
+       }
      }
-   }
 }
 function enemyShoot(e) {
   const target = player;
@@ -570,18 +644,18 @@ function enemyShoot(e) {
     if (e.phase===0) {
       for (let a=-0.5;a<=0.5;a+=0.2)
         enemyBullets.push({x:e.x,y:e.y+e.h/2,vx:Math.sin(a)*e.bulletSpeed,vy:Math.cos(a)*e.bulletSpeed+2,w:8,h:8,dmg:1,color:'#f80'});
-     } else if (e.phase===1) {
+       } else if (e.phase===1) {
       for (let a=0;a<Math.PI*2;a+=Math.PI/6)
         enemyBullets.push({x:e.x,y:e.y,vx:Math.cos(a)*3,vy:Math.sin(a)*3+1,w:6,h:6,dmg:1,color:'#f0f'});
-     } else {
+       } else {
       enemyBullets.push({x:e.x,y:e.y+e.h/2,vx:Math.cos(angle)*e.bulletSpeed,vy:Math.sin(angle)*e.bulletSpeed,w:8,h:8,dmg:2,color:'#0f0',homing:true,bulletSpeed:e.bulletSpeed});
-     }
-   } else if (e.type==='medium') {
+       }
+     } else if (e.type==='medium') {
     enemyBullets.push({x:e.x,y:e.y+e.h/2,vx:Math.cos(angle)*e.bulletSpeed*0.5,vy:Math.sin(angle)*e.bulletSpeed,w:6,h:6,dmg:1,color:'#f80'});
-   } else if (e.type==='large') {
+     } else if (e.type==='large') {
     for (let a=-0.3;a<=0.3;a+=0.3)
       enemyBullets.push({x:e.x,y:e.y+e.h/2,vx:Math.cos(angle+a)*e.bulletSpeed*0.7,vy:Math.sin(angle+a)*e.bulletSpeed,w:5,h:5,dmg:1,color:'#f0f'});
-   }
+     }
   playSound('shoot');
 }
 function drawEnemies() {
@@ -591,7 +665,7 @@ function drawEnemies() {
     if (e.spawnFlash > 0) {
       ctx.fillStyle = `rgba(255,255,255,${0.5+Math.sin(e.spawnFlash)*0.5})`;
       ctx.beginPath(); ctx.arc(x,y,e.w,0,Math.PI*2); ctx.fill(); continue;
-     }
+       }
     ctx.save(); ctx.translate(x,y);
     if (e.type==='boss') {
       const g = ctx.createLinearGradient(0,-e.h/2,0,e.h/2);
@@ -605,20 +679,20 @@ function drawEnemies() {
       ctx.fillStyle='#300'; ctx.fillRect(-50,-e.h/2-15,100,6);
       ctx.fillStyle='#f00'; ctx.fillRect(-50,-e.h/2-15,100*(e.hp/e.maxHp),6);
       ctx.strokeStyle='#ff0'; ctx.lineWidth=1; ctx.strokeRect(-50,-e.h/2-15,100,6);
-     } else if (e.type==='small') {
+       } else if (e.type==='small') {
       ctx.fillStyle=e.color;
       ctx.beginPath();
       ctx.moveTo(0,e.h/2); ctx.lineTo(-e.w/2,-e.h/3); ctx.lineTo(0,-e.h/4); ctx.lineTo(e.w/2,-e.h/3);
       ctx.closePath(); ctx.fill();
       ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(0,0,3,0,Math.PI*2); ctx.fill();
-     } else if (e.type==='medium') {
+       } else if (e.type==='medium') {
       ctx.fillStyle=e.color;
       ctx.beginPath();
       ctx.moveTo(0,e.h/2); ctx.lineTo(-e.w/2,e.h/6); ctx.lineTo(-e.w/3,-e.h/2);
       ctx.lineTo(e.w/3,-e.h/2); ctx.lineTo(e.w/2,e.h/6); ctx.closePath(); ctx.fill();
       ctx.fillStyle='#ff0'; ctx.beginPath(); ctx.arc(0,-2,5,0,Math.PI*2); ctx.fill();
       ctx.fillStyle='#c40'; ctx.fillRect(-e.w/2-4,e.h/6-3,8,6); ctx.fillRect(e.w/2-4,e.h/6-3,8,6);
-     } else if (e.type==='large') {
+       } else if (e.type==='large') {
       ctx.fillStyle=e.color;
       ctx.beginPath();
       ctx.moveTo(0,e.h/2); ctx.lineTo(-e.w/2,e.h/4); ctx.lineTo(-e.w/2,-e.h/3);
@@ -626,9 +700,9 @@ function drawEnemies() {
       ctx.lineTo(e.w/2,e.h/4); ctx.closePath(); ctx.fill();
       ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(0,-4,6,0,Math.PI*2); ctx.fill();
       ctx.fillStyle='#f0f'; ctx.beginPath(); ctx.arc(0,-4,3,0,Math.PI*2); ctx.fill();
-     }
+       }
     ctx.restore();
-   }
+     }
 }
 
 // ═══════════════════════════════════════════
@@ -647,9 +721,9 @@ function updateBullets() {
         if (!b.pierce) playerBullets.splice(i,1);
         if (e.hp<=0) killEnemy(e,j);
         if (!b.pierce) break;
+         }
        }
      }
-   }
   for (let i=enemyBullets.length-1;i>=0;i--) {
     const b = enemyBullets[i];
     if (b.homing && player && player.alive) {
@@ -658,7 +732,7 @@ function updateBullets() {
       const sp = Math.sqrt(b.vx*b.vx+b.vy*b.vy);
       const max = b.bulletSpeed || 4;
       if (sp>max) { b.vx=b.vx/sp*max; b.vy=b.vy/sp*max; }
-     }
+       }
     b.x += b.vx; b.y += b.vy;
     if (b.y>H+20||b.y<-20||b.x<-20||b.x>W+20) { enemyBullets.splice(i,1); continue; }
     if (player && player.alive && player.invincible<=0) {
@@ -666,9 +740,9 @@ function updateBullets() {
         if (player.powerShield>0) { player.powerShield-=30; spawnHitParticles(b.x,b.y,'#0ff'); }
         else hitPlayer();
         enemyBullets.splice(i,1);
+         }
        }
      }
-   }
 }
 function drawBullets() {
   for (let b of playerBullets) {
@@ -678,20 +752,20 @@ function drawBullets() {
       g.addColorStop(0,'transparent'); g.addColorStop(0.3,b.color); g.addColorStop(1,'transparent');
       ctx.fillStyle=g; ctx.fillRect(b.x-b.w/2,b.y-b.h,b.w,b.h*2);
       ctx.fillStyle='#fff'; ctx.fillRect(b.x-1,b.y-b.h,2,b.h*2);
-     } else {
+       } else {
       if (b.trail) { ctx.fillStyle=b.color+'40'; ctx.fillRect(b.x-b.w/2,b.y-2,b.w,b.h+8); }
       ctx.fillStyle=b.color; ctx.fillRect(b.x-b.w/2,b.y-b.h/2,b.w,b.h);
       ctx.fillStyle='#fff'; ctx.fillRect(b.x-1,b.y-b.h/2,2,b.h);
-     }
+       }
     ctx.restore();
-   }
+     }
   for (let b of enemyBullets) {
     ctx.save();
     ctx.shadowBlur=8; ctx.shadowColor=b.color;
     ctx.fillStyle=b.color; ctx.beginPath(); ctx.arc(b.x,b.y,b.w/2,0,Math.PI*2); ctx.fill();
     ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(b.x,b.y,b.w/4,0,Math.PI*2); ctx.fill();
     ctx.restore();
-   }
+     }
 }
 
 // ═══════════════════════════════════════════
@@ -712,11 +786,11 @@ function updatePowerups() {
         weaponLevel++; playSound('powerup');
         for (let k=0;k<15;k++)
           particles.push({x:p.x,y:p.y,vx:(Math.random()-0.5)*4,vy:(Math.random()-0.5)*4,life:30,maxLife:30,color:'#0f0',size:3});
-       } else if (p.type==='S') { player.powerShield=Math.min(player.powerShield+180,360); playSound('powerup'); }
+         } else if (p.type==='S') { player.powerShield=Math.min(player.powerShield+180,360); playSound('powerup'); }
       else if (p.type==='L') { lives++; playSound('powerup'); }
       powerups.splice(i,1);
+       }
      }
-   }
 }
 function drawPowerups() {
   for (let p of powerups) {
@@ -729,7 +803,7 @@ function drawPowerups() {
     ctx.font='bold 12px Courier New'; ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText(p.type,p.x,p.y);
     ctx.restore();
-   }
+     }
 }
 
 // ═══════════════════════════════════════════
@@ -745,7 +819,7 @@ function spawnExplosion(x,y,size,color) {
     const a=Math.random()*Math.PI*2, s=1+Math.random()*(3+size);
     particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:20+Math.random()*20,maxLife:40,
       color: color||['#ff0','#f80','#f00','#fff'][Math.floor(Math.random()*4)],size:2+Math.random()*(2+size)});
-   }
+     }
   for (let i=0;i<size*3;i++)
     particles.push({x:x+(Math.random()-0.5)*size*10,y:y+(Math.random()-0.5)*size*10,
       vx:(Math.random()-0.5)*1.5,vy:(Math.random()-0.5)*1.5,life:30+Math.random()*30,maxLife:60,color:'#888',size:3+Math.random()*4,smoke:true});
@@ -756,7 +830,7 @@ function updateParticles() {
     p.x+=p.vx; p.y+=p.vy; p.vx*=0.96; p.vy*=0.96; p.life--;
     if (p.smoke) p.size+=0.3;
     if (p.life<=0) particles.splice(i,1);
-   }
+     }
 }
 function drawParticles() {
   for (let p of particles) {
@@ -764,7 +838,7 @@ function drawParticles() {
     if (p.smoke) ctx.fillStyle=`rgba(100,100,100,${a*0.3})`;
     else { ctx.fillStyle=p.color; ctx.globalAlpha=a; }
     ctx.beginPath(); ctx.arc(p.x,p.y,p.size*a,0,Math.PI*2); ctx.fill();
-   }
+     }
   ctx.globalAlpha=1;
 }
 
@@ -775,15 +849,17 @@ function killEnemy(e,index) {
   e.alive=false; score+=e.score; playSound('explode');
   const sz = e.type==='boss'?10:e.type==='large'?5:e.type==='medium'?3:1;
   spawnExplosion(e.x,e.y,sz,e.color);
-  shakeAmount = Math.min(10, sz*2);
-  if (e.type==='boss' || Math.random()<(e.type==='large'?0.4:e.type==='medium'?0.15:0.03)) {
+  shakeAmount = Math.min(12, sz*2);
+  const d = getDiff();
+  const baseChance = e.type==='large'?0.4 : e.type==='medium'?0.15 : 0.03;
+  if (e.type==='boss' || Math.random() < baseChance * d.powerupRate) {
     const types=['P','P','S','L'];
     spawnPowerup(e.x,e.y, e.type==='boss'?'P':types[Math.floor(Math.random()*types.length)]);
-   }
+     }
   if (e.type==='boss') {
     for (let k=0;k<3;k++) spawnPowerup(e.x+(k-1)*40,e.y,'P');
     spawnPowerup(e.x,e.y+30,'L');
-   }
+     }
   enemies.splice(index,1);
 }
 function hitPlayer() {
@@ -795,59 +871,129 @@ function hitPlayer() {
 }
 
 // ═══════════════════════════════════════════
-// 波次
+// 關卡 / 波次流程
 // ═══════════════════════════════════════════
-function startWave(wave) {
-  waveTimer=0;
-  const isBoss = (wave+1)%5===0;
-  if (isBoss) {
-    playSound('boss');
-    const boss = spawnEnemy('boss',W/2,-60,'boss');
-    boss.maxHp = 60+wave*15; boss.hp = boss.maxHp;
-    boss.fireRate = Math.max(10,20-wave);
-    for (let i=0;i<3;i++)
-      setTimeout(()=>{ if(gameState==='playing') spawnEnemy('small',Math.random()*(W-60)+30,-30,'sine'); },2000+i*1500);
-   } else {
-    const count = 5+wave*2;
-    for (let i=0;i<count;i++) {
-      const delay = i*(30-Math.min(wave*2,20));
-      setTimeout(()=>{
-        if (gameState!=='playing') return;
-        const r=Math.random();
-        let type, pattern;
-        if (r<0.5){ type='small'; pattern=Math.random()<0.5?'straight':'sine'; }
-        else if (r<0.8){ type='medium'; pattern='zigzag'; }
-        else { type='large'; pattern='dive'; }
-        spawnEnemy(type,Math.random()*(W-60)+30,-30-Math.random()*100,pattern);
-       }, delay*16);
+function showBanner(text, color) {
+  banner = { text, color, timer: 100, max: 100 };
+}
+function updateBanner() {
+  if (banner) { banner.timer--; if (banner.timer <= 0) banner = null; }
+}
+function drawBanner() {
+  if (!banner) return;
+  const alpha = Math.min(1, banner.timer/30, (banner.max-banner.timer)/15);
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = banner.color;
+  ctx.shadowBlur = 20; ctx.shadowColor = banner.color;
+  ctx.font = 'bold 34px Courier New';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(banner.text, W/2, H/2 - 60);
+  ctx.restore();
+}
+
+function spawnWave() {
+  const d = getDiff();
+  const count = 5 + waveInStage*2 + stage;
+  for (let i=0;i<count;i++) {
+    const r = Math.random();
+    let type, pattern;
+    if (r<0.5){ type='small';  pattern=Math.random()<0.5?'straight':'sine'; }
+    else if (r<0.8){ type='medium'; pattern='zigzag'; }
+    else { type='large'; pattern='dive'; }
+    const y = -30 - (i*22) - Math.random()*20;
+    spawnEnemy(type, Math.random()*(W-60)+30, y, pattern);
      }
-   }
+}
+function spawnBoss() {
+  const d = getDiff();
+  const sm = stageMul();
+  const boss = spawnEnemy('boss', W/2, -60, 'boss');
+  boss.maxHp = Math.ceil((60 + stage*25) * d.enemyHp * sm);
+  boss.hp = boss.maxHp;
+  boss.fireRate = Math.max(8, (22 - stage) * d.enemyFire);
+  boss.bulletSpeed = 4 + stage*0.3;
+  playSound('boss');
+  for (let i=0;i<3;i++)
+    spawnEnemy('small', W/2 + (i-1)*90, -30 - i*45, 'sine');
+}
+
+function advanceWave() {
+  const d = getDiff();
+  if (stagePhase === 'waves') {
+    if (waveInStage + 1 >= d.waveCount) {
+      stagePhase = 'boss';
+      showBanner('STAGE ' + stage + '  BOSS', '#f00');
+      spawnBoss();
+       } else {
+      waveInStage++;
+      showBanner('STAGE ' + stage + '-' + (waveInStage+1), '#0ff');
+      spawnWave();
+       }
+     } else if (stagePhase === 'boss') {
+    stagePhase = 'clear';
+    clearTimer = 150;
+    const bonus = Math.floor(1000 * stage * d.bonusMul);
+    score += bonus;
+    playSound('clear');
+    showBanner('STAGE ' + stage + ' CLEAR!', '#0f0');
+    for (let i=0;i<40;i++)
+      particles.push({x:Math.random()*W, y:Math.random()*H,
+        vx:(Math.random()-0.5)*3, vy:(Math.random()-0.5)*3,
+        life:60, maxLife:60, color:['#0f0','#0ff','#ff0'][i%3], size:3});
+     }
+}
+function startNextStage() {
+  stage++;
+  waveInStage = 0;
+  stagePhase = 'waves';
+  themeIndex = (stage-1) % STAGE_THEMES.length;
+  showBanner('STAGE ' + stage + '   ' + getTheme().name, '#ff0');
+  spawnWave();
 }
 
 // ═══════════════════════════════════════════
 // 遊戲流程
 // ═══════════════════════════════════════════
 function resetGame() {
-  score=0; lives=3; weaponLevel=1; currentWave=0; waveTimer=0; frameCount=0; shakeAmount=0;
+  const d = getDiff();
+  score=0; lives=d.lives; weaponLevel=1;
+  stage=1; waveInStage=0; stagePhase='waves'; waveTimer=0; clearTimer=0;
+  frameCount=0; shakeAmount=0; themeIndex=0; banner=null;
   player=createPlayer();
   playerBullets=[]; enemyBullets=[]; enemies=[]; powerups=[]; particles=[];
-  leftTouchId=-1; rightTouchId=-1; mouseActive=false;
-  initStars(); startWave(0);
+  leftTouchId=-1; rightTouchId=-1; weaponBtnTouchId=-1; weaponSwitchPressed=false; mouseActive=false;
+  initStars();
+  showBanner('STAGE 1   ' + getTheme().name, '#ff0');
+  spawnWave();
 }
-function startGame() {
+function startGame(diff) {
+  if (diff) difficulty = diff;
   initAudio();
   document.getElementById('overlay').style.display='none';
   document.getElementById('pauseBtn').style.display='flex';
   gameState='playing'; resetGame();
   requestAnimationFrame(gameLoop);
 }
+function showMenu() {
+  gameState='menu';
+  const ov=document.getElementById('overlay');
+  ov.style.display='flex';
+  ov.innerHTML = menuHTML();
+  document.getElementById('pauseBtn').style.display='none';
+  requestAnimationFrame(menuLoop);
+}
 function pauseGame() {
   if (gameState!=='playing') return;
   gameState='paused';
   const ov=document.getElementById('overlay');
   ov.style.display='flex';
-  ov.innerHTML=`<h1 style="color:#ff0">PAUSED</h1>
-     <button class="start-btn" onclick="resumeGame()">RESUME</button>`;
+  ov.innerHTML = `
+     <h1 style="color:#ff0">PAUSED</h1>
+     <div style="display:flex; flex-wrap:wrap; justify-content:center;">
+       <button class="start-btn" onclick="resumeGame()">RESUME</button>
+       <button class="start-btn" onclick="showMenu()">MENU</button>
+     </div>`;
 }
 function resumeGame() {
   gameState='playing';
@@ -859,11 +1005,15 @@ function gameOver() {
   highScore=Math.max(highScore,score);
   const ov=document.getElementById('overlay');
   ov.style.display='flex';
-  ov.innerHTML=`<h1 style="color:#f00">GAME OVER</h1>
+  ov.innerHTML = `
+     <h1 style="color:#f00">GAME OVER</h1>
      <h2>SCORE: ${score.toLocaleString()}</h2>
+     <p>難度: ${getDiff().name} | 到達: STAGE ${stage}</p>
      <p>最高分: ${highScore.toLocaleString()}</p>
-     <p>到達波次: ${currentWave+1}</p>
-     <button class="start-btn" onclick="startGame()">RETRY</button>`;
+     <div style="display:flex; flex-wrap:wrap; justify-content:center; margin-top:15px;">
+       <button class="start-btn" onclick="startGame('${difficulty}')">RETRY</button>
+       <button class="start-btn" onclick="showMenu()">MENU</button>
+     </div>`;
 }
 
 // ═══════════════════════════════════════════
@@ -875,31 +1025,44 @@ function gameLoop() {
 
   if (keys['KeyP']||keys['Escape']) {
     pauseGame(); keys['KeyP']=false; keys['Escape']=false; return;
-   }
+     }
 
   updateStars(); updatePlayer(); updateEnemies(); updateBullets();
-  updatePowerups(); updateParticles();
+  updatePowerups(); updateParticles(); updateBanner();
   shakeAmount*=0.9; if (shakeAmount<0.1) shakeAmount=0;
 
-  waveTimer++;
-  if (enemies.length===0 && powerups.length===0 && waveTimer>90) {
-    currentWave++; waveTimer=0; startWave(currentWave);
-   }
+  if (stagePhase !== 'clear') {
+    if (enemies.length === 0) {
+      waveTimer++;
+      if (waveTimer > 60) { waveTimer = 0; advanceWave(); }
+       } else {
+      waveTimer = 0;
+       }
+     } else {
+    clearTimer--;
+    if (clearTimer <= 0) startNextStage();
+     }
 
   ctx.save();
   if (shakeAmount>0)
     ctx.translate((Math.random()-0.5)*shakeAmount,(Math.random()-0.5)*shakeAmount);
 
-  ctx.fillStyle='#000'; ctx.fillRect(-10,-10,W+20,H+20);
+  ctx.fillStyle = getTheme().sky;
+  ctx.fillRect(-10,-10,W+20,H+20);
   drawStars(); drawCityscape();
   drawPowerups(); drawEnemies(); drawBullets(); drawParticles(); drawPlayer();
   drawTouchControls();
   ctx.restore();
+  drawBanner();
 
-  document.getElementById('scoreDisplay').textContent='SCORE: '+score.toLocaleString();
-  document.getElementById('weaponDisplay').textContent='WEAPON: P'+(Math.min(player.weaponIndex+1,weaponLevel));
-  let hearts='♥'.repeat(Math.max(0,lives))+'♡'.repeat(Math.max(0,3-lives));
-  document.getElementById('lifeDisplay').textContent='LIVES: '+hearts;
+  document.getElementById('scoreDisplay').textContent = 'SCORE: ' + score.toLocaleString();
+  document.getElementById('weaponDisplay').textContent = 'WEAPON: P' + Math.min(player.weaponIndex+1,weaponLevel);
+  document.getElementById('stageDisplay').textContent =
+     'STAGE ' + stage + '-' + (stagePhase==='boss'?'BOSS':waveInStage+1) + ' · ' + getDiff().name;
+  let hearts = '';
+  for (let i=0;i<lives;i++) hearts += '♥';
+  for (let i=lives;i<getDiff().lives;i++) hearts += '♡';
+  document.getElementById('lifeDisplay').textContent = 'LIVES: ' + hearts;
 
   requestAnimationFrame(gameLoop);
 }
@@ -910,10 +1073,11 @@ function gameLoop() {
 initStars();
 (function menuLoop(){
   if (gameState==='menu') {
-    ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = getTheme().sky;
+    ctx.fillRect(0,0,W,H);
     updateStars(); drawStars(); drawCityscape();
     requestAnimationFrame(menuLoop);
-   }
+     }
 })();
 </script>
 </body>
