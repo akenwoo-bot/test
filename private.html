@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>私人工具專區 - Private Portal</title>
+  
+  <style>
+    :root {
+      --color-primary: #0066cc;
+      --color-primary-focus: #0071e3;
+      --color-ink: #1d1d1f;
+      --color-body-on-dark: #ffffff;
+      --color-body-muted: #cccccc;
+      --color-ink-muted-80: #333333;
+      --color-ink-muted-48: #7a7a7a;
+      --color-hairline: #e0e0e0;
+      --color-canvas: #ffffff;
+      --color-canvas-parchment: #f5f5f7;
+      --color-surface-pearl: #fafafc;
+      --color-surface-tile-1: #272729;
+      --color-surface-black: #000000;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "SF Pro Text", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--color-canvas);
+      color: var(--color-ink);
+      line-height: 1.47;
+      letter-spacing: -0.374px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* 頂部全黑導航列 */
+    .global-nav {
+      height: 44px;
+      background-color: var(--color-surface-black);
+      color: var(--color-body-on-dark);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      font-size: 12px;
+      letter-spacing: -0.12px;
+    }
+
+    .global-nav-brand {
+      color: var(--color-body-on-dark);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    /* 次級毛玻璃懸浮導航列 */
+    .sub-nav-frosted {
+      height: 52px;
+      background-color: rgba(245, 245, 247, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+    }
+
+    .sub-nav-title {
+      font-family: "SF Pro Display", -apple-system, sans-serif;
+      font-size: 21px;
+      font-weight: 600;
+      letter-spacing: 0.231px;
+      color: var(--color-ink);
+    }
+
+    /* Hero 區段 */
+    .hero-section {
+      background-color: var(--color-canvas-parchment);
+      padding: 80px 32px 64px 32px;
+      text-align: center;
+    }
+
+    .hero-title {
+      font-family: "SF Pro Display", -apple-system, sans-serif;
+      font-size: 56px;
+      font-weight: 600;
+      line-height: 1.07;
+      letter-spacing: -0.28px;
+      color: var(--color-ink);
+      margin-bottom: 12px;
+    }
+
+    .hero-subtitle {
+      font-size: 24px;
+      font-weight: 300;
+      line-height: 1.5;
+      color: var(--color-ink-muted-80);
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    /* 卡片網格 */
+    .grid-section {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 80px 32px;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 32px;
+    }
+
+    .card {
+      background-color: var(--color-canvas);
+      border: 1px solid var(--color-hairline);
+      border-radius: 18px;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      text-decoration: none;
+      color: var(--color-ink);
+      transition: border-color 0.2s ease;
+    }
+
+    .card:hover {
+      border-color: #c7c7c7;
+    }
+
+    .card-image-wrapper {
+      width: 100%;
+      height: 260px;
+      background-color: var(--color-surface-pearl);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-image-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      box-shadow: rgba(0, 0, 0, 0.22) 3px 5px 30px 0px;
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover .card-image-wrapper img {
+      transform: scale(1.02);
+    }
+
+    .card-body {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .card-title {
+      font-family: "SF Pro Display", -apple-system, sans-serif;
+      font-size: 28px;
+      font-weight: 600;
+      line-height: 1.14;
+      letter-spacing: 0.196px;
+      color: var(--color-ink);
+      margin-bottom: 12px;
+    }
+
+    .card-desc {
+      font-size: 17px;
+      font-weight: 400;
+      line-height: 1.47;
+      letter-spacing: -0.374px;
+      color: var(--color-ink-muted-80);
+      margin-bottom: 32px;
+      flex: 1;
+    }
+
+    /* Action Blue 按鈕 */
+    .button-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--color-primary);
+      color: #ffffff;
+      font-size: 17px;
+      font-weight: 400;
+      padding: 11px 22px;
+      border-radius: 9999px;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.15s ease, transform 0.15s ease;
+      width: fit-content;
+    }
+
+    .button-primary:hover {
+      background-color: var(--color-primary-focus);
+    }
+
+    .button-primary:active {
+      transform: scale(0.95);
+    }
+
+    .arrow {
+      margin-left: 6px;
+    }
+
+    footer {
+      background-color: var(--color-canvas-parchment);
+      color: var(--color-ink-muted-48);
+      padding: 48px 32px;
+      font-size: 12px;
+      text-align: center;
+      border-top: 1px solid var(--color-hairline);
+    }
+
+    @media (max-width: 734px) {
+      .hero-section {
+        padding: 48px 20px 32px 20px;
+      }
+      .hero-title {
+        font-size: 34px;
+      }
+      .hero-subtitle {
+        font-size: 18px;
+      }
+      .grid-section {
+        padding: 48px 20px;
+      }
+      .card-grid {
+        grid-template-columns: 1fr;
+      }
+      .sub-nav-frosted, .global-nav {
+        padding: 0 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="global-nav">
+    <a href="#" class="global-nav-brand">Private Portal</a>
+  </header>
+
+  <div class="sub-nav-frosted">
+    <span class="sub-nav-title">私人工具專區</span>
+  </div>
+
+  <main>
+    <section class="hero-section">
+      <h1 class="hero-title">私人工具專區</h1>
+      <p class="hero-subtitle">常用指令集與內部快速查詢工具。</p>
+    </section>
+
+    <section class="grid-section">
+      <div class="card-grid">
+
+        <!-- 1. Hermes Agent 指令速查 -->
+        <div class="card">
+          <div class="card-image-wrapper">
+            <img src="image/hermes.PNG" alt="Hermes Agent 指令速查簡圖">
+          </div>
+          <div class="card-body">
+            <h2 class="card-title">Hermes Agent 指令速查</h2>
+            <p class="card-desc">一套可在 WSL / Linux / 伺服器環境執行的 AI Agent 工具。涵蓋模型切換、工具呼叫、Skills、記憶與排程任務。</p>
+            <div class="card-action-container">
+              <a href="https://akenwoo-bot.github.io/test/Hermes%20Agent%20%E6%8C%87%E4%BB%A4%E9%80%9F%E6%9F%A5.html" class="button-primary" target="_blank" rel="noopener">
+                開啟指令集 <span class="arrow">→</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. 綠色採購快速查詢 v2.0 -->
+        <div class="card">
+          <div class="card-image-wrapper">
+            <img src="image/greenliving.PNG" alt="綠色採購快速查詢簡圖">
+          </div>
+          <div class="card-body">
+            <h2 class="card-title">綠色採購快速查詢 v2.0</h2>
+            <p class="card-desc">支援模糊搜尋與縮寫（如影印紙、筆電、螢幕）的綠色採購品項快速查詢工具。</p>
+            <div class="card-action-container">
+              <a href="https://akenwoo-bot.github.io/test/greenliving.html" class="button-primary" target="_blank" rel="noopener">
+                開啟查詢工具 <span class="arrow">→</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Private Portal. Designed with Apple Design System Specification.</p>
+  </footer>
+
+</body>
+</html>
