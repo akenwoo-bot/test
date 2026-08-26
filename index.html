@@ -6,7 +6,7 @@
   <title>線上服務與遊戲專區 - Apple Style</title>
   
   <style>
-    /* Apple Design System 設計變數 (根據規範定義) */
+    /* Apple Design System 設計變數 */
     :root {
       --color-primary: #0066cc;             /* Action Blue */
       --color-primary-focus: #0071e3;       /* Focus Blue */
@@ -35,7 +35,7 @@
       background-color: var(--color-canvas);
       color: var(--color-ink);
       line-height: 1.47;
-      letter-spacing: -0.374px; /* Apple 17px body 預設字距 */
+      letter-spacing: -0.374px;
       -webkit-font-smoothing: antialiased;
     }
 
@@ -113,14 +113,14 @@
       font-size: 56px;
       font-weight: 600;
       line-height: 1.07;
-      letter-spacing: -0.28px; /* Signature Apple Tight Headline Tracking */
+      letter-spacing: -0.28px;
       color: var(--color-ink);
       margin-bottom: 12px;
     }
 
     .hero-subtitle {
       font-size: 24px;
-      font-weight: 300; /* Apple 特有的 Weight 300 輕盈質感 */
+      font-weight: 300;
       line-height: 1.5;
       color: var(--color-ink-muted-80);
       max-width: 680px;
@@ -148,7 +148,7 @@
     .card {
       background-color: var(--color-canvas);
       border: 1px solid var(--color-hairline);
-      border-radius: 18px; /* {rounded.lg} */
+      border-radius: 18px;
       padding: 40px;
       display: flex;
       flex-direction: column;
@@ -161,7 +161,6 @@
       border-color: #c7c7c7;
     }
 
-    /* 預覽簡圖容器與 Product Shadow 規範 */
     .card-image-wrapper {
       width: 100%;
       height: 260px;
@@ -179,7 +178,6 @@
       height: 100%;
       object-fit: cover;
       display: block;
-      /* Apple 系統唯一允許的產品陰影 */
       box-shadow: rgba(0, 0, 0, 0.22) 3px 5px 30px 0px;
       transition: transform 0.3s ease;
     }
@@ -229,7 +227,7 @@
       font-size: 17px;
       font-weight: 400;
       padding: 11px 22px;
-      border-radius: 9999px; /* {rounded.pill} */
+      border-radius: 9999px;
       text-decoration: none;
       border: none;
       cursor: pointer;
@@ -241,7 +239,7 @@
     }
 
     .button-primary:active {
-      transform: scale(0.95); /* Apple 全系統微互動縮放效果 */
+      transform: scale(0.95);
     }
 
     .arrow {
@@ -249,7 +247,7 @@
       font-family: inherit;
     }
 
-    /* 5. 深色交替視訊/展示區段 (Dark Tile Accent) */
+    /* 5. 深色交替展示區段 */
     .dark-tile-section {
       background-color: var(--color-surface-tile-1);
       color: var(--color-body-on-dark);
@@ -277,7 +275,7 @@
       margin-bottom: 32px;
     }
 
-    /* 6. 頁尾 (Parchment Footer) */
+    /* 6. 頁尾 */
     footer {
       background-color: var(--color-canvas-parchment);
       color: var(--color-ink-muted-80);
@@ -301,7 +299,7 @@
       color: var(--color-ink-muted-48);
     }
 
-    /* 7. 響應式斷點設定 (Breakpoints) */
+    /* 7. 響應式斷點 */
     @media (max-width: 1068px) {
       .hero-title {
         font-size: 40px;
@@ -429,10 +427,42 @@
           </div>
         </div>
 
+        <!-- 5. 雷電 -->
+        <div class="card">
+          <div class="card-image-wrapper">
+            <img src="image/雷電.png" alt="雷電簡圖">
+          </div>
+          <div class="card-body">
+            <h2 class="card-title">雷電</h2>
+            <p class="card-desc">經典飛行射擊遊戲，提供多種難度選擇、多款武器裝備與關卡 Boss 挑戰。</p>
+            <div class="card-action-container">
+              <a href="https://akenwoo-bot.github.io/test/%E9%9B%B7%E9%9B%BB.html" class="button-primary" target="_blank" rel="noopener">
+                開始遊戲 <span class="arrow">→</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. 滑鼠小探險家 -->
+        <div class="card">
+          <div class="card-image-wrapper">
+            <img src="image/mouse_game.png" alt="滑鼠小探險家簡圖">
+          </div>
+          <div class="card-body">
+            <h2 class="card-title">滑鼠小探險家</h2>
+            <p class="card-desc">包含 5 大趣味關卡，輕鬆訓練與鍛鍊點擊、雙擊、拖曳與滾輪等滑鼠操控技能。</p>
+            <div class="card-action-container">
+              <a href="https://akenwoo-bot.github.io/test/mouse_game.html" class="button-primary" target="_blank" rel="noopener">
+                開始遊戲 <span class="arrow">→</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
 
-    <!-- 深色質感對比區段 (Apple 經典暗色展示帶) -->
+    <!-- 深色質感對比區段 -->
     <section class="dark-tile-section">
       <div class="dark-tile-content">
         <h2 class="dark-tile-title">流暢體驗，即點即玩</h2>
