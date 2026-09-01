@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學生密碼查詢系統</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus {
+            border-color: #4facfe;
+            outline: none;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-image: linear-gradient(120deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: opacity 0.3s;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .result-box {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 6px;
+            display: none;
+            font-size: 16px;
+        }
+        .success {
+            background-color: #e6f4ea;
+            color: #137333;
+            border: 1px solid #dadce0;
+        }
+        .error {
+            background-color: #fce8e6;
+            color: #c5221f;
+            border: 1px solid #dadce0;
+        }
+        .password-display {
+            font-size: 22px;
+            font-weight: bold;
+            margin-top: 10px;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>學生密碼查詢系統</h2>
+    <div class="input-group">
+        <input type="text" id="searchKey" placeholder="請輸入姓名或學號" autocomplete="off">
+    </div>
+    <button onclick="searchPassword()">開始查詢</button>
+
+    <div id="result" class="result-box"></div>
+</div>
+
+<script>
+    // 這裡放置你的學生資料 (請依照你的 CSV 內容更換此處的資料)
+    // 格式為：{ name: "姓名", id: "學號", password: "密碼" }
+    const studentData = [
+        { name: "邱品翔", id: "110029", password: "240639" },
+        { name: "蘇宸佑", id: "110062", password: "920346" },
+        { name: "蔡侑隼", id: "110119", password: "987250" },
+        { name: "吳竼廷", id: "110178", password: "154730" },
+        { name: "王昱椉", id: "110095", password: "014289" },
+        { name: "劉馥逸", id: "110214", password: "971806" },
+        { name: "沈祐霆", id: "110037", password: "018352" },
+        { name: "陳韋澔", id: "110152", password: "146095" },
+        { name: "王逸中", id: "110122", password: "740132" },
+        { name: "戴士詠", id: "110208", password: "914853" },
+        { name: "張書睿", id: "110007", password: "432075" },
+        { name: "莊禮齊", id: "110127", password: "753246" },
+        { name: "蕭建禾", id: "110188", password: "827403" },
+        { name: "石晨銘", id: "110011", password: "750839" },
+        { name: "莊承穎", id: "110213", password: "739652" },
+        { name: "郭芷妤", id: "110075", password: "497032" },
+        { name: "葉伊芹", id: "110079", password: "143209" },
+        { name: "林綉庭", id: "110164", password: "250941" },
+        { name: "劉雨庭", id: "110080", password: "139504" },
+        { name: "蔡宇媃", id: "110053", password: "254197" },
+        { name: "翁綵言", id: "110019", password: "569280" },
+        { name: "徐悠晴", id: "110219", password: "562073" },
+        { name: "張家箖", id: "110026", password: "087396" },
+        { name: "黃于榛", id: "110173", password: "549368" },
+        { name: "吳柔樺", id: "110174", password: "369058" },
+        { name: "李蒽恩", id: "110113", password: "649201" },
+        { name: "曹宇青", id: "110200", password: "612380" },
+        { name: "許順博", id: "110090", password: "625807" },
+        { name: "吳秉謙", id: "110061", password: "346159" },
+        { name: "朱獎芃", id: "110229", password: "804637" },
+        { name: "沈柏任", id: "110176", password: "756014" },
+        { name: "蔡秉宸", id: "110004", password: "618409" },
+        { name: "游忠諺", id: "110212", password: "617248" },
+        { name: "沈逸翔", id: "110186", password: "501273" },
+        { name: "李麟展", id: "110187", password: "746823" },
+        { name: "陳以撒", id: "110126", password: "109854" },
+        { name: "陳昕智", id: "110156", password: "128379" },
+        { name: "朱軒辰", id: "110042", password: "109487" },
+        { name: "林杰騏", id: "110130", password: "026185" },
+        { name: "蘇又廷", id: "110014", password: "784190" },
+        { name: "陳庠熏", id: "110160", password: "948035" },
+        { name: "沈庭毅", id: "110015", password: "890734" },
+        { name: "劉義釩", id: "110237", password: "160348" },
+        { name: "王苡安", id: "110103", password: "814026" },
+        { name: "黃靖媗", id: "110048", password: "984760" },
+        { name: "謝依絜", id: "110017", password: "801572" },
+        { name: "鄭芷綺", id: "110138", password: "308254" },
+        { name: "王思捷", id: "110082", password: "490352" },
+        { name: "陳品薇", id: "110195", password: "381456" },
+        { name: "趙芯儀", id: "110141", password: "650198" },
+        { name: "翁牧妘", id: "110142", password: "706492" },
+        { name: "葉羽芯", id: "110087", password: "307689" },
+        { name: "黃珮銜", id: "110146", password: "326758" },
+        { name: "莊逸蓉", id: "110028", password: "928014" },
+        { name: "柯駿煜", id: "123456", password: "281763" },
+        { name: "田宸宇", id: "110147", password: "475298" },
+        { name: "邱茂碩", id: "110216", password: "506428" },
+        { name: "洪彥廷", id: "110031", password: "521048" },
+        { name: "黃介威", id: "110092", password: "782564" },
+        { name: "徐韵傑", id: "110001", password: "418067" },
+        { name: "張清萁", id: "110120", password: "573412" },
+        { name: "廖昱凱", id: "110002", password: "927830" },
+        { name: "倪宇群", id: "110005", password: "974813" },
+        { name: "蔣鎧謙", id: "110121", password: "571964" },
+        { name: "黃東原", id: "110183", password: "739068" },
+        { name: "何恭平", id: "110010", password: "315697" },
+        { name: "石孮銨", id: "110155", password: "283967" },
+        { name: "鄭棋尹", id: "110101", password: "408672" },
+        { name: "陳奕廷", id: "110158", password: "092365" },
+        { name: "柯至家", id: "110232", password: "975842" },
+        { name: "凃永駿", id: "110074", password: "031798" },
+        { name: "梅奕蓮", id: "109179", password: "693218" },
+        { name: "沈昀嫻", id: "110134", password: "324968" },
+        { name: "沈詩芩", id: "110047", password: "498752" },
+        { name: "黃品瑄", id: "110165", password: "825493" },
+        { name: "陳永鈴", id: "110166", password: "746893" },
+        { name: "黃姸瑀", id: "110192", password: "063591" },
+        { name: "陳昱晴", id: "110081", password: "548129" },
+        { name: "梅宥薰", id: "110022", password: "031594" },
+        { name: "王藝橙", id: "110196", password: "085697" },
+        { name: "黃睿畇", id: "110024", password: "174053" },
+        { name: "汪昀萱", id: "110227", password: "928365" },
+        { name: "沈芮萱", id: "110086", password: "947306" },
+        { name: "蔡侑杰", id: "110059", password: "475630" },
+        { name: "張聿佳", id: "110091", password: "027846" },
+        { name: "王又禾", id: "110217", password: "069534" },
+        { name: "陳奕帆", id: "110063", password: "096745" },
+        { name: "徐杰瑞", id: "110207", password: "530469" },
+        { name: "黃振維", id: "110097", password: "123470" },
+        { name: "陳祈銓", id: "110123", password: "674025" },
+        { name: "陳祈勳", id: "110124", password: "985706" },
+        { name: "傅予樂", id: "110234", password: "607285" },
+        { name: "何禮嘉", id: "110099", password: "098214" },
+        { name: "吳泓毅", id: "110008", password: "794026" },
+        { name: "陳駿毅", id: "110009", password: "468395" },
+        { name: "黃柏臻", id: "110041", password: "164938" },
+        { name: "蘇宏毅", id: "110128", password: "243578" },
+        { name: "張延宥", id: "110013", password: "473906" },
+        { name: "黃千瑜", id: "110163", password: "928674" },
+        { name: "吳宬樂", id: "110052", password: "253604" },
+        { name: "林苡昕", id: "110109", password: "091287" },
+        { name: "林苡彤", id: "110108", password: "193574" },
+        { name: "連苡妍", id: "110021", password: "461289" },
+        { name: "顏妤家", id: "110083", password: "283647" },
+        { name: "陳卉蓁", id: "110194", password: "236459" },
+        { name: "謝欣妤", id: "110023", password: "698453" },
+        { name: "蔡沁宸", id: "110084", password: "089214" },
+        { name: "陳嵐薰", id: "110199", password: "453197" },
+        { name: "吳臻妮", id: "110236", password: "971584" },
+        { name: "周呈祐", id: "110148", password: "934201" },
+        { name: "沈俊瑋", id: "110117", password: "361984" },
+        { name: "葉鎔陞", id: "110205", password: "371820" },
+        { name: "蒲鑫彥", id: "110033", password: "629708" },
+        { name: "余宣旼", id: "110035", password: "460198" },
+        { name: "吳子為", id: "110094", password: "253786" },
+        { name: "江柏辰", id: "110177", password: "062381" },
+        { name: "翁巳凱", id: "110184", password: "069237" },
+        { name: "余尚恩", id: "110185", password: "035214" },
+        { name: "陳秉宥", id: "110038", password: "367548" },
+        { name: "張鈞傑", id: "110070", password: "387269" },
+        { name: "李暘枻", id: "110129", password: "039284" },
+        { name: "陳逸家", id: "110072", password: "761805" },
+        { name: "蔡程宇", id: "110159", password: "054831" },
+        { name: "康振昀", id: "110189", password: "761398" },
+        { name: "楊捷凱", id: "110161", password: "856932" },
+        { name: "李國嫣", id: "110077", password: "068459" },
+        { name: "李正璇", id: "110076", password: "714250" },
+        { name: "紀翎彥", id: "110235", password: "583960" },
+        { name: "廖翎瑄", id: "110222", password: "402317" },
+        { name: "蔡欣庭", id: "110049", password: "675024" },
+        { name: "蔡澄芸", id: "110167", password: "102897" },
+        { name: "陳苡柔", id: "110050", password: "178432" },
+        { name: "鄭亞橙", id: "110020", password: "641583" },
+        { name: "蔡欣妍", id: "110085", password: "245801" },
+        { name: "王沚甯", id: "110228", password: "315967" },
+        { name: "陳芸萱", id: "110114", password: "168204" },
+        { name: "顏廷芝", id: "110204", password: "631492" },
+        { name: "鄭祥駿", id: "110220", password: "905427" },
+        { name: "李丞禹", id: "110089", password: "216493" },
+        { name: "俞奇富", id: "110233", password: "847591" },
+        { name: "吳冠承", id: "110151", password: "354812" },
+        { name: "黃晨銘", id: "110064", password: "624185" },
+        { name: "程穓蘴", id: "110096", password: "912678" },
+        { name: "高昱恩", id: "110065", password: "163798" },
+        { name: "李昊穎", id: "110180", password: "870925" },
+        { name: "伍廷恩", id: "110006", password: "037692" },
+        { name: "邱宇駿", id: "110209", password: "825403" },
+        { name: "翁晨羲", id: "110068", password: "642093" },
+        { name: "鄧杰燊", id: "110153", password: "156794" },
+        { name: "陳俊甫", id: "110071", password: "214978" },
+        { name: "楊鎰鴻", id: "110012", password: "142673" },
+        { name: "莊博翔", id: "110073", password: "783691" },
+        { name: "林怡薰", id: "110046", password: "173065" },
+        { name: "林怡弦", id: "110078", password: "810374" },
+        { name: "張芸榛", id: "110016", password: "316270" },
+        { name: "謝欣宸", id: "110135", password: "839042" },
+        { name: "沈芃妤", id: "110169", password: "910234" },
+        { name: "張珈榛", id: "110054", password: "975642" },
+        { name: "陳心蕾", id: "110170", password: "569347" },
+        { name: "楊妤蓁", id: "110193", password: "498523" },
+        { name: "姜菩", id: "110025", password: "456920" },
+        { name: "蔡沄潔", id: "110197", password: "538296" },
+        { name: "李欣芸", id: "110058", password: "691372" },
+        { name: "呂凱詳", id: "123456", password: "180764" },
+        { name: "陳棋霖", id: "110060", password: "051768" },
+        { name: "李睿賢", id: "110093", password: "264089" },
+        { name: "林柏睿", id: "110036", password: "702846" },
+        { name: "蕭宇廷", id: "110179", password: "235476" },
+        { name: "陳潁昇", id: "110003", password: "425309" },
+        { name: "楊喜善", id: "110067", password: "051789" },
+        { name: "張呈恩", id: "110215", password: "924708" },
+        { name: "賴宥羽", id: "110221", password: "879315" },
+        { name: "范宸嘉", id: "110230", password: "713569" },
+        { name: "劉侑霖", id: "110225", password: "762835" },
+        { name: "沈畇逵", id: "110040", password: "692748" },
+        { name: "朱晏廷", id: "110157", password: "236758" },
+        { name: "陳稑軒", id: "110043", password: "903658" },
+        { name: "陳垣安", id: "110131", password: "619482" },
+        { name: "莊艾融", id: "110132", password: "295761" },
+        { name: "游喻璇", id: "110210", password: "319824" },
+        { name: "顏唯忻", id: "110104", password: "314785" },
+        { name: "何昀芮", id: "110018", password: "634970" },
+        { name: "吳弦芩", id: "110105", password: "954367" },
+        { name: "蔡昀妘", id: "110107", password: "023976" },
+        { name: "林妤庭", id: "110055", password: "963420" },
+        { name: "黃珮瑄", id: "110111", password: "978253" },
+        { name: "楊依璇", id: "110112", password: "298517" },
+        { name: "沈芮萱", id: "110086", password: "215678" },
+        { name: "吳芊逸", id: "110201", password: "231405" },
+        { name: "張喬茵", id: "110116", password: "432860" },
+        { name: "蔡帛樺", id: "123456", password: "540978" },
+        { name: "黃柏凱", id: "110088", password: "657241" },
+        { name: "王羿驊", id: "110030", password: "537410" },
+        { name: "梁桁胤", id: "110149", password: "069725" },
+        { name: "陳凱文", id: "110150", password: "546031" },
+        { name: "陳則睿", id: "110034", password: "871604" },
+        { name: "沈琨勝", id: "110118", password: "780291" },
+        { name: "林禹呈", id: "110066", password: "480513" },
+        { name: "戚瑋", id: "110181", password: "593471" },
+        { name: "沈峻陞", id: "110154", password: "307495" },
+        { name: "侯杰棆", id: "110098", password: "425678" },
+        { name: "邵鎮源", id: "110039", password: "150926" },
+        { name: "鄭莘宸", id: "110069", password: "308754" },
+        { name: "吳竑佐", id: "110100", password: "180652" },
+        { name: "方宥凱", id: "110218", password: "805634" },
+        { name: "李宥樑", id: "110102", password: "735614" },
+        { name: "蔡奇叡", id: "110045", password: "827651" },
+        { name: "王筠淇", id: "110136", password: "496073" },
+        { name: "蔡亞欣", id: "110106", password: "071925" },
+        { name: "顏彤安", id: "110226", password: "071264" },
+        { name: "蕭梵妤", id: "110139", password: "639271" },
+        { name: "林子琳", id: "110171", password: "412935" },
+        { name: "王譽霏", id: "110110", password: "423169" },
+        { name: "廖云鳳", id: "110140", password: "412806" },
+        { name: "陳宥菁", id: "110056", password: "183462" },
+        { name: "李芯莛", id: "110172", password: "897210" },
+        { name: "胡芯瑀", id: "110115", password: "617802" },
+        { name: "楊沛芸", id: "110202", password: "759061" },
+        { name: "潘昀熙", id: "110175", password: "201739" },
+        { name: "蘇峻頏", id: "30601", password: "084756" },
+        { name: "楊承諺", id: "30602", password: "374862" },
+        { name: "翁寘桓", id: "30603", password: "854031" },
+        { name: "周千任", id: "30604", password: "675320" },
+        { name: "王坤田", id: "30605", password: "278139" },
+        { name: "蕭宇呈", id: "30606", password: "921048" },
+        { name: "戴萻茞", id: "30607", password: "109485" },
+        { name: "陳叡霆", id: "30608", password: "329746" },
+        { name: "梅廷岳", id: "30609", password: "014975" },
+        { name: "李丞羿", id: "30610", password: "865139" },
+        { name: "林楷橙", id: "30611", password: "823195" },
+        { name: "楊政哲", id: "30612", password: "519806" },
+        { name: "楊景丞", id: "30613", password: "402967" },
+        { name: "江承哲", id: "30614", password: "762035" },
+        { name: "陳旻邑", id: "30615", password: "745013" },
+        { name: "張智雄", id: "30616", password: "948502" },
+        { name: "蔣和納", id: "30617", password: "285109" },
+        { name: "羅云希", id: "30618", password: "659874" },
+        { name: "王嬿溶", id: "30619", password: "365418" },
+        { name: "蔡沐言", id: "30620", password: "570924" },
+        { name: "蕭苡安", id: "30621", password: "708619" },
+        { name: "蔡芷綺", id: "30622", password: "130897" },
+        { name: "董旻凌", id: "30623", password: "357820" },
+        { name: "李語潼", id: "30624", password: "958034" },
+        { name: "楊寓媗", id: "30625", password: "257941" },
+    ];
+
+    function searchPassword() {
+        const searchKey = document.getElementById('searchKey').value.trim();
+        const resultDiv = document.getElementById('result');
+        
+        // 清空先前的查詢結果與樣式
+        resultDiv.style.display = 'none';
+        resultDiv.className = 'result-box';
+        resultDiv.innerHTML = '';
+
+        if (searchKey === '') {
+            resultDiv.style.display = 'block';
+            resultDiv.classList.add('error');
+            resultDiv.innerHTML = '請先輸入姓名或學號！';
+            return;
+        }
+
+        // 搜尋資料：比對姓名或學號 (忽略大小寫)
+        const student = studentData.find(s => 
+            s.name === searchKey || 
+            s.id.toLowerCase() === searchKey.toLowerCase()
+        );
+
+        if (student) {
+            resultDiv.style.display = 'block';
+            resultDiv.classList.add('success');
+            resultDiv.innerHTML = `
+                <div>查詢成功！<strong>${student.name} (${student.id})</strong> 的密碼為：</div>
+                <div class="password-display">${student.password}</div>
+            `;
+        } else {
+            resultDiv.style.display = 'block';
+            resultDiv.classList.add('error');
+            resultDiv.innerHTML = '找不到該學生資料，請檢查輸入是否正確。';
+        }
+    }
+
+    // 支援按下 Enter 鍵直接查詢
+    document.getElementById('searchKey').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchPassword();
+        }
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1311 @@
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+							<style>
+								body {
+									background-color: white; /* Ensure the iframe has a white background */
+								}
+
+								
+							</style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🚀 滑鼠小探險家 - 滑鼠練習遊戲</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ===== 背景星星動畫 ===== */
+.bg-stars {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 0;
+}
+.star {
+  position: absolute; background: white; border-radius: 50%;
+  animation: twinkle 2s infinite alternate;
+}
+@keyframes twinkle {
+  0% { opacity: 0.3; transform: scale(1); }
+  100% { opacity: 1; transform: scale(1.3); }
+}
+
+/* ===== 遊戲容器 ===== */
+#game-container {
+  position: relative; z-index: 1;
+  width: 100vw; height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ===== 畫面共用 ===== */
+.screen {
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  width: 100%; height: 100%;
+  padding: 20px;
+}
+.screen.active { display: flex; }
+
+/* ===== 開始畫面 ===== */
+#start-screen { background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); }
+.title {
+  font-size: 3.5em; font-weight: 900; color: #fff;
+  text-shadow: 0 0 20px rgba(255,200,0,0.8), 0 4px 8px rgba(0,0,0,0.3);
+  margin-bottom: 10px; animation: bounce 1s ease infinite;
+}
+.subtitle {
+  font-size: 1.3em; color: #ffd700; margin-bottom: 40px;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.robot {
+  font-size: 8em; margin-bottom: 20px;
+  animation: float 3s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-10px) rotate(3deg); }
+  75% { transform: translateY(-10px) rotate(-3deg); }
+}
+
+.btn {
+  padding: 18px 50px; font-size: 1.4em; font-weight: 700;
+  border: none; border-radius: 50px; cursor: pointer;
+  background: linear-gradient(135deg, #f093fb, #f5576c);
+  color: white; box-shadow: 0 8px 25px rgba(245, 87, 108, 0.4);
+  transition: all 0.3s; margin: 8px;
+}
+.btn:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 12px 35px rgba(245,87,108,0.6); }
+.btn:active { transform: scale(0.97); }
+.btn-small { padding: 12px 30px; font-size: 1.1em; }
+.btn-green { background: linear-gradient(135deg, #43e97b, #38f9d7); box-shadow: 0 8px 25px rgba(67,233,123,0.4); }
+.btn-blue { background: linear-gradient(135deg, #4facfe, #00f2fe); box-shadow: 0 8px 25px rgba(79,172,254,0.4); }
+.btn-orange { background: linear-gradient(135deg, #fa709a, #fee140); box-shadow: 0 8px 25px rgba(250,112,154,0.4); }
+
+/* ===== 關卡選擇 ===== */
+#level-select { background: linear-gradient(180deg, #0f3460, #16213e); }
+.level-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 20px; margin-top: 30px; max-width: 700px;
+}
+.level-card {
+  background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+  border-radius: 20px; padding: 25px; text-align: center;
+  cursor: pointer; transition: all 0.3s;
+  border: 2px solid rgba(255,255,255,0.2);
+}
+.level-card:hover { transform: translateY(-5px); background: rgba(255,255,255,0.2); border-color: #ffd700; }
+.level-card.locked { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+.level-icon { font-size: 3em; margin-bottom: 10px; }
+.level-name { color: #fff; font-size: 1.1em; font-weight: 700; margin-bottom: 5px; }
+.level-desc { color: rgba(255,255,255,0.7); font-size: 0.85em; }
+.level-stars { margin-top: 8px; font-size: 1.2em; }
+.h2-title { color: #fff; font-size: 2.2em; margin-bottom: 5px; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+
+/* ===== 遊戲畫面 ===== */
+#game-screen { background: linear-gradient(180deg, #1a1a2e, #0f3460); position: relative; }
+#game-area {
+  width: 90vw; height: 75vh; position: relative;
+  background: rgba(255,255,255,0.05); border-radius: 20px;
+  border: 2px solid rgba(255,255,255,0.1);
+  overflow: hidden;
+}
+.game-hud {
+  display: flex; justify-content: space-between; align-items: center;
+  width: 90vw; padding: 10px 20px; color: #fff; font-size: 1.1em;
+}
+.hud-item { background: rgba(255,255,255,0.1); padding: 8px 18px; border-radius: 15px; }
+.game-instruction {
+  color: #ffd700; font-size: 1.3em; font-weight: 700;
+  margin: 15px 0; text-align: center;
+  text-shadow: 0 2px 10px rgba(255,215,0,0.3);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* ===== 左鍵點擊：打地鼠 / 抓蟲 ===== */
+.bug {
+  position: absolute; font-size: 2.5em; cursor: pointer;
+  transition: transform 0.1s; z-index: 5;
+  animation: popIn 0.3s ease;
+}
+.bug:hover { transform: scale(1.2); }
+.bug.hit { animation: hitPop 0.3s ease forwards; }
+@keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+@keyframes hitPop {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.5); }
+  100% { transform: scale(0); opacity: 0; }
+}
+
+/* ===== 右鍵點擊：探險家 ===== */
+.treasure-spot {
+  position: absolute; width: 60px; height: 60px;
+  border-radius: 50%; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2em; z-index: 5;
+  background: rgba(255,255,255,0.15);
+  border: 2px solid rgba(255,255,255,0.3);
+  animation: glow 1.5s ease-in-out infinite alternate;
+}
+@keyframes glow {
+  0% { box-shadow: 0 0 10px rgba(255,215,0,0.3); }
+  100% { box-shadow: 0 0 25px rgba(255,215,0,0.8); }
+}
+.context-menu {
+  position: absolute; background: #2a2a4a; border: 1px solid #ffd700;
+  border-radius: 12px; padding: 10px; z-index: 100;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  animation: popIn 0.2s ease;
+}
+.context-menu-item {
+  padding: 8px 16px; color: #fff; cursor: pointer;
+  border-radius: 8px; font-size: 0.95em;
+  transition: background 0.2s;
+}
+.context-menu-item:hover { background: rgba(255,215,0,0.2); }
+
+/* ===== 雙擊練習：開寶箱 ===== */
+.chest {
+  position: absolute; font-size: 3em; cursor: pointer;
+  z-index: 5; transition: transform 0.1s;
+  animation: popIn 0.3s ease;
+}
+.chest.opened { animation: hitPop 0.5s ease forwards; }
+
+/* ===== 拖曳練習 ===== */
+.drag-item {
+  position: absolute; font-size: 2.2em; cursor: grab;
+  z-index: 10; transition: transform 0.1s;
+  padding: 8px; border-radius: 15px;
+  background: rgba(255,255,255,0.15);
+}
+.drag-item:active { cursor: grabbing; transform: scale(1.1); }
+.drop-zone {
+  position: absolute; width: 70px; height: 70px;
+  border: 3px dashed rgba(255,255,255,0.5);
+  border-radius: 50%; z-index: 1;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5em; color: rgba(255,255,255,0.5);
+}
+.drop-zone.active { border-color: #43e97b; background: rgba(67,233,123,0.2); transform: scale(1.1); }
+.drop-zone.filled { border-color: #ffd700; background: rgba(255,215,0,0.15); border-style: solid; }
+
+/* ===== 滾輪練習 ===== */
+#scroll-area {
+  width: 90vw; height: 75vh; overflow-y: auto;
+  background: linear-gradient(180deg, #1a1a3e, #0a1628);
+  border-radius: 20px; border: 2px solid rgba(255,255,255,0.1);
+  position: relative;
+}
+#scroll-area::-webkit-scrollbar { width: 12px; }
+#scroll-area::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 10px; }
+#scroll-area::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #f093fb, #f5576c); border-radius: 10px; }
+.scroll-content { padding: 30px; min-height: 3000px; position: relative; }
+.scroll-hint {
+  position: sticky; top: 10px; text-align: center;
+  color: #ffd700; font-size: 1.2em; font-weight: 700;
+  padding: 15px; background: rgba(0,0,0,0.5);
+  border-radius: 15px; margin-bottom: 20px;
+  z-index: 10;
+}
+.scroll-target {
+  position: absolute; font-size: 2em; cursor: pointer;
+  padding: 5px; animation: glow 1s ease-in-out infinite alternate;
+}
+
+/* ===== 獎勵畫面 ===== */
+.reward-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.7); z-index: 1000;
+  display: none; align-items: center; justify-content: center;
+}
+.reward-overlay.active { display: flex; }
+.reward-box {
+  background: linear-gradient(135deg, #2a2a5a, #1a1a3e);
+  border: 2px solid #ffd700; border-radius: 25px;
+  padding: 40px; text-align: center; color: #fff;
+  animation: popIn 0.5s ease;
+  box-shadow: 0 0 50px rgba(255,215,0,0.3);
+}
+.reward-stars { font-size: 3em; margin: 15px 0; }
+.reward-title { font-size: 2em; font-weight: 900; margin-bottom: 10px; }
+.reward-score { font-size: 1.3em; color: #ffd700; margin-bottom: 20px; }
+
+/* ===== 計時器 ===== */
+.timer-bar {
+  width: 90vw; height: 8px; background: rgba(255,255,255,0.1);
+  border-radius: 10px; margin: 10px 0; overflow: hidden;
+}
+.timer-fill {
+  height: 100%; background: linear-gradient(90deg, #43e97b, #38f9d7);
+  border-radius: 10px; transition: width 0.1s linear;
+}
+.timer-fill.warning { background: linear-gradient(90deg, #fa709a, #f5576c); }
+
+/* ===== 漂浮分數 ===== */
+.float-score {
+  position: absolute; color: #ffd700; font-weight: 900;
+  font-size: 1.5em; pointer-events: none; z-index: 50;
+  animation: floatUp 1s ease forwards;
+  text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+@keyframes floatUp {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-80px) scale(1.3); }
+}
+
+/* ===== 完成畫面 ===== */
+#complete-screen { background: linear-gradient(180deg, #1a1a2e, #0f3460); }
+.trophy { font-size: 6em; animation: float 2s ease-in-out infinite; }
+.progress-dots { display: flex; gap: 10px; margin: 15px 0; }
+.progress-dot {
+  width: 15px; height: 15px; border-radius: 50%;
+  background: rgba(255,255,255,0.2); transition: all 0.3s;
+}
+.progress-dot.done { background: #ffd700; box-shadow: 0 0 10px #ffd700; }
+
+/* ===== 音效圖示 ===== */
+.sound-toggle {
+  position: fixed; top: 15px; right: 15px; z-index: 999;
+  font-size: 1.5em; cursor: pointer; padding: 5px;
+  background: rgba(255,255,255,0.1); border-radius: 50%;
+  border: none; width: 45px; height: 45px;
+  transition: all 0.3s;
+}
+.sound-toggle:hover { background: rgba(255,255,255,0.2); }
+
+/* ===== 響應式 ===== */
+@media (max-width: 768px) {
+  .title { font-size: 2em; }
+  .level-grid { grid-template-columns: 1fr; }
+  .robot { font-size: 5em; }
+  #game-area, .game-hud, .timer-bar { width: 95vw; }
+  #scroll-area { width: 95vw; }
+}
+
+/* ===== 粒子效果 ===== */
+.particle {
+  position: absolute; pointer-events: none; z-index: 100;
+  border-radius: 50%;
+}
+
+/* 關卡提示 */
+.hint-text {
+  color: rgba(255,255,255,0.6); font-size: 0.95em;
+  margin-top: 10px; text-align: center;
+}
+.combo-text {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 3em; font-weight: 900; color: #ffd700;
+  text-shadow: 0 0 30px rgba(255,215,0,0.8);
+  pointer-events: none; z-index: 60;
+  animation: comboPop 0.8s ease forwards;
+}
+@keyframes comboPop {
+  0% { transform: translate(-50%,-50%) scale(0.5); opacity: 0; }
+  50% { transform: translate(-50%,-50%) scale(1.3); opacity: 1; }
+  100% { transform: translate(-50%,-50%) scale(1); opacity: 0; }
+}
+
+.back-btn {
+  position: absolute; top: 15px; left: 15px;
+  z-index: 50; background: rgba(255,255,255,0.1);
+  color: #fff; border: none; border-radius: 10px;
+  padding: 8px 15px; cursor: pointer; font-size: 0.9em;
+  transition: all 0.3s;
+}
+.back-btn:hover { background: rgba(255,255,255,0.25); }
+
+.level-emoji-row {
+  display: flex; gap: 15px; margin: 20px 0;
+  font-size: 1.8em;
+}
+.level-emoji-item {
+  display: flex; flex-direction: column; align-items: center;
+  opacity: 0.5; transition: all 0.3s;
+}
+.level-emoji-item.unlocked { opacity: 1; }
+.level-emoji-item.current { transform: scale(1.2); }
+.level-emoji-label { font-size: 0.35em; color: rgba(255,255,255,0.7); margin-top: 3px; }
+</style>
+</head>
+<body>
+
+<div class="bg-stars" id="bgStars"></div>
+<button class="sound-toggle" id="soundToggle" title="開關音效">🔊</button>
+
+<div id="game-container">
+
+  <!-- ========== 開始畫面 ========== -->
+  <div class="screen active" id="start-screen">
+    <div class="robot">🤖</div>
+    <h1 class="title">滑鼠小探險家</h1>
+    <p class="subtitle">🎮 5 大關卡，練出你的滑鼠超能力！</p>
+    <div class="level-emoji-row">
+      <div class="level-emoji-item"><span>🖱️</span><span class="level-emoji-label">左鍵</span></div>
+      <div class="level-emoji-item"><span>🖱️</span><span class="level-emoji-label">右鍵</span></div>
+      <div class="level-emoji-item"><span>⚡</span><span class="level-emoji-label">雙擊</span></div>
+      <div class="level-emoji-item"><span>🖐️</span><span class="level-emoji-label">拖曳</span></div>
+      <div class="level-emoji-item"><span>🎡</span><span class="level-emoji-label">滾輪</span></div>
+    </div>
+    <button class="btn" onclick="showScreen('level-select')">🚀 開始冒險！</button>
+    <p class="hint-text">適合 5-12 歲小朋友 · 用瀏覽器遊玩</p>
+  </div>
+
+  <!-- ========== 關卡選擇 ========== -->
+  <div class="screen" id="level-select">
+    <h2 class="h2-title">🗺️ 選擇關卡</h2>
+    <p class="hint-text">完成一關解鎖下一關！</p>
+    <div class="level-grid" id="levelGrid"></div>
+    <button class="btn btn-small btn-blue" style="margin-top:25px" onclick="showScreen('start-screen')">🏠 回主畫面</button>
+  </div>
+
+  <!-- ========== 遊戲畫面 ========== -->
+  <div class="screen" id="game-screen">
+    <div class="game-hud">
+      <div class="hud-item">🏆 分數: <span id="scoreDisplay">0</span></div>
+      <div class="hud-item" id="levelName">關卡</div>
+      <div class="hud-item">⏱️ <span id="timeDisplay">30</span>s</div>
+    </div>
+    <div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>
+    <p class="game-instruction" id="gameInstruction"></p>
+    <button class="back-btn" onclick="exitToLevels()">🏠 退出</button>
+    <div id="game-area"></div>
+    <div class="hint-text" id="gameHint"></div>
+  </div>
+
+  <!-- ========== 完成畫面 ========== -->
+  <div class="screen" id="complete-screen">
+    <div class="trophy">🏆</div>
+    <h1 class="title" style="font-size:2.5em">恭喜你！</h1>
+    <p class="subtitle" id="completeMsg">你完成了所有關卡！</p>
+    <div id="totalStars" class="reward-stars"></div>
+    <p style="color:#fff; font-size:1.2em; margin-bottom:20px" id="totalScore">總分: 0</p>
+    <button class="btn btn-green" onclick="restartGame()">🔄 再玩一次</button>
+    <button class="btn btn-small btn-blue" onclick="showScreen('level-select')" style="margin-top:10px">🗺️ 選關卡</button>
+  </div>
+
+  <!-- ========== 獎勵彈窗 ========== -->
+  <div class="reward-overlay" id="rewardOverlay">
+    <div class="reward-box">
+      <div class="reward-title" id="rewardTitle">🎉 太棒了！</div>
+      <div class="reward-stars" id="rewardStars">⭐⭐⭐</div>
+      <div class="reward-score" id="rewardScore">分數: 0</div>
+      <button class="btn btn-green" id="rewardNextBtn" onclick="nextLevel()">下一關 ▶</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ====================== 全局變數 ======================
+let currentLevel = 0;
+let totalScore = 0;
+let levelScores = [0, 0, 0, 0, 0];
+let levelStars = [0, 0, 0, 0, 0];
+let unlockedLevels = 1;
+let soundEnabled = true;
+let gameTimer = null;
+let timeLeft = 30;
+let currentScore = 0;
+let comboCount = 0;
+let comboTimer = null;
+let audioCtx = null;
+
+const levels = [
+  {
+    id: 0, name: "🐛 抓蟲大行動", icon: "🐛",
+    desc: "練習左鍵快速點擊",
+    color: "#43e97b",
+    instruction: "快速左鍵點擊所有的昆蟲！🐛🦋🐝",
+    hint: "提示：把滑鼠移到昆蟲上面，然後快速按左鍵！"
+  },
+  {
+    id: 1, name: "🕵️ 寶藏探險家", icon: "🗺️",
+    desc: "練習右鍵點擊與選單",
+    color: "#4facfe",
+    instruction: "右鍵點擊寶藏，選「開關」或「查看」！",
+    hint: "提示：在寶藏上按滑鼠右鍵，會跳出選單！"
+  },
+  {
+    id: 2, name: "📦 寶箱快開", icon: "📦",
+    desc: "練習雙擊",
+    color: "#f093fb",
+    instruction: "快速雙擊寶箱把它打開！",
+    hint: "提示：快速按兩下滑鼠左鍵（雙擊）！"
+  },
+  {
+    id: 3, name: "🎯 拖曳大挑戰", icon: "🖐️",
+    desc: "練習拖曳物件",
+    color: "#fa709a",
+    instruction: "把左邊的道具拖曳到右邊對應的圓圈！",
+    hint: "提示：按住物件不放，拖到對應位置再放開！"
+  },
+  {
+    id: 4, name: "🔍 深度搜索", icon: "🎡",
+    desc: "練習滑鼠滾輪",
+    color: "#fee140",
+    instruction: "用滑鼠滾輪向下滾動，找到並點擊所有寶石！",
+    hint: "提示：用滑鼠滾輪（或觸板上下滑）來滾動畫面！"
+  }
+];
+
+// ====================== 音效系統 ======================
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+function playSound(type) {
+  if (!soundEnabled) return;
+  initAudio();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  gain.gain.value = 0.15;
+
+  switch(type) {
+    case 'click':
+      osc.frequency.value = 800; osc.type = 'sine';
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+      break;
+    case 'hit':
+      osc.frequency.value = 1200; osc.type = 'square';
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+      break;
+    case 'success':
+      osc.frequency.value = 523; osc.type = 'sine';
+      gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+      osc.start();
+      osc.frequency.setValueAtTime(659, audioCtx.currentTime + 0.1);
+      osc.frequency.setValueAtTime(784, audioCtx.currentTime + 0.2);
+      osc.stop(audioCtx.currentTime + 0.3);
+      break;
+    case 'fail':
+      osc.frequency.value = 300; osc.type = 'sawtooth';
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+      break;
+    case 'combo':
+      osc.frequency.value = 1000; osc.type = 'sine';
+      gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+      osc.start();
+      osc.frequency.exponentialRampToValueAtTime(2000, audioCtx.currentTime + 0.2);
+      osc.stop(audioCtx.currentTime + 0.2);
+      break;
+    case 'win':
+      [523, 659, 784, 1047].forEach((f, i) => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination);
+        o.frequency.value = f; o.type = 'sine';
+        g.gain.setValueAtTime(0.1, audioCtx.currentTime + i * 0.15);
+        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.15 + 0.3);
+        o.start(audioCtx.currentTime + i * 0.15);
+        o.stop(audioCtx.currentTime + i * 0.15 + 0.3);
+      });
+      break;
+    case 'star':
+      osc.frequency.value = 1500; osc.type = 'sine';
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+      break;
+  }
+}
+
+// ====================== 背景星星 ======================
+function createBgStars() {
+  const container = document.getElementById('bgStars');
+  container.innerHTML = '';
+  for (let i = 0; i < 60; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    const size = Math.random() * 3 + 1;
+    star.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%; top:${Math.random()*100}%;
+      animation-delay:${Math.random()*2}s;
+      animation-duration:${1.5 + Math.random()*2}s;
+    `;
+    container.appendChild(star);
+  }
+}
+
+// ====================== 畫面切換 ======================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'level-select') renderLevelGrid();
+}
+
+// ====================== 關卡選擇畫面 ======================
+function renderLevelGrid() {
+  const grid = document.getElementById('levelGrid');
+  grid.innerHTML = '';
+  levels.forEach((lv, i) => {
+    const card = document.createElement('div');
+    const locked = i >= unlockedLevels;
+    card.className = `level-card ${locked ? 'locked' : ''}`;
+    card.innerHTML = `
+      <div class="level-icon">${lv.icon}</div>
+      <div class="level-name">${lv.name}</div>
+      <div class="level-desc">${lv.desc}</div>
+      <div class="level-stars">${'⭐'.repeat(levelStars[i])}${'☆'.repeat(3 - levelStars[i])}</div>
+    `;
+    if (!locked) {
+      card.onclick = () => startLevel(i);
+    }
+    grid.appendChild(card);
+  });
+}
+
+// ====================== 遊戲核心 ======================
+function startLevel(idx) {
+  currentLevel = idx;
+  currentScore = 0;
+  comboCount = 0;
+  timeLeft = 30;
+  playSound('click');
+
+  const lv = levels[idx];
+  document.getElementById('levelName').textContent = lv.name;
+  document.getElementById('gameInstruction').textContent = lv.instruction;
+  document.getElementById('gameHint').textContent = lv.hint;
+  document.getElementById('scoreDisplay').textContent = '0';
+  document.getElementById('timeDisplay').textContent = '30';
+  document.getElementById('timerFill').style.width = '100%';
+  document.getElementById('timerFill').className = 'timer-fill';
+
+  showScreen('game-screen');
+  startTimer();
+
+  // 清除舊的
+  const ga = document.getElementById('game-area');
+  ga.innerHTML = '';
+
+  // 啟動各關卡
+  switch(idx) {
+    case 0: initBugHunt(ga); break;
+    case 1: initTreasureHunt(ga); break;
+    case 2: initChestOpen(ga); break;
+    case 3: initDragGame(ga); break;
+    case 4: initScrollGame(); break;
+  }
+}
+
+function startTimer() {
+  clearInterval(gameTimer);
+  timeLeft = 30;
+  document.getElementById('timeDisplay').textContent = timeLeft;
+  gameTimer = setInterval(() => {
+    timeLeft--;
+    document.getElementById('timeDisplay').textContent = timeLeft;
+    const pct = (timeLeft / 30) * 100;
+    const fill = document.getElementById('timerFill');
+    fill.style.width = pct + '%';
+    if (pct < 30) fill.classList.add('warning');
+
+    if (timeLeft <= 0) {
+      clearInterval(gameTimer);
+      endLevel();
+    }
+  }, 1000);
+}
+
+function addScore(points, x, y) {
+  currentScore += points;
+  document.getElementById('scoreDisplay').textContent = currentScore;
+
+  // 漂浮分數
+  const fs = document.createElement('div');
+  fs.className = 'float-score';
+  fs.textContent = `+${points}`;
+  fs.style.left = (x || window.innerWidth/2) + 'px';
+  fs.style.top = (y || window.innerHeight/2) + 'px';
+  document.body.appendChild(fs);
+  setTimeout(() => fs.remove(), 1000);
+
+  // Combo
+  comboCount++;
+  clearTimeout(comboTimer);
+  comboTimer = setTimeout(() => {
+    if (comboCount >= 3) {
+      playSound('combo');
+      const ct = document.createElement('div');
+      ct.className = 'combo-text';
+      ct.textContent = `${comboCount}x 連擊！🔥`;
+      document.body.appendChild(ct);
+      setTimeout(() => ct.remove(), 800);
+      currentScore += comboCount * 2;
+      document.getElementById('scoreDisplay').textContent = currentScore;
+    }
+    comboCount = 0;
+  }, 1500);
+
+  // 分數獎勵
+  if (points >= 20) playSound('hit');
+  else playSound('click');
+}
+
+function endLevel() {
+  clearInterval(gameTimer);
+  levelScores[currentLevel] = currentScore;
+  totalScore += currentScore;
+
+  // 計算星星
+  const starThresholds = [80, 120, 150, 100, 100];
+  let stars = 1;
+  if (currentScore >= starThresholds[currentLevel] * 1.5) stars = 3;
+  else if (currentScore >= starThresholds[currentLevel]) stars = 2;
+  levelStars[currentLevel] = Math.max(levelStars[currentLevel], stars);
+
+  // 解鎖下一關
+  if (currentLevel + 1 < levels.length) {
+    unlockedLevels = Math.max(unlockedLevels, currentLevel + 2);
+  }
+
+  // 顯示獎勵
+  playSound('win');
+  const overlay = document.getElementById('rewardOverlay');
+  const starStr = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+  document.getElementById('rewardStars').textContent = starStr;
+  document.getElementById('rewardScore').textContent = `本關分數: ${currentScore}`;
+
+  document.getElementById('rewardTitle').textContent =
+    stars === 3 ? '🌟 太厲害了！' : stars === 2 ? '🎉 做得好！' : '💪 繼續加油！';
+
+  if (currentLevel >= levels.length - 1) {
+    document.getElementById('rewardNextBtn').textContent = '🏆 查看總成績';
+    document.getElementById('rewardNextBtn').onclick = showComplete;
+  } else {
+    document.getElementById('rewardNextBtn').textContent = '下一關 ▶';
+    document.getElementById('rewardNextBtn').onclick = nextLevel;
+  }
+
+  overlay.classList.add('active');
+}
+
+function nextLevel() {
+  document.getElementById('rewardOverlay').classList.remove('active');
+  if (currentLevel < levels.length - 1) {
+    startLevel(currentLevel + 1);
+  } else {
+    showComplete();
+  }
+}
+
+function showComplete() {
+  document.getElementById('rewardOverlay').classList.remove('active');
+  const totalStars = levelStars.reduce((a, b) => a + b, 0);
+  document.getElementById('totalStars').textContent =
+    '⭐'.repeat(totalStars) + '☆'.repeat(15 - totalStars);
+  document.getElementById('totalScore').textContent = `總分: ${totalScore} 分`;
+  const msgs = ['你是滑鼠小天才！🚀', '滑鼠達人就是你！👑', '太厲害了，小冠軍！🏆'];
+  document.getElementById('completeMsg').textContent =
+    msgs[Math.min(Math.floor(totalStars / 5), msgs.length - 1)];
+  showScreen('complete-screen');
+  playSound('win');
+}
+
+function restartGame() {
+  levelScores = [0,0,0,0,0];
+  levelStars = [0,0,0,0,0];
+  totalScore = 0;
+  unlockedLevels = 1;
+  showScreen('start-screen');
+}
+
+function exitToLevels() {
+  clearInterval(gameTimer);
+  showScreen('level-select');
+}
+
+// ====================== 關卡1：抓蟲大行動（左鍵點擊）======================
+function initBugHunt(area) {
+  const bugs = ['🐛','🦋','🐝','🪲','🦗','🐌','🕷️','🐞'];
+  let spawnCount = 0;
+  const maxBugs = 25;
+
+  function spawnBug() {
+    if (spawnCount >= maxBugs || timeLeft <= 0) return;
+    spawnCount++;
+
+    const bug = document.createElement('div');
+    bug.className = 'bug';
+    bug.textContent = bugs[Math.floor(Math.random() * bugs.length)];
+    const maxX = area.clientWidth - 60;
+    const maxY = area.clientHeight - 60;
+    bug.style.left = Math.random() * maxX + 10 + 'px';
+    bug.style.top = Math.random() * maxY + 10 + 'px';
+
+    // 隨機大小
+    const size = 1.5 + Math.random() * 1.5;
+    bug.style.fontSize = size + 'em';
+
+    // 點擊事件
+    bug.onclick = (e) => {
+      e.stopPropagation();
+      if (bug.classList.contains('hit')) return;
+      bug.classList.add('hit');
+      const pts = Math.round(10 / (size - 0.5));
+      addScore(pts, e.clientX, e.clientY);
+      playSound('hit');
+      spawnParticles(e.clientX, e.clientY, '#43e97b', 8);
+      setTimeout(() => bug.remove(), 300);
+      checkBugComplete();
+    };
+
+    // 自動消失
+    const lifeTime = 2500 + Math.random() * 2000;
+    bug.dataset.timer = setTimeout(() => {
+      if (bug && !bug.classList.contains('hit')) {
+        bug.classList.add('hit');
+        setTimeout(() => bug.remove(), 300);
+        comboCount = 0;
+      }
+    }, lifeTime);
+
+    area.appendChild(bug);
+  }
+
+  function checkBugComplete() {
+    const remaining = area.querySelectorAll('.bug:not(.hit)');
+    if (spawnCount >= maxBugs && remaining.length === 0) {
+      addScore(50, area.clientWidth/2, area.clientHeight/2);
+    }
+  }
+
+  let spawnRate = 600;
+  const spawnInterval = setInterval(() => {
+    spawnBug();
+    spawnRate = Math.max(300, spawnRate - 10);
+    if (spawnCount >= maxBugs) clearInterval(spawnInterval);
+  }, spawnRate);
+}
+
+// ====================== 關卡2：寶藏探險家（右鍵點擊）======================
+function initTreasureHunt(area) {
+  const treasures = ['💎','👑','🔮','🏺','🗝️','🪙','💰','🎁'];
+  let found = 0;
+  const totalTreasures = 12;
+
+  function spawnTreasure() {
+    if (found >= totalTreasures || timeLeft <= 0) return;
+
+    const spot = document.createElement('div');
+    spot.className = 'treasure-spot';
+    spot.textContent = treasures[Math.floor(Math.random() * treasures.length)];
+    const maxX = area.clientWidth - 70;
+    const maxY = area.clientHeight - 70;
+    spot.style.left = Math.random() * maxX + 10 + 'px';
+    spot.style.top = Math.random() * maxY + 10 + 'px';
+    spot.style.animationDelay = Math.random() * 2 + 's';
+
+    // 右鍵事件
+    spot.oncontextmenu = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      showContextMenu(e.clientX, e.clientY, spot, treasures[0]);
+    };
+
+    // 左鍵不觸發（鼓勵用右鍵）
+    spot.onclick = (e) => {
+      e.preventDefault();
+      const hint = document.createElement('div');
+      hint.className = 'float-score';
+      hint.textContent = '用右鍵！🖱️';
+      hint.style.color = '#fa709a';
+      hint.style.left = e.clientX + 'px';
+      hint.style.top = e.clientY + 'px';
+      document.body.appendChild(hint);
+      setTimeout(() => hint.remove(), 1000);
+    };
+
+    // 自動消失
+    const life = 3500 + Math.random() * 2000;
+    spot.dataset.timer = setTimeout(() => {
+      if (spot && spot.style.display !== 'none') {
+        spot.style.transition = 'all 0.5s';
+        spot.style.opacity = '0';
+        spot.style.transform = 'scale(0)';
+        setTimeout(() => spot.remove(), 500);
+      }
+    }, life);
+
+    area.appendChild(spot);
+  }
+
+  function showContextMenu(x, y, spot, item) {
+    document.querySelectorAll('.context-menu').forEach(m => m.remove());
+
+    const menu = document.createElement('div');
+    menu.className = 'context-menu';
+    menu.style.left = x + 'px';
+    menu.style.top = y + 'px';
+    menu.innerHTML = `
+      <div class="context-menu-item" style="font-weight:700;color:#ffd700">🔍 檢查 ${item}</div>
+      <div class="context-menu-item" id="menuOpen">🔓 開關</div>
+      <div class="context-menu-item" id="menuInspect">👁️ 查看</div>
+      <div class="context-menu-item" id="menuUse">✨ 使用魔法</div>
+    `;
+    document.body.appendChild(menu);
+
+    menu.querySelectorAll('.context-menu-item').forEach(item => {
+      item.onclick = (e) => {
+        e.stopPropagation();
+        const pts = 15 + Math.floor(Math.random() * 10);
+        addScore(pts, e.clientX, e.clientY);
+        playSound('success');
+        spawnParticles(e.clientX, e.clientY, '#4facfe', 12);
+        spot.style.display = 'none';
+        clearTimeout(parseInt(spot.dataset.timer));
+        found++;
+        menu.remove();
+
+        const foundEl = document.createElement('div');
+        foundEl.className = 'float-score';
+        foundEl.textContent = '✨ 找到！+' + pts;
+        foundEl.style.left = e.clientX + 'px';
+        foundEl.style.top = (e.clientY - 30) + 'px';
+        foundEl.style.fontSize = '1.2em';
+        document.body.appendChild(foundEl);
+        setTimeout(() => foundEl.remove(), 1000);
+
+        if (found < totalTreasures) {
+          setTimeout(spawnTreasure, 500);
+        }
+      };
+    });
+
+    setTimeout(() => {
+      document.addEventListener('click', function closeMenu() {
+        menu.remove();
+        document.removeEventListener('click', closeMenu);
+      });
+    }, 50);
+  }
+
+  for (let i = 0; i < 3; i++) {
+    setTimeout(spawnTreasure, i * 500);
+  }
+  const interval = setInterval(() => {
+    if (found < totalTreasures && timeLeft > 0) {
+      const current = area.querySelectorAll('.treasure-spot:not([style*="display: none"])');
+      if (current.length < 4) spawnTreasure();
+    }
+  }, 1000);
+}
+
+// ====================== 關卡3：寶箱快開（雙擊）======================
+function initChestOpen(area) {
+  let opened = 0;
+  const totalChests = 15;
+  const chestEmojis = ['📦','🎁','🗳️','💼','🧰'];
+
+  function spawnChest() {
+    if (opened >= totalChests || timeLeft <= 0) return;
+
+    const chest = document.createElement('div');
+    chest.className = 'chest';
+    chest.textContent = chestEmojis[Math.floor(Math.random() * chestEmojis.length)];
+    const maxX = area.clientWidth - 60;
+    const maxY = area.clientHeight - 60;
+    chest.style.left = Math.random() * maxX + 10 + 'px';
+    chest.style.top = Math.random() * maxY + 10 + 'px';
+
+    let clickCount = 0;
+    let clickTimer = null;
+
+    chest.ondblclick = (e) => {
+      e.stopPropagation();
+      if (chest.classList.contains('opened')) return;
+      chest.classList.add('opened');
+      const pts = 20;
+      addScore(pts, e.clientX, e.clientY);
+      playSound('success');
+      spawnParticles(e.clientX, e.clientY, '#f093fb', 10);
+
+      const loot = document.createElement('div');
+      loot.className = 'float-score';
+      loot.textContent = '💰 +20';
+      loot.style.left = e.clientX + 'px';
+      loot.style.top = (e.clientY - 20) + 'px';
+      loot.style.fontSize = '1.8em';
+      document.body.appendChild(loot);
+      setTimeout(() => loot.remove(), 1000);
+
+      opened++;
+      setTimeout(() => chest.remove(), 500);
+    };
+
+    // 單擊提示
+    chest.onclick = (e) => {
+      e.stopPropagation();
+      if (chest.classList.contains('opened')) return;
+      clickCount++;
+      clearTimeout(clickTimer);
+      clickTimer = setTimeout(() => {
+        if (clickCount === 1) {
+          const hint = document.createElement('div');
+          hint.className = 'float-score';
+          hint.textContent = '快速按兩下！';
+          hint.style.color = '#f093fb';
+          hint.style.left = e.clientX + 'px';
+          hint.style.top = (e.clientY - 20) + 'px';
+          document.body.appendChild(hint);
+          setTimeout(() => hint.remove(), 800);
+        }
+        clickCount = 0;
+      }, 300);
+    };
+
+    const life = 3000 + Math.random() * 2000;
+    chest.dataset.timer = setTimeout(() => {
+      if (chest && !chest.classList.contains('opened')) {
+        chest.classList.add('opened');
+        setTimeout(() => chest.remove(), 300);
+      }
+    }, life);
+
+    area.appendChild(chest);
+  }
+
+  for (let i = 0; i < 3; i++) {
+    setTimeout(spawnChest, i * 400);
+  }
+  const interval = setInterval(() => {
+    if (opened < totalChests && timeLeft > 0) {
+      const current = area.querySelectorAll('.chest:not(.opened)');
+      if (current.length < 4) spawnChest();
+    }
+  }, 800);
+}
+
+// ====================== 關卡4：拖曳大挑戰（拖曳）======================
+function initDragGame(area) {
+  const items = [
+    { emoji: '🍎', color: '#ff6b6b', label: '蘋果' },
+    { emoji: '🍌', color: '#ffd93d', label: '香蕉' },
+    { emoji: '🍇', color: '#9b59b6', label: '葡萄' },
+    { emoji: '🍊', color: '#e67e22', label: '橘子' },
+    { emoji: '🍓', color: '#e74c3c', label: '草莓' },
+    { emoji: '🍉', color: '#2ecc71', label: '西瓜' },
+    { emoji: '🍑', color: '#ff9ff3', label: '桃子' },
+    { emoji: '🥝', color: '#27ae60', label: '奇異果' },
+  ];
+
+  let matched = 0;
+  const totalToMatch = 10;
+  let round = 0;
+
+  function newRound() {
+    if (matched >= totalToMatch || timeLeft <= 0) return;
+
+    area.querySelectorAll('.drag-item, .drop-zone').forEach(el => el.remove());
+
+    round++;
+    const pickCount = Math.min(3 + Math.floor(round / 3), 4);
+    const shuffled = [...items].sort(() => Math.random() - 0.5).slice(0, pickCount);
+
+    shuffled.forEach((item, i) => {
+      const dragEl = document.createElement('div');
+      dragEl.className = 'drag-item';
+      dragEl.textContent = item.emoji;
+      dragEl.style.left = (20 + i * 30) + 'px';
+      dragEl.style.top = (100 + i * (area.clientHeight - 200) / pickCount) + 'px';
+      dragEl.style.border = `3px solid ${item.color}`;
+      dragEl.draggable = true;
+      dragEl.dataset.item = item.label;
+      dragEl.dataset.color = item.color;
+
+      dragEl.ondragstart = (e) => {
+        e.dataTransfer.setData('text/plain', item.label);
+        e.dataTransfer.setData('color', item.color);
+        dragEl.style.opacity = '0.5';
+        playSound('click');
+      };
+      dragEl.ondragend = () => { dragEl.style.opacity = '1'; };
+
+      makeDraggable(dragEl, item);
+      area.appendChild(dragEl);
+    });
+
+    const zones = [...shuffled].sort(() => Math.random() - 0.5);
+    zones.forEach((item, i) => {
+      const zone = document.createElement('div');
+      zone.className = 'drop-zone';
+      zone.style.right = (30 + i * 25) + 'px';
+      zone.style.top = (80 + i * (area.clientHeight - 160) / pickCount) + 'px';
+      zone.style.width = '75px';
+      zone.style.height = '75px';
+      zone.textContent = '❓';
+      zone.dataset.accept = item.label;
+
+      zone.ondragover = (e) => {
+        e.preventDefault();
+        zone.classList.add('active');
+      };
+      zone.ondragleave = () => zone.classList.remove('active');
+      zone.ondrop = (e) => {
+        e.preventDefault();
+        zone.classList.remove('active');
+        const itemLabel = e.dataTransfer.getData('text/plain');
+        if (itemLabel === item.label) {
+          zone.classList.add('filled');
+          zone.textContent = item.emoji;
+          zone.style.color = item.color;
+          playSound('success');
+          matched++;
+          addScore(15, area.clientWidth - 50, parseInt(zone.style.top) + 35);
+          spawnParticles(area.clientWidth - 50, parseInt(zone.style.top) + 35, item.color, 10);
+          setTimeout(newRound, 800);
+        } else {
+          zone.style.borderColor = '#ff6b6b';
+          playSound('fail');
+          setTimeout(() => {
+            zone.style.borderColor = 'rgba(255,255,255,0.5)';
+          }, 500);
+        }
+      };
+
+      area.appendChild(zone);
+    });
+  }
+
+  function makeDraggable(el, item) {
+    let isDragging = false;
+    let offsetX, offsetY;
+
+    el.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      el.style.zIndex = 100;
+      el.style.position = 'absolute';
+      offsetX = e.clientX - el.getBoundingClientRect().left;
+      offsetY = e.clientY - el.getBoundingClientRect().top;
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const rect = area.getBoundingClientRect();
+      let x = e.clientX - rect.left - offsetX;
+      let y = e.clientY - rect.top - offsetY;
+      x = Math.max(0, Math.min(x, area.clientWidth - 60));
+      y = Math.max(0, Math.min(y, area.clientHeight - 60));
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+
+      document.querySelectorAll('.drop-zone:not(.filled)').forEach(zone => {
+        const zr = zone.getBoundingClientRect();
+        if (e.clientX >= zr.left && e.clientX <= zr.right &&
+            e.clientY >= zr.top && e.clientY <= zr.bottom) {
+          zone.classList.add('active');
+        } else {
+          zone.classList.remove('active');
+        }
+      });
+    });
+
+    document.addEventListener('mouseup', (e) => {
+      if (!isDragging) return;
+      isDragging = false;
+      el.style.zIndex = '10';
+
+      let dropped = false;
+      document.querySelectorAll('.drop-zone:not(.filled)').forEach(zone => {
+        const zr = zone.getBoundingClientRect();
+        if (e.clientX >= zr.left && e.clientX <= zr.right &&
+            e.clientY >= zr.top && e.clientY <= zr.bottom) {
+          if (item.label === zone.dataset.accept) {
+            zone.classList.add('filled');
+            zone.textContent = item.emoji;
+            zone.style.color = item.color;
+            playSound('success');
+            matched++;
+            addScore(15, e.clientX, e.clientY);
+            spawnParticles(e.clientX, e.clientY, item.color, 10);
+            el.remove();
+            dropped = true;
+            setTimeout(newRound, 800);
+          } else {
+            zone.style.borderColor = '#ff6b6b';
+            playSound('fail');
+            setTimeout(() => zone.style.borderColor = 'rgba(255,255,255,0.5)', 500);
+          }
+        }
+      });
+      if (!dropped) el.classList.remove('active');
+    });
+  }
+
+  newRound();
+}
+
+// ====================== 關卡5：深度搜索（滾輪）======================
+function initScrollGame() {
+  const ga = document.getElementById('game-area');
+  ga.innerHTML = `
+    <div id="scroll-area">
+      <div class="scroll-content" id="scrollContent">
+        <div class="scroll-hint">🖱️ 用滾輪向下滾動，找到並點擊所有寶石！ 💎</div>
+      </div>
+    </div>
+  `;
+
+  const content = document.getElementById('scrollContent');
+  const totalGems = 15;
+  let found = 0;
+  const gems = ['💎','🔷','🟣','🟡','🔴','🟢','💠','✨','🌟','⭐','🪙','💰','👑','🎖️','🏅'];
+
+  for (let i = 0; i < totalGems; i++) {
+    const gem = document.createElement('div');
+    gem.className = 'scroll-target';
+    gem.textContent = gems[i % gems.length];
+    gem.style.left = (10 + Math.random() * 80) + '%';
+    gem.style.top = (200 + i * 180 + Math.random() * 80) + 'px';
+    gem.style.fontSize = (1.5 + Math.random() * 1.5) + 'em';
+
+    gem.onclick = (e) => {
+      e.stopPropagation();
+      if (gem.style.display === 'none') return;
+      gem.style.display = 'none';
+      const pts = 10 + Math.floor(Math.random() * 15);
+      found++;
+      addScore(pts, e.clientX, e.clientY);
+      playSound('hit');
+      spawnParticles(e.clientX, e.clientY, '#fee140', 8);
+
+      const label = document.createElement('div');
+      label.className = 'float-score';
+      label.textContent = `${gem.textContent} +${pts}`;
+      label.style.left = e.clientX + 'px';
+      label.style.top = (e.clientY - 30) + 'px';
+      document.body.appendChild(label);
+      setTimeout(() => label.remove(), 1000);
+
+      if (found >= totalGems) {
+        const doneMsg = document.createElement('div');
+        doneMsg.className = 'float-score';
+        doneMsg.textContent = '🎉 全部找到！';
+        doneMsg.style.left = '50%';
+        doneMsg.style.top = '40%';
+        doneMsg.style.fontSize = '2.5em';
+        doneMsg.style.transform = 'translate(-50%,-50%)';
+        document.body.appendChild(doneMsg);
+        setTimeout(() => doneMsg.remove(), 1500);
+        addScore(50, window.innerWidth/2, window.innerHeight/2);
+      }
+    };
+
+    content.appendChild(gem);
+  }
+
+  const decorations = ['🌿','🪨','🌸','🍄','🌙','☁️','🌈','🦋'];
+  for (let i = 0; i < 30; i++) {
+    const dec = document.createElement('div');
+    dec.style.cssText = `
+      position:absolute; font-size:${1 + Math.random()*1.5}em;
+      left:${Math.random()*90}%; top:${300 + Math.random()*2800}px;
+      opacity:0.3; pointer-events:none;
+    `;
+    dec.textContent = decorations[Math.floor(Math.random() * decorations.length)];
+    content.appendChild(dec);
+  }
+
+  const scrollArea = document.getElementById('scroll-area');
+  scrollArea.onscroll = () => {
+    const maxScroll = scrollArea.scrollHeight - scrollArea.clientHeight;
+    const pct = scrollArea.scrollTop / maxScroll;
+    const hint = scrollArea.querySelector('.scroll-hint');
+    hint.textContent = `💎 已找到 ${found}/${totalGems} 寶石！進度: ${Math.round(pct * 100)}%`;
+    if (pct > 0.3 && pct < 0.7) {
+      hint.textContent = '💡 繼續滾動！寶石可能在更下方或上方哦～';
+    }
+  };
+}
+
+// ====================== 粒子效果 ======================
+function spawnParticles(x, y, color, count) {
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = 5 + Math.random() * 10;
+    const angle = (Math.PI * 2 / count) * i + Math.random() * 0.5;
+    const dist = 40 + Math.random() * 60;
+    p.style.cssText = `
+      left:${x}px; top:${y}px;
+      width:${size}px; height:${size}px;
+      background:${color};
+      opacity: 0.8;
+      transition: all 0.6s ease-out;
+    `;
+    document.body.appendChild(p);
+    requestAnimationFrame(() => {
+      p.style.left = (x + Math.cos(angle) * dist) + 'px';
+      p.style.top = (y + Math.sin(angle) * dist) + 'px';
+      p.style.opacity = '0';
+      p.style.transform = 'scale(0)';
+    });
+    setTimeout(() => p.remove(), 700);
+  }
+}
+
+// ====================== 音效開關 ======================
+document.getElementById('soundToggle').addEventListener('click', () => {
+  soundEnabled = !soundEnabled;
+  document.getElementById('soundToggle').textContent = soundEnabled ? '🔊' : '🔇';
+});
+
+// ====================== 初始化 ======================
+createBgStars();
+
+document.addEventListener('contextmenu', (e) => {
+  if (document.getElementById('game-screen').classList.contains('active')) {
+    e.preventDefault();
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    document.getElementById('rewardOverlay').classList.remove('active');
+    exitToLevels();
+  }
+});
+</script>
+</body>
+</html>
+
+							<script>
+                            	
+							</script>
+                        </body>
+                        </html>
+                    

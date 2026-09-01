@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>踩地雷遊戲</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+
+  h1 { color: #fff; margin-bottom: 15px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+
+  /* 模式切換 */
+  .mode-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .mode-toggle {
+    padding: 10px 22px;
+    font-size: 15px;
+    border: none;
+    border-radius: 25px;
+    background: rgba(255,255,255,0.25);
+    color: #fff;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+  }
+
+  .mode-toggle:hover { transform: translateY(-2px); background: rgba(255,255,255,0.4); }
+  .mode-toggle.active { background: #fff; color: #764ba2; }
+
+  /* 關卡按鈕 */
+  .controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 700px;
+  }
+
+  .level-btn {
+    padding: 8px 14px;
+    font-size: 13px;
+    border: none;
+    border-radius: 8px;
+    background: #fff;
+    color: #667eea;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+
+  .level-btn:hover:not(.locked) { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.2); }
+  .level-btn.active { background: #ffd700; color: #333; }
+
+  .level-btn.locked {
+    background: rgba(0,0,0,0.2);
+    color: rgba(255,255,255,0.5);
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  /* 經典難度按鈕 */
+  .difficulty-btn {
+    padding: 10px 20px;
+    font-size: 14px;
+    border: none;
+    border-radius: 8px;
+    background: #fff;
+    color: #667eea;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+
+  .difficulty-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.2); }
+  .difficulty-btn.active { background: #ffd700; color: #333; }
+
+  .game-info {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .info-box {
+    background: rgba(255,255,255,0.9);
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 17px;
+    font-weight: bold;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+
+  .reset-btn {
+    font-size: 28px;
+    background: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+
+  .reset-btn:hover { transform: scale(1.1); }
+
+  #board {
+    display: grid;
+    gap: 3px;
+    background: #bbb;
+    padding: 8px;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+
+  .cell {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #4a90d9;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+    user-select: none;
+    transition: all 0.1s;
+    box-shadow: inset 0 -3px 0 rgba(0,0,0,0.2);
+  }
+
+  .cell:hover:not(.revealed) { background: #5ba0e9; transform: scale(1.05); }
+  .cell.revealed { background: #e8e8e8; box-shadow: inset 0 0 3px rgba(0,0,0,0.2); cursor: default; transform: none; }
+  .cell.revealed.has-number:hover { box-shadow: 0 0 0 3px #ffd700, inset 0 0 3px rgba(0,0,0,0.2); cursor: pointer; }
+  .cell.mine { background: #ff5252; }
+  .cell.flag { background: #ffd700; }
+  .cell.exploded { background: #d32f2f; }
+
+  .cell.n1 { color: #1976d2; }
+  .cell.n2 { color: #388e3c; }
+  .cell.n3 { color: #d32f2f; }
+  .cell.n4 { color: #7b1fa2; }
+  .cell.n5 { color: #c2185b; }
+  .cell.n6 { color: #0097a7; }
+  .cell.n7 { color: #424242; }
+  .cell.n8 { color: #8d6e63; }
+
+  .message {
+    margin-top: 15px;
+    font-size: 20px;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    min-height: 30px;
+    text-align: center;
+    max-width: 600px;
+  }
+
+  .message.new-record { animation: pulse 0.6s ease-in-out infinite alternate; color: #ffd700; }
+
+  @keyframes pulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.15); }
+  }
+
+  .hint {
+    margin-top: 8px;
+    color: rgba(255,255,255,0.95);
+    font-size: 13px;
+    text-align: center;
+    background: rgba(0,0,0,0.15);
+    padding: 6px 14px;
+    border-radius: 6px;
+    min-height: 20px;
+  }
+
+  .footer { margin-top: 20px; color: rgba(255,255,255,0.8); font-size: 13px; text-align: center; }
+</style>
+</head>
+<body>
+  <h1>💣 踩地雷 💣</h1>
+
+  <!-- 模式切換 -->
+  <div class="mode-controls">
+    <button class="mode-toggle active" data-mode="campaign">🎯 關卡模式</button>
+    <button class="mode-toggle" data-mode="classic">🎮 經典模式</button>
+  </div>
+
+  <!-- 關卡模式：關按鈕 -->
+  <div class="controls" id="level-controls"></div>
+
+  <!-- 經典模式：難度按鈕 -->
+  <div class="controls" id="difficulty-controls" style="display:none;">
+    <button class="difficulty-btn active" data-level="easy">初級 9×9</button>
+    <button class="difficulty-btn" data-level="medium">中級 16×16</button>
+    <button class="difficulty-btn" data-level="hard">高級 30×16</button>
+  </div>
+
+  <!-- 關卡資訊列 -->
+  <div class="game-info" id="campaign-info">
+    <div class="info-box">🎯 <span id="level-name">新手村</span></div>
+    <div class="info-box">關卡 <span id="level-num">1</span>/<span id="level-total">10</span></div>
+    <div class="info-box">⏱️ <span id="timer">0</span>s</div>
+    <div class="info-box">🏆 最佳 <span id="level-best">--</span></div>
+  </div>
+
+  <!-- 經典資訊列 -->
+  <div class="game-info" id="classic-info" style="display:none;">
+    <div class="info-box">🚩 <span id="flag-count">0</span></div>
+    <button class="reset-btn" id="reset-btn">🙂</button>
+    <div class="info-box">⏱️ <span id="timer">0</span>s</div>
+    <div class="info-box">🏆 最佳 <span id="best-time">--</span></div>
+  </div>
+
+  <div id="board"></div>
+
+  <div class="message" id="message"></div>
+  <div class="hint" id="hint">💡 通關每關可解鎖下一關 ｜ ⚡ 對數字再點一次可智慧開格</div>
+
+  <div class="footer">
+    左鍵點擊開啟格子 ｜ 右鍵插旗標記 ｜ 點擊表情重置遊戲
+  </div>
+
+<script>
+  const board = document.getElementById('board');
+  const messageEl = document.getElementById('message');
+  const hintEl = document.getElementById('hint');
+  const flagCountEl = document.getElementById('flag-count');
+  const timerEl = document.getElementById('timer');
+  const bestTimeEl = document.getElementById('best-time');
+  const levelNameEl = document.getElementById('level-name');
+  const levelNumEl = document.getElementById('level-num');
+  const levelTotalEl = document.getElementById('level-total');
+  const levelBestEl = document.getElementById('level-best');
+  const resetBtn = document.getElementById('reset-btn');
+
+  // ====== 關卡定義 ======
+  const campaignLevels = [
+    { name: '新手村',        rows: 5,  cols: 5,  mines: 3   },
+    { name: '小試牛刀',      rows: 6,  cols: 8,  mines: 6   },
+    { name: '入門挑戰',      rows: 9,  cols: 9,  mines: 10  },
+    { name: '初露頭角',      rows: 10, cols: 12, mines: 18  },
+    { name: '進階之路',      rows: 12, cols: 12, mines: 24  },
+    { name: '高手過招',      rows: 13, cols: 16, mines: 36  },
+    { name: '專家級',        rows: 16, cols: 16, mines: 45  },
+    { name: '大師級',        rows: 16, cols: 22, mines: 65  },
+    { name: '天階級',        rows: 16, cols: 30, mines: 99  },
+    { name: '地獄級',        rows: 20, cols: 20, mines: 140 }
+  ];
+
+  const classicLevels = {
+    easy:   { rows: 9,  cols: 9,  mines: 10 },
+    medium: { rows: 16, cols: 16, mines: 40 },
+    hard:   { rows: 16, cols: 30, mines: 99 }
+  };
+
+  // ====== 儲存鍵 ======
+  const CLASSIC_BEST_KEY = 'minesweeper_best_times';
+  const LEVEL_PROGRESS_KEY = 'minesweeper_level_progress';
+  const LEVEL_BEST_KEY = 'minesweeper_level_best';
+
+  // ====== 遊戲狀態 ======
+  let gameMode = 'campaign';
+  let currentLevelIndex = 0;
+  let classicLevel = 'easy';
+  let grid = [];
+  let revealedCount = 0;
+  let flagCount = 0;
+  let gameOver = false;
+  let firstClick = true;
+  let startTime = null;
+  let timerInterval = null;
+  let currentRows = 0, currentCols = 0, currentMines = 0;
+
+  // ====== 關卡進度讀取/儲存 ======
+  function getLevelProgress() {
+    return parseInt(localStorage.getItem(LEVEL_PROGRESS_KEY) || '0', 10);
+  }
+
+  function saveLevelProgress(level) {
+    const current = getLevelProgress();
+    if (level > current) localStorage.setItem(LEVEL_PROGRESS_KEY, String(level));
+  }
+
+  function getLevelBest() {
+    const stored = localStorage.getItem(LEVEL_BEST_KEY);
+    return stored ? JSON.parse(stored) : {};
+  }
+
+  function saveLevelBest(time) {
+    const bests = getLevelBest();
+    if (bests[currentLevelIndex] === undefined || time < bests[currentLevelIndex]) {
+      bests[currentLevelIndex] = time;
+      localStorage.setItem(LEVEL_BEST_KEY, JSON.stringify(bests));
+    }
+  }
+
+  function getLevelBestTime() {
+    return getLevelBest()[currentLevelIndex] || null;
+  }
+
+  // ====== 經典模式最佳紀錄 ======
+  function getBestTimes() {
+    const stored = localStorage.getItem(CLASSIC_BEST_KEY);
+    return stored ? JSON.parse(stored) : {};
+  }
+
+  function saveBestTime(level, time) {
+    const bestTimes = getBestTimes();
+    bestTimes[level] = time;
+    localStorage.setItem(CLASSIC_BEST_KEY, JSON.stringify(bestTimes));
+  }
+
+  function getBestTime(level) {
+    return getBestTimes()[level] || null;
+  }
+
+  // ====== 計時器 ======
+  function startTimer() {
+    startTime = Date.now();
+    timerInterval = setInterval(() => {
+      timerEl.textContent = Math.floor((Date.now() - startTime) / 1000);
+    }, 100);
+  }
+
+  function stopTimer() { clearInterval(timerInterval); }
+
+  // ====== 輔助：周圍格子 ======
+  function getNeighbors(r, c) {
+    const result = [];
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        if (dr === 0 && dc === 0) continue;
+        const nr = r + dr, nc = c + dc;
+        if (nr >= 0 && nr < grid.length && nc >= 0 && nc < grid[0].length) result.push([nr, nc]);
+      }
+    }
+    return result;
+  }
+
+  // ====== 關卡按鈕渲染 ======
+  function renderLevelButtons() {
+    const container = document.getElementById('level-controls');
+    container.innerHTML = '';
+    const unlocked = getLevelProgress();
+
+    campaignLevels.forEach((lvl, idx) => {
+      const btn = document.createElement('button');
+      btn.classList.add('level-btn');
+      const isUnlocked = idx <= unlocked;
+      btn.textContent = isUnlocked ? `${idx + 1}. ${lvl.name}` : `🔒 ${idx + 1}`;
+
+      if (!isUnlocked) {
+        btn.classList.add('locked');
+      } else {
+        if (idx === currentLevelIndex) btn.classList.add('active');
+        btn.addEventListener('click', () => selectLevel(idx));
+      }
+      container.appendChild(btn);
+    });
+  }
+
+  // ====== 選擇關卡 ======
+  function selectLevel(idx) {
+    if (idx > getLevelProgress()) return;
+    currentLevelIndex = idx;
+    gameMode = 'campaign';
+    document.querySelectorAll('.mode-toggle').forEach(b =>
+      b.classList.toggle('active', b.dataset.mode === 'campaign'));
+    document.getElementById('level-controls').style.display = 'flex';
+    document.getElementById('difficulty-controls').style.display = 'none';
+    document.getElementById('campaign-info').style.display = 'flex';
+    document.getElementById('classic-info').style.display = 'none';
+    hintEl.textContent = '💡 通關每關可解鎖下一關 ｜ ⚡ 對數字再點一次可智慧開格';
+    renderLevelButtons();
+    initGame();
+  }
+
+  // ====== 切換模式 ======
+  function setMode(mode) {
+    gameMode = mode;
+    document.querySelectorAll('.mode-toggle').forEach(b =>
+      b.classList.toggle('active', b.dataset.mode === mode));
+
+    if (mode === 'campaign') {
+      document.getElementById('level-controls').style.display = 'flex';
+      document.getElementById('difficulty-controls').style.display = 'none';
+      document.getElementById('campaign-info').style.display = 'flex';
+      document.getElementById('classic-info').style.display = 'none';
+      hintEl.textContent = '💡 通關每關可解鎖下一關 ｜ ⚡ 對數字再點一次可智慧開格';
+      renderLevelButtons();
+    } else {
+      document.getElementById('level-controls').style.display = 'none';
+      document.getElementById('difficulty-controls').style.display = 'flex';
+      document.getElementById('campaign-info').style.display = 'none';
+      document.getElementById('classic-info').style.display = 'flex';
+      hintEl.textContent = '💡 左鍵開啟 ｜ 右鍵插旗 ｜ ⚡ 對數字再點一次可智慧開格';
+    }
+    initGame();
+  }
+
+  // ====== 初始化遊戲 ======
+  function initGame() {
+    gameOver = false;
+    firstClick = true;
+    revealedCount = 0;
+    flagCount = 0;
+    messageEl.textContent = '';
+    messageEl.classList.remove('new-record');
+    resetBtn.textContent = '🙂';
+    stopTimer();
+    timerEl.textContent = '0';
+
+    let rows, cols, mines;
+
+    if (gameMode === 'campaign') {
+      const lvl = campaignLevels[currentLevelIndex];
+      rows = lvl.rows; cols = lvl.cols; mines = lvl.mines;
+      levelNameEl.textContent = lvl.name;
+      levelNumEl.textContent = currentLevelIndex + 1;
+      levelTotalEl.textContent = campaignLevels.length;
+      const best = getLevelBestTime();
+      levelBestEl.textContent = best ? best + 's' : '--';
+    } else {
+      const c = classicLevels[classicLevel];
+      rows = c.rows; cols = c.cols; mines = c.mines;
+      flagCountEl.textContent = mines;
+      bestTimeEl.textContent = getBestTime(classicLevel) ? getBestTime(classicLevel) + 's' : '--';
+    }
+
+    currentRows = rows; currentCols = cols; currentMines = mines;
+    buildBoard(rows, cols);
+  }
+
+  // ====== 建構棋盘 ======
+  function buildBoard(rows, cols) {
+    grid = [];
+    board.style.gridTemplateColumns = `repeat(${cols}, 32px)`;
+    board.innerHTML = '';
+
+    for (let r = 0; r < rows; r++) {
+      grid[r] = [];
+      for (let c = 0; c < cols; c++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.row = r;
+        cell.dataset.col = c;
+        board.appendChild(cell);
+        grid[r][c] = { cell, isMine: false, revealed: false, flagged: false, neighbors: 0 };
+        cell.addEventListener('click', () => handleClick(r, c));
+        cell.addEventListener('contextmenu', (e) => { e.preventDefault(); handleRightClick(r, c); });
+      }
+    }
+  }
+
+  // ====== 放置地雷 ======
+  function placeMines(safeRow, safeCol) {
+    const { rows, cols, mines } = { rows: currentRows, cols: currentCols, mines: currentMines };
+    let placed = 0;
+
+    while (placed < mines) {
+      const r = Math.floor(Math.random() * rows);
+      const c = Math.floor(Math.random() * cols);
+      if (Math.abs(r - safeRow) <= 1 && Math.abs(c - safeCol) <= 1) continue;
+      if (!grid[r][c].isMine) { grid[r][c].isMine = true; placed++; }
+    }
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (!grid[r][c].isMine) grid[r][c].neighbors = countNeighbors(r, c);
+      }
+    }
+  }
+
+  function countNeighbors(r, c) {
+    let count = 0;
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        const nr = r + dr, nc = c + dc;
+        if (nr >= 0 && nr < grid.length && nc >= 0 && nc < grid[0].length) {
+          if (grid[nr][nc].isMine) count++;
+        }
+      }
+    }
+    return count;
+  }
+
+  // ====== 左鍵點擊 ======
+  function handleClick(r, c) {
+    if (gameOver || grid[r][c].flagged) return;
+    const cellData = grid[r][c];
+
+    // 未展開 → 一般開啟
+    if (!cellData.revealed) {
+      if (firstClick) { placeMines(r, c); firstClick = false; startTimer(); }
+      if (cellData.isMine) { explodeMine(r, c); return; }
+      reveal(r, c);
+      checkWin();
+      return;
+    }
+
+    // 已展開數字 → 智慧開格
+    if (cellData.revealed && cellData.neighbors > 0 && !firstClick) {
+      handleSmartClick(r, c);
+      return;
+    }
+  }
+
+  // ====== 智慧開格 ======
+  function handleSmartClick(r, c) {
+    const num = grid[r][c].neighbors;
+    const neighbors = getNeighbors(r, c);
+    let flags = 0;
+    const unrevealed = [];
+
+    for (const [nr, nc] of neighbors) {
+      if (grid[nr][nc].flagged) flags++;
+      else if (!grid[nr][nc].revealed) unrevealed.push([nr, nc]);
+    }
+
+    // 旗標數 = 數字 → 展開其餘
+    if (flags === num) {
+      for (const [nr, nc] of unrevealed) {
+        if (grid[nr][nc].isMine) { explodeMine(nr, nc); return; }
+      }
+      for (const [nr, nc] of unrevealed) reveal(nr, nc);
+      checkWin();
+      return;
+    }
+
+    // 旗標不足但空格數 = 缺少的旗標數 → 插旗
+    if (flags < num && unrevealed.length === num - flags) {
+      for (const [nr, nc] of unrevealed) {
+        const cell = grid[nr][nc];
+        cell.flagged = true;
+        cell.cell.textContent = '🚩';
+        cell.cell.classList.add('flag');
+        flagCount++;
+      }
+      flagCountEl.textContent = currentMines - flagCount;
+    }
+  }
+
+  // ====== 展開格子 ======
+  function reveal(r, c) {
+    if (r < 0 || r >= grid.length || c < 0 || c >= grid[0].length) return;
+    const cellData = grid[r][c];
+    if (cellData.revealed || cellData.flagged) return;
+
+    cellData.revealed = true;
+    revealedCount++;
+    cellData.cell.classList.add('revealed');
+
+    if (cellData.neighbors > 0) {
+      cellData.cell.textContent = cellData.neighbors;
+      cellData.cell.classList.add('n' + cellData.neighbors, 'has-number');
+    } else {
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          reveal(r + dr, c + dc);
+        }
+      }
+    }
+  }
+
+  // ====== 右鍵插旗 ======
+  function handleRightClick(r, c) {
+    if (gameOver || grid[r][c].revealed) return;
+    const cellData = grid[r][c];
+
+    if (cellData.flagged) {
+      cellData.flagged = false;
+      cellData.cell.textContent = '';
+      cellData.cell.classList.remove('flag');
+      flagCount--;
+    } else {
+      cellData.flagged = true;
+      cellData.cell.textContent = '🚩';
+      cellData.cell.classList.add('flag');
+      flagCount++;
+    }
+    flagCountEl.textContent = currentMines - flagCount;
+  }
+
+  // ====== 引爆地雷 ======
+  function explodeMine(r, c) {
+    gameOver = true;
+    stopTimer();
+    grid[r][c].cell.classList.add('exploded', 'revealed');
+    grid[r][c].cell.textContent = '💥';
+
+    for (let i = 0; i < grid.length; i++) {
+      for (let j = 0; j < grid[0].length; j++) {
+        const cell = grid[i][j];
+        if (cell.isMine && !cell.flagged) {
+          cell.cell.classList.add('revealed', 'mine');
+          if (!cell.cell.textContent) cell.cell.textContent = '💣';
+        } else if (!cell.isMine && cell.flagged) {
+          cell.cell.textContent = '❌';
+        }
+      }
+    }
+    resetBtn.textContent = '😵';
+    messageEl.textContent = '💥 遊戲結束！你踩到地雷了';
+  }
+
+  // ====== 檢查勝利 ======
+  function checkWin() {
+    const totalCells = currentRows * currentCols;
+    if (revealedCount !== totalCells - currentMines) return;
+
+    gameOver = true;
+    stopTimer();
+    const finalTime = Math.floor((Date.now() - startTime) / 1000);
+
+    // 自動標記地雷
+    for (let r = 0; r < grid.length; r++) {
+      for (let c = 0; c < grid[0].length; c++) {
+        if (grid[r][c].isMine && !grid[r][c].flagged) {
+          grid[r][c].cell.textContent = '🚩';
+          grid[r][c].cell.classList.add('flag');
+        }
+      }
+    }
+    resetBtn.textContent = '😎';
+
+    if (gameMode === 'campaign') {
+      saveLevelBest(finalTime);
+      saveLevelProgress(currentLevelIndex + 1); // 解鎖下一關
+      const best = getLevelBestTime();
+      levelBestEl.textContent = best + 's';
+      renderLevelButtons();
+
+      if (currentLevelIndex === campaignLevels.length - 1) {
+        messageEl.textContent = '🎉👑 你通關了所有關卡！你是最強的地雷大師！';
+        messageEl.classList.add('new-record');
+      } else if (finalTime < best) {
+        messageEl.textContent = `🏆 關卡 ${currentLevelIndex + 1}「${campaignLevels[currentLevelIndex].name}」破紀錄！僅需 ${finalTime} 秒！`;
+        messageEl.classList.add('new-record');
+      } else {
+        messageEl.textContent = `🎉 關卡 ${currentLevelIndex + 1}「${campaignLevels[currentLevelIndex].name}」通關！用時 ${finalTime} 秒。點擊右側下一關繼續挑戰！`;
+      }
+    } else {
+      const oldBest = getBestTime(classicLevel);
+      if (oldBest === null) {
+        saveBestTime(classicLevel, finalTime);
+        bestTimeEl.textContent = finalTime + 's';
+        messageEl.textContent = `🎉 恭喜你通關！用時 ${finalTime} 秒，這是你的首個紀錄！`;
+        messageEl.classList.add('new-record');
+      } else if (finalTime < oldBest) {
+        saveBestTime(classicLevel, finalTime);
+        bestTimeEl.textContent = finalTime + 's';
+        messageEl.textContent = `🎉🏆 新紀錄！你打破了最佳紀錄，僅需 ${finalTime} 秒！`;
+        messageEl.classList.add('new-record');
+      } else {
+        messageEl.textContent = `🎉 恭喜你通關！用時 ${finalTime} 秒（最佳紀錄 ${oldBest} 秒）`;
+      }
+    }
+  }
+
+  // ====== 事件綁定 ======
+  document.querySelectorAll('.mode-toggle').forEach(btn => {
+    btn.addEventListener('click', () => setMode(btn.dataset.mode));
+  });
+
+  document.querySelectorAll('.difficulty-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      classicLevel = btn.dataset.level;
+      setMode('classic');
+    });
+  });
+
+  resetBtn.addEventListener('click', initGame);
+  board.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  // ====== 啟動 ======
+  setMode('campaign');
+</script>
+</body>
+</html>
