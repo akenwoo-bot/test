@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UP-TD-117CS 多功能電子鐘 操作指南</title>
+    <style>
+        :root {
+            --primary-color: #1e3a8a;
+            --primary-light: #3b82f6;
+            --accent-color: #059669;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-muted: #4b5563;
+            --border-color: #e5e7eb;
+            --code-bg: #eff6ff;
+            --code-color: #1d4ed8;
+            --highlight-bg: #fef3c7;
+            --highlight-text: #92400e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding-bottom: 30px;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            color: #ffffff;
+            padding: 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        }
+
+        header h1 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header .subtitle {
+            font-size: 0.75rem;
+            color: #93c5fd;
+            margin-top: 2px;
+        }
+
+        /* Quick Search Bar */
+        .search-container {
+            padding: 10px 16px;
+            background: #ffffff;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 8px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .search-box:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        /* Nav Tabs */
+        .nav-scroller {
+            background: #ffffff;
+            border-bottom: 1px solid var(--border-color);
+            overflow-x: auto;
+            white-space: nowrap;
+            position: sticky;
+            top: 57px;
+            z-index: 90;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .nav-scroller::-webkit-scrollbar {
+            display: none;
+        }
+
+        .nav-tabs {
+            display: inline-flex;
+            padding: 0 8px;
+        }
+
+        .tab-btn {
+            padding: 12px 14px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        /* Main Content Container */
+        .container {
+            padding: 16px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.25s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .card-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid #eff6ff;
+            padding-bottom: 6px;
+        }
+
+        .card-title icon {
+            margin-right: 6px;
+        }
+
+        /* Key / Command Styling */
+        .key-seq {
+            display: inline-block;
+            background-color: var(--code-bg);
+            color: var(--code-color);
+            font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+            font-weight: 700;
+            font-size: 0.95rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid #bfdbfe;
+            margin: 2px 0;
+        }
+
+        .kbd {
+            display: inline-block;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.2);
+            padding: 1px 6px;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #0f172a;
+        }
+
+        /* Callout & Highlights */
+        .callout {
+            background-color: #f0fdf4;
+            border-left: 4px solid var(--accent-color);
+            padding: 10px 12px;
+            border-radius: 0 8px 8px 0;
+            margin: 10px 0;
+            font-size: 0.88rem;
+        }
+
+        .callout-warning {
+            background-color: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            color: #92400e;
+        }
+
+        .callout-title {
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        /* List Styling */
+        ul, ol {
+            padding-left: 20px;
+            margin-bottom: 8px;
+        }
+
+        li {
+            margin-bottom: 6px;
+            font-size: 0.92rem;
+        }
+
+        /* Table Styling */
+        .table-responsive {
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #f1f5f9;
+            color: #334155;
+            font-weight: 700;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        /* Quick Cheat Sheet List */
+        .step-box {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .step-num {
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.8rem;
+            margin-right: 10px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .step-text {
+            font-size: 0.9rem;
+            flex-grow: 1;
+        }
+
+        .step-code {
+            margin-top: 4px;
+        }
+
+        /* Back to top float button */
+        .top-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .top-btn:active {
+            opacity: 1;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #e2e8f0;
+            color: #334155;
+        }
+
+        .badge-green {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-blue {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-amber {
+            background: #fef3c7;
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div>
+            <h1>UP-TD-117CS 操作說明</h1>
+            <div class="subtitle">全校廣播 / 多功能電子鐘 手機速查手冊</div>
+        </div>
+    </header>
+
+    <!-- Search Bar -->
+    <div class="search-container">
+        <input type="text" id="searchInput" class="search-box" placeholder="🔍 搜尋關鍵字或功能（如：月考、*2、時間、曲目...）" onkeyup="searchFunction()">
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-scroller">
+        <div class="nav-tabs" id="tabBar">
+            <button class="tab-btn active" onclick="switchTab('quick')">⚡ 簡易速查</button>
+            <button class="tab-btn" onclick="switchTab('tab1')">1. 輸出作息 (*1)</button>
+            <button class="tab-btn" onclick="switchTab('tab2')">2. 時間記憶 (*2)</button>
+            <button class="tab-btn" onclick="switchTab('tab3')">3. 資料複製 (*3)</button>
+            <button class="tab-btn" onclick="switchTab('tab4')">4. 查詢加刪 (*4)</button>
+            <button class="tab-btn" onclick="switchTab('tab567')">5/6/7. 對時與刪除</button>
+            <button class="tab-btn" onclick="switchTab('mp3')">🎵 MP3/歌曲</button>
+            <button class="tab-btn" onclick="switchTab('hardware')">⚙️ 面板與硬體</button>
+        </div>
+    </div>
+
+    <div class="container" id="contentContainer">
+
+        <!-- TAB: Quick Cheat Sheet -->
+        <div id="quick" class="tab-content active">
+            <div class="card">
+                <div class="card-title">★ 簡易操作流程 (速查)</div>
+
+                <div class="step-box">
+                    <div class="step-num">1</div>
+                    <div class="step-text">
+                        <strong>硬體準備：</strong><br>
+                        將金屬鑰匙轉至「設定」位置；POWER 鍵切為 AUTO（燈熄滅）。
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <div class="step-num">2</div>
+                    <div class="step-text">
+                        <strong>清除舊記憶（清除整組或單天）：</strong>
+                        <div class="step-code">
+                            ・清除全組(0~9組): <span class="key-seq">* 7 [組號] #</span><br>
+                            例: <span class="key-seq">* 7 0 #</span> (清空第0組週一~週日)<br>
+                            ・清除特定單天: <span class="key-seq">* 7 [組號] [星期] #</span><br>
+                            例: <span class="key-seq">* 7 1 2 #</span> (清空第1組週二)
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <div class="step-num">3</div>
+                    <div class="step-text">
+                        <strong>開啟自動報時（重要！）：</strong><br>
+                        操作指令：<span class="key-seq">* 6 1 #</span><br>
+                        <small style="color:var(--text-muted);">（樂曲十位數顯示 "1" 表示已啟動報時輸出）</small>
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <div class="step-num">4</div>
+                    <div class="step-text">
+                        <strong>確認資料已清空：</strong><br>
+                        輸入 <span class="key-seq">* 4 1 1</span>，按 <span class="kbd">A</span> 或 <span class="kbd">B</span> 鍵檢查。若無資料表示已清空。按 <span class="kbd">*</span> 返回待機。
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <div class="step-num">5</div>
+                    <div class="step-text">
+                        <strong>輸入報時時間記憶：</strong><br>
+                        指令：<span class="key-seq">* 2 [組號] [星期] [10位數設定] #</span><br>
+                        例: <span class="key-seq">* 2 1 1 0800 01 0020 #</span><br>
+                        <small>（08:00 報時、播放 01 首、長度 20 秒）</small>
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <div class="step-num">6</div>
+                    <div class="step-text">
+                        <strong>調整標準時間 (對時)：</strong><br>
+                        指令：<span class="key-seq">* 5 [星期] [時時分分]</span> 聽 117 報時按 <span class="kbd">#</span> 歸零秒數。
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <div class="step-num">7</div>
+                    <div class="step-text">
+                        <strong>最後檢查與鎖定：</strong><br>
+                        按 <span class="key-seq">* 4</span> 用 <span class="kbd">A</span> / <span class="kbd">B</span> 鍵逐筆檢查完成後，連按 <span class="kbd">*</span> 鍵回待機。最後將鑰匙轉至「鎖定」。
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 1: 選擇輸出作息表 -->
+        <div id="tab1" class="tab-content">
+            <div class="card">
+                <div class="card-title">一、選擇輸出作息表 (*1)</div>
+                <p style="margin-bottom:10px;">用於依不同情境（如：正常上課、考試、寒暑假）切換不同的報時時間表。</p>
+
+                <div class="callout">
+                    <div class="callout-title">💡 切換作息指令範例：</div>
+                    如明天要月考（第2種模式），於前一天放學後輸入：<br>
+                    <span class="key-seq">* 1 2 #</span><br>
+                    考試結束要改回正常上課（第1種模式），輸入：<br>
+                    <span class="key-seq">* 1 1 #</span>
+                </div>
+
+                <h4 style="margin:12px 0 6px 0; font-size:0.95rem;">操作步驟：</h4>
+                <ol>
+                    <li>按 <span class="kbd">*</span> 鍵（功能選擇閃爍）。</li>
+                    <li>按 <span class="kbd">1</span> 進入「輸出作息表設定」模式，游標右移。</li>
+                    <li>按作息表號碼 <span class="kbd">0</span> ~ <span class="kbd">9</span>。</li>
+                    <li>按 <span class="kbd">#</span> 鍵確認完成設定。（螢幕會快速閃爍二次並回到待機模式，顯示下次報時資訊）。</li>
+                </ol>
+
+                <h4 style="margin:14px 0 6px 0; font-size:0.95rem;">學校作息表號碼範例對照：</h4>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>模式號碼</th>
+                                <th>適用情境</th>
+                                <th>快捷指令</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>第 1 種</td>
+                                <td>平時正常上班/上課</td>
+                                <td><span class="key-seq">*11#</span></td>
+                            </tr>
+                            <tr>
+                                <td>第 2 種</td>
+                                <td>休假模式</td>
+                                <td><span class="key-seq">*12#</span></td>
+                            </tr>
+                            <tr>
+                                <td>第 3 種</td>
+                                <td>補課模式</td>
+                                <td><span class="key-seq">*13#</span></td>
+                            </tr>
+                            <tr>
+                                <td>第 4 種</td>
+                                <td>月考第一天(數學)</td>
+                                <td><span class="key-seq">*14#</span></td>
+                            </tr>
+                            <tr>
+                                <td>第 5 種</td>
+                                <td>月考第二天(國語)</td>
+                                <td><span class="key-seq">*15#</span></td>
+                            </tr>
+                            <tr>
+                                <td>第 6 種</td>
+                                <td>暑期輔導</td>
+                                <td><span class="key-seq">*16#</span></td>
+                            </tr>
+                            <tr>
+                                <td>第 7 種</td>
+                                <td>新生訓練</td>
+                                <td><span class="key-seq">*17#</span></td>
+                            </tr>
+                            <tr>
+                                <td>第 8 種</td>
+                                <td>未設定</td>
+                                <td><span class="key-seq">*18#</span></td>
+                            </tr>
+                            <tr>
+                                <td>第 9 種</td>
+                                <td>資優班考試</td>
+                                <td><span class="key-seq">*19#</span></td>
+                            </tr>
+                            <tr>
+                                <td>第 0 種</td>
+                                <td>未設定</td>
+                                <td><span class="key-seq">*10#</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: 時間記憶設定 -->
+        <div id="tab2" class="tab-content">
+            <div class="card">
+                <div class="card-title">二、時間記憶設定 (*2)</div>
+                <p style="margin-bottom:10px;">設定各作息表在幾點幾分發出何種音樂與播放多久。</p>
+
+                <div class="callout">
+                    <div class="callout-title">🔢 10 位數設定格式拆解：</div>
+                    格式：<span class="badge badge-blue">報時時間 (4位)</span> + <span class="badge badge-green">樂曲編號 (2位)</span> + <span class="badge badge-amber">報時長度 (4位)</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>項目</th>
+                                <th>報時時間(時分)</th>
+                                <th>樂曲</th>
+                                <th>報時長度(分秒)</th>
+                                <th>確認</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>位數</strong></td>
+                                <td>4 位數字</td>
+                                <td>2 位數字</td>
+                                <td>4 位數字</td>
+                                <td><span class="kbd">#</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>範例</strong></td>
+                                <td><span class="key-seq">0800</span> (08:00)</td>
+                                <td><span class="key-seq">01</span> (第1首)</td>
+                                <td><span class="key-seq">0020</span> (20秒)</td>
+                                <td><span class="kbd">#</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h4 style="margin:12px 0 6px 0; font-size:0.95rem;">詳細操作步驟：</h4>
+                <ol>
+                    <li>按 <span class="kbd">*</span>，再按 <span class="kbd">2</span> 進入設定。</li>
+                    <li>輸入作息號碼 <span class="kbd">0</span> ~ <span class="kbd">9</span>。</li>
+                    <li>輸入星期 <span class="kbd">1</span> ~ <span class="kbd">7</span>（1 代表星期一）。</li>
+                    <li>連續輸入 10 位數資料（例：<code>0800010020</code>）。</li>
+                    <li>第一個數字閃爍，檢查無誤後按 <span class="kbd">#</span> 完成該筆設定。</li>
+                    <li>設定成功後顯示幕閃爍二次，並自動返回步驟 4，可繼續輸入下一筆。</li>
+                    <li>輸入全部完畢後，連續按 <span class="kbd">*</span> 返回正常待機模式。</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- TAB 3: 設定資料的複製 -->
+        <div id="tab3" class="tab-content">
+            <div class="card">
+                <div class="card-title">三、設定資料複製 (*3)</div>
+                <p style="margin-bottom:10px;">如果星期一至星期五的作息相同，只要設定好星期一，即可直接複製到其他天，節省設定時間。</p>
+
+                <div class="callout">
+                    <div class="callout-title">📋 複製指令格式：</div>
+                    <span class="key-seq">* 3 [作息組號] [目標星期] #</span>
+                </div>
+
+                <h4 style="margin:12px 0 6px 0; font-size:0.95rem;">範例說明：</h4>
+                <p style="font-size:0.9rem; margin-bottom:8px;">將「第1組作息」的星期一資料複製到星期二：</p>
+                <p><span class="key-seq">* 3 1 2 #</span></p>
+
+                <p style="font-size:0.9rem; margin:10px 0 8px 0;">若要繼續複製到星期三，則輸入：</p>
+                <p><span class="key-seq">* 3 1 3 #</span></p>
+
+                <p style="font-size:0.85rem; color:var(--text-muted); margin-top:10px;">
+                    註：複製會以星期一為基準資料。若星期六、日不需要相同作息，則不用複製。
+                </p>
+            </div>
+        </div>
+
+        <!-- TAB 4: 作息定時查詢/增加/刪除 -->
+        <div id="tab4" class="tab-content">
+            <div class="card">
+                <div class="card-title">四、作息查詢、單筆增加與刪除 (*4)</div>
+
+                <h4 style="margin:8px 0 6px 0; font-size:0.95rem;">1. 進入查詢模式：</h4>
+                <p style="font-size:0.9rem; margin-bottom:8px;">按 <span class="kbd">*</span> ➔ 按 <span class="kbd">4</span> ➔ 輸入作息組號 <span class="kbd">0~9</span> ➔ 輸入星期 <span class="kbd">1~7</span>。</p>
+
+                <h4 style="margin:12px 0 6px 0; font-size:0.95rem;">2. 查詢按鍵說明：</h4>
+                <ul>
+                    <li>按 <span class="kbd">A</span> 鍵：查詢第 1 筆，或往前查詢。</li>
+                    <li>按 <span class="kbd">B</span> 鍵：查詢最後 1 筆，或往後查詢。</li>
+                    <li>按 <span class="kbd">*</span> 鍵：退出查詢，返回待機模式。</li>
+                </ul>
+
+                <h4 style="margin:12px 0 6px 0; font-size:0.95rem;">3. 單筆新增 (C 鍵)：</h4>
+                <p style="font-size:0.9rem;">在查詢模式下，按 <span class="kbd">C</span> 鍵即可直接調出輸入畫面，新增一組定時設定。</p>
+
+                <h4 style="margin:12px 0 6px 0; font-size:0.95rem;">4. 單筆刪除 (D 鍵)：</h4>
+                <p style="font-size:0.9rem;">在查詢模式下，先用 <span class="kbd">A</span> / <span class="kbd">B</span> 翻到欲刪除的那一筆時間畫面，按 <span class="kbd">D</span> 鍵即可直接將該筆資料刪除。</p>
+            </div>
+        </div>
+
+        <!-- TAB 5/6/7: 對時、輸出開關、清空組別 -->
+        <div id="tab567" class="tab-content">
+            <div class="card">
+                <div class="card-title">五、標準時間調整 / 對時 (*5)</div>
+                <p style="font-size:0.9rem; margin-bottom:8px;">利用電話 117 電信報時進行精準同步對時：</p>
+                <ol>
+                    <li>按 <span class="kbd">*</span> ➔ 按 <span class="kbd">5</span>。</li>
+                    <li>輸入今天星期幾 <span class="kbd">1~7</span>。</li>
+                    <li>例如現為 10 點 9 分 40 秒，準備對時 10 點 10 分 0 秒：先輸入 <span class="key-seq">1010</span>。</li>
+                    <li>聽 117 報時至 10 點 10 分 0 秒整那一刻，立刻按下 <span class="kbd">#</span> 鍵，秒數即歸零同步！</li>
+                </ol>
+            </div>
+
+            <div class="card">
+                <div class="card-title">六、報時輸出開關 (*6)</div>
+                <p style="font-size:0.9rem; margin-bottom:8px;">設定是否開啟聲音輸出：</p>
+                <ul>
+                    <li><strong>開啟報時輸出：</strong> <span class="key-seq">* 6 1 #</span> (正常使用狀態)</li>
+                    <li><strong>關閉報時輸出：</strong> <span class="key-seq">* 6 0 #</span> (暫停自動報時)</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <div class="card-title">七、刪除整天或整組作息 (*7)</div>
+                <p style="font-size:0.9rem; margin-bottom:8px;"><strong>1. 刪除某作息表中的某一整天：</strong></p>
+                <p style="margin-bottom:10px;"><span class="key-seq">* 7 [組號] [星期] #</span><br>
+                例: 刪除第0組的星期六 ➔ <span class="key-seq">* 7 0 6 #</span></p>
+
+                <p style="font-size:0.9rem; margin-bottom:8px;"><strong>2. 刪除某作息表的全部 7 天資料（整組清空）：</strong></p>
+                <p><span class="key-seq">* 7 [組號] #</span><br>
+                例: 清空第0組全部作息 ➔ <span class="key-seq">* 7 0 #</span></p>
+            </div>
+        </div>
+
+        <!-- TAB MP3: 手動播放與預錄歌曲表 -->
+        <div id="mp3" class="tab-content">
+            <div class="card">
+                <div class="card-title">🎵 MP3 手動播放功能</div>
+                <ol>
+                    <li>按下 <span class="kbd">POWER</span> 鍵啟動電源（燈亮）。</li>
+                    <li>待 MP3 模組啟動後，輸入曲目編號再按 <span class="kbd">#</span> 開始播放。<br>
+                    例：手動播放第 8 首 ➔ <span class="key-seq">POWER + 8 + #</span></li>
+                    <li>播放中若要手動停止，按 <span class="kbd">*</span> 鍵即可。</li>
+                </ol>
+                <div class="callout callout-warning">
+                    ⚠️ 註：手動播放中若預定報時時間到達，將會自動停止手動音樂，改執行自動報時。
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">🎶 出廠預錄歌曲對照表 (17首)</div>
+                <div class="table-responsive">
+                    <table id="songTable">
+                        <thead>
+                            <tr>
+                                <th>編號</th>
+                                <th>曲目名稱</th>
+                                <th>長度</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>01</strong></td><td>西敏寺鐘聲</td><td>00:22</td></tr>
+                            <tr><td><strong>02</strong></td><td>音樂 2</td><td>00:40</td></tr>
+                            <tr><td><strong>03</strong></td><td>音樂 3</td><td>00:44</td></tr>
+                            <tr><td><strong>04</strong></td><td>音樂 4</td><td>00:47</td></tr>
+                            <tr><td><strong>05</strong></td><td>輕快鐘聲</td><td>00:23</td></tr>
+                            <tr><td><strong>06</strong></td><td>愛的羅曼史 (音樂)</td><td>00:30</td></tr>
+                            <tr><td><strong>07</strong></td><td>彼得羅西卡舞曲 (音樂)</td><td>00:25</td></tr>
+                            <tr><td><strong>08</strong></td><td>叮咚 10 次</td><td>00:16</td></tr>
+                            <tr><td><strong>09</strong></td><td>洗手歌</td><td>01:43</td></tr>
+                            <tr><td><strong>10</strong></td><td>潔牙歌</td><td>05:40</td></tr>
+                            <tr><td><strong>11</strong></td><td>新式健康操</td><td>06:11</td></tr>
+                            <tr><td><strong>12</strong></td><td>頒獎音樂 - 傳統頒獎樂</td><td>03:37</td></tr>
+                            <tr><td><strong>13</strong></td><td>管樂樂 - 運動員進行曲</td><td>02:50</td></tr>
+                            <tr><td><strong>14</strong></td><td>新式健康操 (國中)</td><td>06:38</td></tr>
+                            <tr><td><strong>15</strong></td><td>高中健康操拳擊有氧</td><td>10:54</td></tr>
+                            <tr><td><strong>16</strong></td><td>國歌</td><td>01:20</td></tr>
+                            <tr><td><strong>17</strong></td><td>國旗歌</td><td>00:54</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB Hardware: 面板與硬體說明 -->
+        <div id="hardware" class="tab-content">
+            <div class="card">
+                <div class="card-title">📱 前面板說明</div>
+                <ul>
+                    <li><strong>金屬鑰匙：</strong> 鎖定時間設定功能，避免非相關人員隨意變更。</li>
+                    <li><strong>POWER：</strong> 控制背板 AMPS.W 與 MP3 電源。</li>
+                    <li><strong>標準時間顯示區：</strong> 面板正上方，顯示「時-分-秒」。</li>
+                    <li><strong>操作顯示區：</strong> 共 6 組數字（包含①功能選擇、②作息表、③星期、④報時時間、⑤樂曲、⑥報時長度）。</li>
+                    <li><strong>輸入鍵盤：</strong> 16 鍵金屬鍵盤。</li>
+                    <li><strong>MP3 模組：</strong> 使用 USB 隨身碟為聲音檔案來源。</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <div class="card-title">🔌 背板說明</div>
+                <ul>
+                    <li><strong>聲音輸出：</strong> 接至擴大機 (AMP) 麥克風輸入孔。</li>
+                    <li><strong>VOLUME 音量：</strong> 具備日/夜間自動降音功能。<br>
+                        ・日間音量 (AM 06:00 ~ PM 17:59)<br>
+                        ・夜間音量 (PM 18:00 ~ AM 05:59) 自動降低音量。
+                    </li>
+                    <li><strong>監聽喇叭：</strong> ON 啟動 / OFF 關閉本機監聽。</li>
+                    <li><strong>自動對時：</strong> 00:00 接點可接打卡鐘/刷卡鐘（需具備24小時輸出）或 GPS 衛星定位器。</li>
+                    <li><strong>全區開關：</strong> 全區（與 AMPS.W 接點連動）/ 分區（不連動）。</li>
+                    <li><strong>-S.W- / AMPS.W：</strong> 控制喇叭分區與 Power AMP 控制接點。</li>
+                    <li><strong>備用電源：</strong> DC 24V 停電備用電池輸入（無充電功能）。</li>
+                    <li><strong>變壓器：</strong> DC 18V 標準變壓器輸入。</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <div class="card-title">🛠️ 維護注意事項 & 記憶電池</div>
+                <div class="callout callout-warning">
+                    <div class="callout-title">⚠️ 記憶電池更換 (CR2032)</div>
+                    本機具停電保護，設定時間可永久保存。<br>
+                    <strong>若停電後標準時間消失，請更換記憶電池！</strong><br>
+                    📍 電池位置：面對機器上蓋左上方，電池型號為 <strong>CR2032</strong>。
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Back to top button -->
+    <button class="top-btn" onclick="scrollToTop()">▲</button>
+
+    <script>
+        function switchTab(tabId) {
+            // Hide all tab content
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(c => c.classList.remove('active'));
+
+            // Deactivate all buttons
+            const buttons = document.querySelectorAll('.tab-btn');
+            buttons.forEach(b => b.classList.remove('active'));
+
+            // Activate target tab content
+            const targetContent = document.getElementById(tabId);
+            if(targetContent) {
+                targetContent.classList.add('active');
+            }
+
+            // Activate target button
+            const activeBtn = Array.from(buttons).find(b => b.getAttribute('onclick').includes(tabId));
+            if(activeBtn) {
+                activeBtn.classList.add('active');
+                activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            }
+
+            // Clear search when switching tabs
+            document.getElementById('searchInput').value = '';
+            resetSearch();
+        }
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function searchFunction() {
+            let input = document.getElementById('searchInput').value.toLowerCase().trim();
+            if(!input) {
+                resetSearch();
+                return;
+            }
+
+            // Make all cards visible and highlight matching text or cards
+            const cards = document.querySelectorAll('.card');
+            const tabs = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => tab.classList.add('active'));
+
+            cards.forEach(card => {
+                let text = card.innerText.toLowerCase();
+                if(text.includes(input)) {
+                    card.style.display = 'block';
+                    card.style.border = '2px solid #3b82f6';
+                } else {
+                    card.style.display = 'none';
+                    card.style.border = '1px solid var(--border-color)';
+                }
+            });
+        }
+
+        function resetSearch() {
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                card.style.display = 'block';
+                card.style.border = '1px solid var(--border-color)';
+            });
+
+            // Restore active tab
+            const activeBtn = document.querySelector('.tab-btn.active');
+            if(activeBtn) {
+                const tabId = activeBtn.getAttribute('onclick').match(/'([^']+)'/)[1];
+                const contents = document.querySelectorAll('.tab-content');
+                contents.forEach(c => c.classList.remove('active'));
+                document.getElementById(tabId).classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>
