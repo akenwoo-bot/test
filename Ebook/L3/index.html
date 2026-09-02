@@ -1,0 +1,644 @@
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+							<style>
+								body {
+									background-color: white; /* Ensure the iframe has a white background */
+								}
+
+								
+							</style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>網路大冒險 🚀 — 給五年級的網路小百科</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { font-family:'Noto Sans TC', sans-serif; background:#f2fbf7; color:#1e293b; line-height:1.75; font-size:1.05rem; }
+h1,h2,h3 { font-family:'ZCOOL KuaiLe','Noto Sans TC',sans-serif; font-weight:400; }
+section { padding:70px 20px; }
+.wrap { max-width:980px; margin:0 auto; }
+
+/* ===== 導覽列 ===== */
+.nav { position:sticky; top:0; z-index:100; background:rgba(6,42,42,.96); backdrop-filter:blur(8px); display:flex; gap:4px; padding:10px 14px; justify-content:center; flex-wrap:wrap; }
+.nav a { color:#c3fae8; text-decoration:none; padding:6px 14px; border-radius:999px; font-size:.92rem; font-weight:700; transition:.2s; }
+.nav a:hover { background:#0ca678; color:#fff; }
+
+/* ===== Hero ===== */
+.hero {
+  position:relative; overflow:hidden; color:#fff; text-align:center; padding:90px 20px 100px;
+  background:
+    linear-gradient(rgba(203,250,232,.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(203,250,232,.08) 1px, transparent 1px),
+    linear-gradient(160deg,#05445e 0%,#087f5b 55%,#0ca678 100%);
+  background-size:28px 28px, 28px 28px, cover;
+}
+.hero h1 { font-size:clamp(2.4rem,7vw,4rem); letter-spacing:3px; }
+.hero p.sub { font-size:clamp(1rem,2.5vw,1.25rem); color:#c3fae8; margin:18px auto 32px; max-width:640px; }
+.float-emoji { position:absolute; font-size:46px; animation:floaty 4s ease-in-out infinite; pointer-events:none; opacity:.9; }
+@keyframes floaty { 0%,100%{transform:translateY(0) rotate(-8deg)} 50%{transform:translateY(-18px) rotate(8deg)} }
+.cta { display:inline-block; background:#ffd43b; color:#05445e; font-weight:900; font-size:1.15rem; padding:14px 36px; border-radius:999px; text-decoration:none; box-shadow:0 6px 0 #e8a50f; transition:.15s; }
+.cta:hover { transform:translateY(3px); box-shadow:0 3px 0 #e8a50f; }
+
+/* ===== 共用 ===== */
+h2.title { font-size:clamp(1.9rem,4.5vw,2.7rem); margin-bottom:10px; }
+.lead { font-size:1.12rem; color:#3d5a50; margin-bottom:32px; max-width:760px; }
+.card { background:#fff; border-radius:22px; padding:26px; box-shadow:0 8px 0 rgba(12,166,120,.14); border:3px solid #d3f9d8; }
+.reveal { opacity:0; transform:translateY(28px); transition:opacity .7s ease, transform .7s ease; }
+.reveal.visible { opacity:1; transform:none; }
+.fun-fact { background:#fff; border:3px dashed #0ca678; border-radius:18px; padding:18px 22px; font-size:1.02rem; }
+.fun-fact b { color:#087f5b; }
+.quiz-q { font-weight:900; font-size:1.15rem; margin-bottom:14px; }
+.qbtn { font-family:inherit; font-size:1.02rem; font-weight:900; padding:10px 22px; margin:0 6px 8px 0; border-radius:999px; border:3px solid #d3f9d8; background:#fff; cursor:pointer; transition:.15s; }
+.qbtn:hover:not(:disabled) { transform:translateY(-2px); border-color:#0ca678; }
+.qbtn.correct { background:#dcfce7; border-color:#22c55e; }
+.qbtn.wrong { background:#fee2e2; border-color:#ef4444; }
+.quiz-msg { display:none; margin-top:12px; background:#f0fff4; border-left:5px solid #0ca678; padding:10px 14px; border-radius:8px; }
+.quiz-card { margin-bottom:18px; }
+footer { background:#062a2a; color:#63e6be; text-align:center; padding:22px; font-size:.9rem; }
+
+/* ===== 資料卡 ===== */
+.data-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; }
+.data-card { text-align:center; transition:transform .2s; }
+.data-card:hover { transform:translateY(-6px) rotate(-1deg); }
+.data-card .emoji { font-size:2.8rem; }
+.data-card h3 { font-size:1.2rem; margin:6px 0 4px; color:#087f5b; }
+.data-card p { font-size:.92rem; color:#5c6b82; }
+
+/* ===== 鍵值對示範 ===== */
+.kv-demo { display:grid; gap:12px; }
+.kv-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; background:#fff; border:3px solid #d3f9d8; border-radius:16px; padding:12px 16px; }
+.kv-key { background:#fff3bf; border:2px solid #ffd43b; border-radius:12px; padding:4px 14px; font-weight:900; color:#7c5800; text-align:center; }
+.kv-val { background:#e7f5ff; border:2px solid #74c0fc; border-radius:12px; padding:4px 14px; font-weight:900; color:#1864ab; text-align:center; }
+.kv-small { font-size:.75rem; display:block; opacity:.75; }
+.kv-op { font-weight:900; font-size:1.3rem; color:#087f5b; }
+.kv-code { font-family:Consolas,Menlo,monospace; background:#062a2a; color:#96f2d7; border-radius:10px; padding:6px 14px; font-size:.95rem; margin-left:auto; }
+
+/* ===== 實驗卡 ===== */
+.exp-card { padding:0; overflow:hidden; }
+.exp-head { padding:24px 26px 18px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+.exp-num { width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:1.3rem; color:#fff; flex:0 0 44px; }
+.exp-head h3 { font-size:1.7rem; }
+.tool-badge { font-weight:900; font-size:.88rem; padding:4px 16px; border-radius:999px; color:#fff; }
+.exp-body { display:grid; grid-template-columns:1fr 340px; gap:0; }
+.play-area { padding:20px 26px 26px; }
+.side-area { background:#062a2a; padding:20px; display:flex; flex-direction:column; gap:14px; border-left:3px solid #0b3d3d; }
+.side-area .side-title { color:#8ce9d4; font-weight:900; font-size:.85rem; }
+.code-card { background:#021414; border-radius:14px; padding:16px; font-family:Consolas,Menlo,monospace; font-size:.88rem; color:#96f2d7; line-height:1.9; white-space:pre-wrap; word-break:break-all; flex:1; }
+.code-card .c-title { display:block; font-family:'Noto Sans TC',sans-serif; color:#5f8a80; font-size:.78rem; font-weight:900; margin-bottom:8px; }
+.ck { color:#ffd43b; font-weight:bold; }
+.cs { color:#8ce99a; }
+.cn { color:#ffa94d; font-weight:bold; }
+
+/* 實驗 D */
+#expD .exp-num { background:#e8590c; }
+#expD .tool-badge { background:#0ca678; }
+.char-preview { display:flex; align-items:center; gap:14px; background:linear-gradient(135deg,#e6fcf5,#d3f9d8); border:3px solid #69db7c; border-radius:16px; padding:14px 18px; margin-bottom:18px; }
+.cp-avatar { font-size:3rem; }
+.cp-name { font-size:1.4rem; font-weight:900; color:#087f5b; }
+.cp-detail { font-size:.95rem; color:#3d5a50; font-weight:700; }
+.d-inputs { display:grid; gap:12px; margin-bottom:18px; }
+.d-inputs label { display:flex; align-items:center; gap:10px; font-weight:900; font-size:.98rem; }
+.d-inputs input { flex:1; font-family:inherit; font-size:1rem; padding:8px 12px; border:3px solid #b2f2bb; border-radius:12px; outline:none; transition:.15s; min-width:0; }
+.d-inputs input:focus { border-color:#0ca678; box-shadow:0 0 0 3px rgba(12,166,120,.15); }
+.fmt-toggle { display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-weight:900; font-size:.95rem; }
+.fmt-btn { font-family:inherit; font-weight:900; font-size:1rem; padding:8px 24px; border-radius:999px; border:3px solid #b2f2bb; background:#fff; cursor:pointer; transition:.15s; }
+.fmt-btn.active { background:#0ca678; color:#fff; border-color:#087f5b; }
+.d-hint { color:#8ce9d4; font-size:.85rem; }
+
+/* 筆記本的缺點 */
+.limit-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-top:24px; }
+.limit-item { background:#fff5f5; border:3px solid #ffc9c9; border-radius:16px; padding:16px; font-size:.95rem; }
+.limit-item b { color:#c92a2a; display:block; margin-bottom:4px; }
+.transition-line { text-align:center; font-size:1.3rem; font-weight:900; color:#087f5b; margin-top:36px; }
+
+/* 圖書館介紹 */
+.lib-intro { display:flex; gap:20px; align-items:flex-start; flex-wrap:wrap; }
+.lib-intro-emoji { font-size:4.5rem; line-height:1; animation:floaty 3s ease-in-out infinite; }
+.lib-intro h3 { font-size:1.6rem; color:#087f5b; margin-bottom:8px; }
+
+/* ===== 搜尋大對決 ===== */
+.target-banner { text-align:center; background:#087f5b; color:#fff; border-radius:16px; padding:12px 18px; font-weight:900; font-size:1.15rem; margin-bottom:18px; }
+.race-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.race-panel { border-radius:20px; padding:20px; border:3px solid; }
+.race-notebook { background:#fff9db; border-color:#ffd43b; }
+.race-library { background:#e7f5ff; border-color:#74c0fc; }
+.race-head { font-size:1.3rem; font-weight:900; margin-bottom:12px; text-align:center; }
+.nb-page { display:grid; grid-template-columns:1fr 1fr; gap:10px; background:#fff; border:2px dashed #fcc419; border-radius:14px; padding:12px; min-height:170px; }
+@keyframes pageFlip { from { transform:translateX(-50%); opacity:0; } to { transform:translateX(0); opacity:1; } }
+.nb-page.page-flip { animation:pageFlip .4s ease; }
+.nb-card { background:#fffdf5; border:2px solid #ffe066; border-radius:12px; padding:10px 6px; text-align:center; font-weight:900; font-size:.9rem; display:flex; flex-direction:column; align-items:center; gap:2px; color:#5c4a00; }
+.nb-card .em { font-size:1.9rem; }
+.nb-card.found { border-color:#22c55e; background:#dcfce7; animation:foundBounce .7s; }
+@keyframes foundBounce { 0%,100%{transform:scale(1)} 40%{transform:scale(1.18)} }
+.nb-controls { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:14px; flex-wrap:wrap; }
+.nb-btn { font-family:inherit; font-weight:900; font-size:1rem; padding:10px 22px; border-radius:999px; border:none; cursor:pointer; background:#f59f00; color:#fff; box-shadow:0 4px 0 #b07500; transition:.15s; }
+.nb-btn:hover:not(:disabled) { transform:translateY(3px); box-shadow:0 1px 0 #b07500; }
+.nb-btn:disabled { opacity:.5; cursor:default; }
+.nb-counter { font-weight:900; color:#7c5800; font-size:.95rem; }
+.nb-msg { text-align:center; font-weight:900; min-height:1.6em; margin-top:8px; font-size:.95rem; }
+.lib-librarian { text-align:center; font-size:2.6rem; margin-bottom:4px; }
+.lib-lbl { text-align:center; font-weight:900; color:#1864ab; margin-bottom:12px; font-size:.95rem; }
+.lib-ask { display:flex; gap:8px; margin-bottom:10px; }
+.lib-ask select { flex:1; font-family:inherit; font-size:.98rem; font-weight:700; padding:8px; border:3px solid #74c0fc; border-radius:12px; background:#fff; cursor:pointer; min-width:0; }
+.lib-btn { font-family:inherit; font-weight:900; font-size:.98rem; padding:8px 16px; border-radius:12px; border:none; cursor:pointer; background:#1c7ed6; color:#fff; box-shadow:0 4px 0 #0b4f8a; transition:.15s; white-space:nowrap; }
+.lib-btn:hover { transform:translateY(3px); box-shadow:0 1px 0 #0b4f8a; }
+.lib-btn:disabled { opacity:.5; cursor:default; }
+.query-echo { font-family:Consolas,Menlo,monospace; background:#062a2a; color:#96f2d7; border-radius:10px; padding:8px 12px; font-size:.88rem; min-height:2.6em; margin-bottom:10px; }
+.lib-result { min-height:96px; display:flex; align-items:center; justify-content:center; }
+.lib-card { background:#fff; border:3px solid #4dabf7; border-radius:14px; padding:14px 24px; text-align:center; font-weight:900; font-size:1.1rem; color:#1864ab; display:flex; flex-direction:column; align-items:center; gap:4px; }
+.lib-card .em { font-size:3rem; }
+@keyframes popIn { from { transform:scale(.4); opacity:0; } to { transform:scale(1); opacity:1; } }
+.lib-card.pop { animation:popIn .5s cubic-bezier(.5,1.8,.4,1); }
+.lib-counter { text-align:center; font-weight:900; color:#1864ab; font-size:.95rem; margin-top:10px; }
+.race-result { display:none; margin-top:18px; text-align:center; background:#fff; border:3px dashed #0ca678; border-radius:18px; padding:20px; font-size:1.1rem; font-weight:900; color:#087f5b; }
+.race-restart { text-align:center; margin-top:16px; }
+.restart-btn { font-family:inherit; font-weight:900; font-size:1.05rem; padding:11px 30px; border-radius:999px; border:none; cursor:pointer; background:#0ca678; color:#fff; box-shadow:0 4px 0 #087f5b; transition:.15s; }
+.restart-btn:hover { transform:translateY(3px); box-shadow:0 1px 0 #087f5b; }
+
+/* ===== 對比表 ===== */
+.cmp-table { width:100%; border-collapse:separate; border-spacing:0; background:#fff; border-radius:18px; overflow:hidden; border:3px solid #d3f9d8; box-shadow:0 8px 0 rgba(12,166,120,.14); }
+.cmp-table th, .cmp-table td { padding:14px 16px; text-align:center; border-bottom:2px solid #e6fcf5; font-size:.98rem; }
+.cmp-table th { background:#087f5b; color:#fff; font-size:1.05rem; }
+.cmp-table td:first-child { font-weight:900; color:#087f5b; background:#f0fff4; }
+.cmp-table tr:last-child td { border-bottom:none; }
+
+/* ===== 總結 ===== */
+.summary { background:linear-gradient(160deg,#05445e,#087f5b); color:#fff; }
+.summary h2.title { color:#fff; }
+.sum-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:16px; margin-top:28px; }
+.sum-card { background:rgba(255,255,255,.1); border:2px solid rgba(255,255,255,.25); border-radius:18px; padding:18px; font-size:.98rem; text-align:center; }
+.sum-card .emoji { font-size:2.2rem; }
+.sum-card b { color:#ffd43b; }
+
+@media (max-width:860px) {
+  .exp-body { grid-template-columns:1fr; }
+  .side-area { border-left:none; border-top:3px solid #0b3d3d; }
+  .race-grid { grid-template-columns:1fr; }
+  .kv-code { margin-left:0; width:100%; }
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="#data">🃏 什麼是資料</a>
+  <a href="#notebook">📓 筆記本時代</a>
+  <a href="#library">📚 圖書館時代</a>
+  <a href="#compare">⚖️ 大對比</a>
+  <a href="#quiz">❓ 小測驗</a>
+</nav>
+
+<!-- ===== Hero ===== -->
+<header class="hero">
+  <div class="float-emoji" style="top:14%; left:8%;">🗄️</div>
+  <div class="float-emoji" style="top:55%; right:8%; animation-delay:1.3s;">🃏</div>
+  <div class="float-emoji" style="top:20%; right:24%; font-size:36px; animation-delay:.6s;">🔍</div>
+  <div class="float-emoji" style="top:62%; left:18%; font-size:36px; animation-delay:2s;">📚</div>
+  <h1>🗄️ 資訊保險箱</h1>
+  <p class="sub">你的名字、分數、照片……這些「資料」到底存在哪裡？<br>電腦是用什麼方法記住的？又是怎麼一瞬間找到的？</p>
+  <a class="cta" href="#data">🔍 開始探索！</a>
+</header>
+
+<!-- ===== 什麼是資料 ===== -->
+<section id="data">
+  <div class="wrap">
+    <h2 class="title">🃏 先認識「資料」</h2>
+    <p class="lead">電腦世界裡的一切，最後都會變成一張張「資訊卡片」。你玩遊戲、用地圖、傳訊息，背後都是資料在跑！</p>
+    <div class="data-grid">
+      <div class="card data-card reveal"><div class="emoji">📛</div><h3>名字卡</h3><p>「小美」這三個字，也是一筆資料</p></div>
+      <div class="card data-card reveal"><div class="emoji">🖼️</div><h3>照片卡</h3><p>一張照片其實是幾百萬個小數字</p></div>
+      <div class="card data-card reveal"><div class="emoji">🏆</div><h3>分數卡</h3><p>你的遊戲高紀錄 9999 分，也是一筆資料</p></div>
+      <div class="card data-card reveal"><div class="emoji">💬</div><h3>訊息卡</h3><p>傳給朋友的「你好！」也是資料</p></div>
+    </div>
+    <div class="fun-fact reveal" style="margin-top:24px;">
+      <b>🤔 問題來了：</b>這些卡片要「記」在什麼地方？記了之後，要怎麼「找」回來？這就是要介紹的兩代技術——「筆記本」和「圖書館」！
+    </div>
+  </div>
+</section>
+
+<!-- ===== 第一關：筆記本時代 ===== -->
+<section id="notebook" style="background:#fff9db;">
+  <div class="wrap">
+    <h2 class="title">📓 第一代：筆記本時代（JSON / YAML）</h2>
+    <p class="lead">最簡單的記錄方式，就像在筆記本上寫：「標籤：內容」。電腦管這個叫做「鍵值對」——<b>鍵（key）</b>是標籤，<b>值（value）</b>是內容。</p>
+
+    <div class="kv-demo">
+      <div class="kv-row reveal">
+        <span class="kv-key">🏷️ 名字<span class="kv-small">鍵（key）</span></span>
+        <span class="kv-op">+</span>
+        <span class="kv-val">✏️ 小明<span class="kv-small">值（value）</span></span>
+        <span class="kv-op">=</span>
+        <span class="kv-code">"name": "小明"</span>
+      </div>
+      <div class="kv-row reveal">
+        <span class="kv-key">🏷️ 年紀<span class="kv-small">鍵（key）</span></span>
+        <span class="kv-op">+</span>
+        <span class="kv-val">✏️ 11<span class="kv-small">值（value）</span></span>
+        <span class="kv-op">=</span>
+        <span class="kv-code">"age": 11</span>
+      </div>
+      <div class="kv-row reveal">
+        <span class="kv-key">🏷️ 最愛的食物<span class="kv-small">鍵（key）</span></span>
+        <span class="kv-op">+</span>
+        <span class="kv-val">✏️ 披薩<span class="kv-small">值（value）</span></span>
+        <span class="kv-op">=</span>
+        <span class="kv-code">"favorite_food": "披薩"</span>
+      </div>
+    </div>
+
+    <!-- 實驗 D -->
+    <div style="margin-top:34px;">
+      <div class="card exp-card reveal" id="expD">
+        <div class="exp-head">
+          <span class="exp-num">D</span>
+          <h3>我的遊戲角色卡</h3>
+          <span class="tool-badge">JSON / YAML 即時生成</span>
+        </div>
+        <div class="exp-body">
+          <div class="play-area">
+            <div class="char-preview">
+              <div class="cp-avatar">🧒</div>
+              <div>
+                <div class="cp-name" id="pvName">？</div>
+                <div class="cp-detail">年紀 <b id="pvAge">？</b> ｜ 最愛的食物 <b id="pvFood">？</b></div>
+              </div>
+            </div>
+            <div class="d-inputs">
+              <label>📛 名字 <input type="text" id="inName" maxlength="10" placeholder="例如：小明"></label>
+              <label>🎂 年紀 <input type="number" id="inAge" min="1" max="120" value="11"></label>
+              <label>🍕 最愛的食物 <input type="text" id="inFood" maxlength="10" placeholder="例如：披薩"></label>
+            </div>
+            <div class="fmt-toggle">
+              <span>電腦記的格式：</span>
+              <button class="fmt-btn active" data-fmt="json">JSON</button>
+              <button class="fmt-btn" data-fmt="yaml">YAML</button>
+            </div>
+          </div>
+          <div class="side-area">
+            <span class="side-title">📜 電腦是這樣記的（跟著你即時變！）</span>
+            <div class="code-card"><span class="c-title" id="dCodeTitle">character.json</span><span id="dCode"></span></div>
+            <p class="d-hint">💡 看看：名字改一下，程式碼也跟著變！小秘密：數字不用加引號「"」，文字才需要。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 筆記本的缺點 -->
+    <div class="limit-strip">
+      <div class="limit-item reveal">📖 <b>頁數變超多</b>1000 筆資料就是 1000 頁筆記本，翻起來好慢喔</div>
+      <div class="limit-item reveal">✍️ <b>會寫亂</b>兩個人同時在一本筆記本上寫，內容就混在一起了</div>
+      <div class="limit-item reveal">🔍 <b>找東西慢</b>要找某一個人的資料，只能一頁一頁翻，翻到找到為止</div>
+    </div>
+    <p class="transition-line reveal">👇 為了解決這些問題，「超級圖書館」誕生啦！</p>
+  </div>
+</section>
+
+<!-- ===== 第二關：圖書館時代 ===== -->
+<section id="library">
+  <div class="wrap">
+    <h2 class="title">📚 第二代：圖書館時代（資料庫 Database）</h2>
+    <p class="lead">資料庫是一個特殊的「保險箱」（常常是一個 <b>.db</b> 檔案），裡面住著一位「超級圖書館員」（搜尋程式）。你不用翻頁，只要「說話」（下查詢），它一秒就把資料遞給你！</p>
+
+    <div class="card lib-intro reveal">
+      <div class="lib-intro-emoji">🧑‍🏫</div>
+      <div>
+        <h3>圖書館員的兩件法寶</h3>
+        <p><b>1. 會聽指令（查詢 Query）</b>——你對它說：「找出所有分數 100 分的玩家！」它馬上照辦，不用你動手翻。</p>
+        <p style="margin-top:8px;"><b>2. 有目錄（索引 Index）</b>——它事先把資料排好：「小貓在第 3 頁、小犬在第 5 頁……」所以就算有 100 萬張卡片，它也能一眼定位、瞬間找到！</p>
+      </div>
+    </div>
+
+    <!-- 實驗 E：搜尋大對決 -->
+    <div style="margin-top:34px;">
+      <div class="card exp-card reveal" id="expE">
+        <div class="exp-head">
+          <span class="exp-num" style="background:#1c7ed6;">E</span>
+          <h3>搜尋大對決：筆記本 vs 圖書館</h3>
+          <span class="tool-badge" style="background:#1c7ed6;">找東西比賽</span>
+        </div>
+        <div class="exp-body" style="grid-template-columns:1fr;">
+          <div class="play-area">
+            <div class="target-banner" id="targetBanner">🎯 目標動物：？</div>
+            <p style="text-align:center; font-weight:700; color:#3d5a50; margin-bottom:16px;">兩隊都要找「同一隻」動物！筆記本隊只能翻頁，圖書館隊只要開口！</p>
+            <div class="race-grid">
+              <!-- 筆記本隊 -->
+              <div class="race-panel race-notebook">
+                <div class="race-head">📓 筆記本隊</div>
+                <div class="nb-page" id="nbPage"></div>
+                <div class="nb-controls">
+                  <button class="nb-btn" id="nbNextBtn">📖 翻到下一页</button>
+                  <span class="nb-counter">已翻 <b id="nbFlips">0</b> 頁（第 <b id="nbPageNo">1</b> / 4 頁）</span>
+                </div>
+                <p class="nb-msg" id="nbMsg"></p>
+              </div>
+              <!-- 圖書館隊 -->
+              <div class="race-panel race-library">
+                <div class="race-head">📚 圖書館隊</div>
+                <div class="lib-librarian">🧑‍🏫</div>
+                <p class="lib-lbl">「要找我幫你找！」</p>
+                <div class="lib-ask">
+                  <select id="libSelect"></select>
+                  <button class="lib-btn" id="libAskBtn">📢 問圖書館員</button>
+                </div>
+                <div class="query-echo" id="queryEcho">// 你的查詢會顯示在這裡</div>
+                <div class="lib-result" id="libResult"></div>
+                <p class="lib-counter">已查詢 <b id="libQueries">0</b> 次</p>
+              </div>
+            </div>
+            <div class="race-result" id="raceResult"></div>
+            <div class="race-restart">
+              <button class="restart-btn" id="raceRestart">🔄 換一隻動物再比一次</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 大對比 ===== -->
+<section id="compare" style="background:#e6fcf5;">
+  <div class="wrap">
+    <h2 class="title">⚖️ 筆記本 vs 圖書館：大對比</h2>
+    <div style="overflow-x:auto;">
+      <table class="cmp-table reveal">
+        <tr><th>比較項目</th><th>📓 筆記本時代<br>JSON / YAML</th><th>📚 圖書館時代<br>資料庫（.db）</th></tr>
+        <tr><td>形象比喻</td><td>自己寫筆記、自己翻</td><td>請超級圖書館員幫忙找</td></tr>
+        <tr><td>適合數量</td><td>少量資料（遊戲設定、個人資料）</td><td>海量資料（幾十億筆都沒問題）</td></tr>
+        <tr><td>找資料方式</td><td>一頁一頁翻 😴</td><td>開口下查詢 ⚡</td></tr>
+        <tr><td>搜尋速度</td><td>資料越多越慢</td><td>靠「索引」秒速找到</td></tr>
+        <tr><td>多人同時使用</td><td>容易寫亂</td><td>library 排好隊，不會亂</td></tr>
+        <tr><td>專業術語</td><td>鍵值對（Key-Value）</td><td>查詢（Query）＋ 索引（Index）</td></tr>
+      </table>
+    </div>
+
+    <div style="display:grid; gap:16px; margin-top:30px;">
+      <div class="fun-fact reveal"><b>🌍 JSON 是網路的「通用語言」：</b>你打開地圖 App 時，手機和伺服器就是用 JSON 這種「標籤＋內容」格式在交頭接耳，交換位置、路線和店名！</div>
+      <div class="fun-fact reveal"><b>🐘 最大的資料庫有幾十億筆：</b>大公司的資料庫裡有幾十億張「卡片」，但因為有索引（目錄），圖書館員還是能在 0.1 秒內找到你要的那一張！</div>
+      <div class="fun-fact reveal"><b>📱 你的手機也是一個資料庫：</b>通訊錄裡的聯絡人就是存在資料庫裡。你輸入一個名字，聯絡人就「跳」出來——那就是圖書館員在工作！</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 小測驗 ===== -->
+<section id="quiz">
+  <div class="wrap">
+    <h2 class="title">❓ 保險箱小測驗</h2>
+    <p class="lead">答對 4 題，你就是「資料管理小達人」！</p>
+    <div id="quizWrap"></div>
+  </div>
+</section>
+
+<!-- ===== 總結 ===== -->
+<section class="summary">
+  <div class="wrap">
+    <h2 class="title">🏆 探索完成！記住這 5 件事</h2>
+    <div class="sum-grid">
+      <div class="sum-card reveal"><div class="emoji">🃏</div><br><b>資料</b>＝資訊卡片<br>名字、照片、分數都是</div>
+      <div class="sum-card reveal"><div class="emoji">🏷️</div><br><b>鍵值對</b>＝標籤＋內容<br>筆記本時代（JSON / YAML）</div>
+      <div class="sum-card reveal"><div class="emoji">📢</div><br><b>查詢</b>＝開口請圖書館員找<br>不用自己翻頁</div>
+      <div class="sum-card reveal"><div class="emoji">📇</div><br><b>索引</b>＝目錄<br>秒速找到的祕密</div>
+      <div class="sum-card reveal"><div class="emoji">📦</div><br><b>選對工具</b><br>少量→筆記本，海量→資料庫！</div>
+    </div>
+    <p style="text-align:center; margin-top:34px; font-size:1.2rem; color:#c3fae8;">下次看到 App 瞬間找出一堆資料，你就知道：<br>那是一位「超級圖書館員」在 0.1 秒內完成了你的工作！🧑‍🏫⚡</p>
+  </div>
+</section>
+
+<footer>用 ❤️ 為五年級的同學打造 ｜ 資訊的魔法保險箱</footer>
+
+<script>
+/* ===== 捲動顯示 ===== */
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
+  });
+}, { threshold: 0.15 });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+/* ===== 實驗 D：角色卡 + 即時程式碼 ===== */
+const inName = document.getElementById('inName');
+const inAge = document.getElementById('inAge');
+const inFood = document.getElementById('inFood');
+let dFmt = 'json';
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function dUpdate(){
+  const name = inName.value.trim() || '小明';
+  const age = (inAge.value !== '' ? inAge.value : '11');
+  const food = inFood.value.trim() || '披薩';
+  document.getElementById('pvName').textContent = name;
+  document.getElementById('pvAge').textContent = age;
+  document.getElementById('pvFood').textContent = food;
+  if (dFmt === 'json') {
+    document.getElementById('dCodeTitle').textContent = 'character.json';
+    document.getElementById('dCode').innerHTML =
+      '{\n' +
+      '  <span class="ck">"name"</span>: <span class="cs">"' + esc(name) + '"</span>,\n' +
+      '  <span class="ck">"age"</span>: <span class="cn">' + esc(age) + '</span>,\n' +
+      '  <span class="ck">"favorite_food"</span>: <span class="cs">"' + esc(food) + '"</span>\n' +
+      '}';
+  } else {
+    document.getElementById('dCodeTitle').textContent = 'character.yaml';
+    document.getElementById('dCode').innerHTML =
+      '<span class="ck">name</span>: <span class="cs">"' + esc(name) + '"</span>\n' +
+      '<span class="ck">age</span>: <span class="cn">' + esc(age) + '</span>\n' +
+      '<span class="ck">favorite_food</span>: <span class="cs">"' + esc(food) + '"</span>';
+  }
+}
+inName.addEventListener('input', dUpdate);
+inAge.addEventListener('input', dUpdate);
+inFood.addEventListener('input', dUpdate);
+document.querySelectorAll('.fmt-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.fmt-btn').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    dFmt = b.dataset.fmt;
+    dUpdate();
+  });
+});
+dUpdate();
+
+/* ===== 實驗 E：搜尋大對決 ===== */
+const ANIMALS = [
+  {name:'小貓', emoji:'🐱'}, {name:'小犬', emoji:'🐶'}, {name:'小兔', emoji:'🐰'}, {name:'小狐狸', emoji:'🦊'},
+  {name:'小企鵝', emoji:'🐧'}, {name:'小烏龜', emoji:'🐢'}, {name:'小青蛙', emoji:'🐸'}, {name:'小老虎', emoji:'🐯'},
+  {name:'小獅子', emoji:'🦁'}, {name:'小猴子', emoji:'🐵'}, {name:'小長頸鹿', emoji:'🦒'}, {name:'小鯨魚', emoji:'🐳'},
+  {name:'小蝴蝶', emoji:'🦋'}, {name:'小海豚', emoji:'🐬'}, {name:'小貓頭鷹', emoji:'🦉'}, {name:'小浣熊', emoji:'🦝'}
+];
+const PER_PAGE = 4, PAGES = 4;
+let targetIdx, nbPage, nbFlips, nbDone, libDone, libQueries;
+
+const nbPageEl = document.getElementById('nbPage');
+const nbNextBtn = document.getElementById('nbNextBtn');
+const nbMsg = document.getElementById('nbMsg');
+const libSelect = document.getElementById('libSelect');
+const libAskBtn = document.getElementById('libAskBtn');
+const queryEcho = document.getElementById('queryEcho');
+const libResult = document.getElementById('libResult');
+const raceResult = document.getElementById('raceResult');
+
+/* 建立下拉選單 */
+ANIMALS.forEach((a, i) => {
+  const opt = document.createElement('option');
+  opt.value = i;
+  opt.textContent = a.emoji + ' ' + a.name;
+  libSelect.appendChild(opt);
+});
+
+function renderNbPage(animate){
+  const start = nbPage * PER_PAGE;
+  nbPageEl.innerHTML = ANIMALS.slice(start, start + PER_PAGE).map((a, i) => {
+    const idx = start + i;
+    const cls = (idx === targetIdx && nbDone) ? ' nb-card found' : ' nb-card';
+    return '<div class="' + cls.trim() + '"><span class="em">' + a.emoji + '</span>' + a.name + '</div>';
+  }).join('');
+  document.getElementById('nbPageNo').textContent = nbPage + 1;
+  if (animate) {
+    nbPageEl.classList.remove('page-flip');
+    void nbPageEl.offsetWidth;
+    nbPageEl.classList.add('page-flip');
+  }
+}
+
+function checkRaceResult(){
+  if (nbDone && libDone) {
+    raceResult.innerHTML = '🏁 比賽結果：筆記本隊翻了 <b>' + nbFlips + ' 頁</b>，圖書館隊只用 <b>1 次查詢</b>！<br>就算有 100 萬張卡片，圖書館員還是眨眼就找到！⚡';
+    raceResult.style.display = 'block';
+    raceResult.scrollIntoView({ behavior:'smooth', block:'center' });
+  }
+}
+
+function nbNext(){
+  if (nbDone || nbPage >= PAGES - 1) return;
+  nbPage++;
+  nbFlips++;
+  document.getElementById('nbFlips').textContent = nbFlips;
+  renderNbPage(true);
+  const start = nbPage * PER_PAGE;
+  if (targetIdx >= start && targetIdx < start + PER_PAGE) {
+    nbDone = true;
+    nbNextBtn.disabled = true;
+    setTimeout(() => {
+      renderNbPage(false); /* 標記找到的卡片 */
+      nbMsg.textContent = '🎉 找到了！在第 ' + (nbPage + 1) + ' 頁！';
+      nbMsg.style.color = '#2b8a3e';
+      checkRaceResult();
+    }, 420);
+  } else {
+    nbMsg.textContent = '😅 這一頁沒有……繼續翻！';
+    nbMsg.style.color = '#7c5800';
+  }
+}
+
+function libAsk(){
+  if (libDone) return;
+  const chosen = +libSelect.value;
+  libQueries++;
+  document.getElementById('libQueries').textContent = libQueries;
+  queryEcho.textContent = '找(卡片庫, 名字 = "' + ANIMALS[chosen].name + '")';
+  if (chosen !== targetIdx) {
+    libResult.innerHTML = '<div class="lib-card pop">😅 ' + ANIMALS[chosen].emoji + ' ' + ANIMALS[chosen].name + ' 找到了，但這不是今天的目標！再問一次！</div>';
+    return;
+  }
+  libDone = true;
+  libAskBtn.disabled = true;
+  libResult.innerHTML = '<div class="lib-card pop"><span class="em">' + ANIMALS[chosen].emoji + '</span>' + ANIMALS[chosen].name + ' —— 秒速找到！⚡</div>';
+  checkRaceResult();
+}
+
+function raceInit(){
+  targetIdx = 4 + Math.floor(Math.random() * 12); /* 目標在第 2~4 頁 */
+  nbPage = 0; nbFlips = 0; nbDone = false; libDone = false; libQueries = 0;
+  document.getElementById('targetBanner').textContent = '🎯 目標動物：' + ANIMALS[targetIdx].emoji + ' ' + ANIMALS[targetIdx].name + '（兩隊找同一隻！）';
+  document.getElementById('nbFlips').textContent = '0';
+  document.getElementById('nbPageNo').textContent = '1';
+  nbMsg.textContent = '';
+  nbNextBtn.disabled = false;
+  libAskBtn.disabled = false;
+  queryEcho.textContent = '// 你的查詢會顯示在這裡';
+  libResult.innerHTML = '';
+  document.getElementById('libQueries').textContent = '0';
+  raceResult.style.display = 'none';
+  renderNbPage(false);
+}
+
+nbNextBtn.addEventListener('click', nbNext);
+libAskBtn.addEventListener('click', libAsk);
+document.getElementById('raceRestart').addEventListener('click', raceInit);
+raceInit();
+
+/* ===== 小測驗 ===== */
+function buildQuiz(wrapEl, questions, goodMsg, badMsg){
+  let answered = 0, correctCount = 0;
+  questions.forEach((item, idx) => {
+    const card = document.createElement('div');
+    card.className = 'card quiz-card reveal';
+    card.innerHTML =
+      '<p class="quiz-q">' + (idx + 1) + '. ' + item.q + '</p><div>' +
+      item.options.map(o => '<button class="qbtn" data-a="' + o.key + '">' + o.label + '</button>').join('') +
+      '</div><p class="quiz-msg"></p>';
+    wrapEl.appendChild(card);
+    io.observe(card);
+    card.querySelectorAll('.qbtn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (card.dataset.done) return;
+        card.dataset.done = '1';
+        card.querySelectorAll('.qbtn').forEach(b => b.disabled = true);
+        const ok = btn.dataset.a === item.a;
+        if (ok) correctCount++;
+        btn.classList.add(ok ? 'correct' : 'wrong');
+        card.querySelector('.qbtn[data-a="' + item.a + '"]').classList.add('correct');
+        const msg = card.querySelector('.quiz-msg');
+        msg.textContent = (ok ? '🎉 答對了！' : '💡 正確答案是「' + item.correctLabel + '」。') + ' ' + item.explain;
+        msg.style.display = 'block';
+        answered++;
+        if (answered === questions.length) {
+          const r = document.createElement('p');
+          r.className = 'card';
+          r.style.cssText = 'text-align:center; font-size:1.2rem; font-weight:900; border-color:' + (correctCount === questions.length ? '#22c55e' : '#0ca678') + ';';
+          r.textContent = correctCount === questions.length ? goodMsg : (badMsg + '你答對 ' + correctCount + ' 題！把上面的解釋讀一遍，下次一定全對！');
+          wrapEl.appendChild(r);
+          r.scrollIntoView({ behavior:'smooth', block:'center' });
+        }
+      });
+    });
+  });
+}
+buildQuiz(document.getElementById('quizWrap'), [
+  { q:'在 "name": "小明" 這行資料裡，"name"（標籤）叫做什麼？',
+    a:'key', correctLabel:'鍵（key）',
+    options:[ {key:'key', label:'🏷️ 鍵（key）'}, {key:'value', label:'✏️ 值（value）'}, {key:'index', label:'📇 索引'}, {key:'query', label:'📢 查詢'} ],
+    explain:'「標籤＋內容」就叫鍵值對：標籤是「鍵」，內容「小明」才是「值」！' },
+  { q:'有 10,000 位玩家的資料，要快速找出「所有分數 100 分的人」，最棒的方法？',
+    a:'db', correctLabel:'用資料庫問圖書館員',
+    options:[ {key:'note', label:'📖 一頁一頁翻筆記本'}, {key:'db', label:'📚 用資料庫下查詢'}, {key:'friend', label:'🙋 請同學幫忙找'}, {key:'rewrite', label:'✍️ 把筆記本重寫一次'} ],
+    explain:'資料一多，「翻頁」就來不及了！資料庫的圖書館員會下查詢，瞬間找出所有符合的人！' },
+  { q:'JSON 和 YAML 是什麼？',
+    a:'fmt', correctLabel:'用「標籤＋內容」寫下資訊的格式',
+    options:[ {key:'game', label:'🎮 一種電腦遊戲'}, {key:'fmt', label:'📝 用「標籤＋內容」記錄資訊的格式'}, {key:'box', label:'📦 一種很大的保險箱'}, {key:'person', label:'🧑‍🏫 一種圖書館員'} ],
+    explain:'它們都是「筆記本時代」的寫法：把資訊寫成一行行的「標籤：內容」，讓電腦看得懂！' },
+  { q:'資料庫裡的「索引」（目錄）有什麼用？',
+    a:'fast', correctLabel:'讓搜尋變快',
+    options:[ {key:'save', label:'💾 讓資料存比較多'}, {key:'fast', label:'⚡ 讓搜尋變快'}, {key:'pretty', label:'🎨 讓資料變漂亮'}, {key:'safe', label:'🔒 讓資料更安全'} ],
+    explain:'索引就像圖書館的目錄：「小貓在第 3 頁」——有了它，不用翻遍所有書，一查就知道在哪裡！' }
+], '👑 4/4 全對！你是「資料管理小達人」，已經懂資料庫的入門祕密了！', '🌟 ');
+</script>
+</body>
+</html>
+
+							<script>
+                            	
+							</script>
+                        </body>
+                        </html>
+                    
