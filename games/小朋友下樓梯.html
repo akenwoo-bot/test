@@ -1,0 +1,499 @@
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+							<style>
+								body {
+									background-color: white; /* Ensure the iframe has a white background */
+								}
+
+								
+							</style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>小朋友下樓梯:極速進化版</title>
+     <style>
+        body {
+            margin: 0;
+            background-color: #1a1a1a;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+            user-select: none;
+         }
+         #game-container {
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+         }
+        canvas {
+            background: #222;
+            display: block;
+            border-radius: 4px;
+            touch-action: none;
+         }
+         /* UI 疊層 */
+         .overlay {
+            position: absolute;
+            top: 0; left: 0; width: 400px; height: 600px;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            z-index: 10;
+         }
+         .hidden { display: none !important; }
+        button {
+            background: #ff5722;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.1s;
+         }
+        button:active { transform: scale(0.95); }
+        button.gacha-btn { background: #9c27b0; }
+        button.buff-btn { background: #4caf50; width: 80%; font-size: 16px; margin: 5px; }
+         .stats-banner {
+            position: absolute;
+            top: 10px; width: 90%;
+            display: flex; justify-content: space-between;
+            font-size: 18px; font-weight: bold;
+            pointer-events: none;
+            z-index: 5;
+            text-shadow: 1px 1px 3px #000;
+         }
+         .controls-hint {
+            margin-top: 10px;
+            color: #888;
+            font-size: 14px;
+         }
+     </style>
+</head>
+<body>
+
+     <div id="game-container">
+         <!-- 頂部即時資訊 -->
+         <div class="stats-banner">
+             <div id="ui-hp">❤️ HP: 10/10</div>
+             <div id="ui-score">🪵 層數: 0</div>
+             <div id="ui-coins">🪙 100</div>
+         </div>
+
+         <!-- 遊戲畫布 -->
+         <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+         <!-- 主選單 / 商店大廳 -->
+         <div id="menu-overlay" class="overlay">
+             <h1 style="color: #ff5722; margin-bottom: 5px;">下樓梯:極速深淵</h1>
+             <p style="color:#aaa; margin-top:0;">每 5 層即可獲得超爽天賦!</p>
+             <div style="font-size: 24px; margin: 15px 0;">目前角色: <span id="current-char-emoji">🧍</span></div>
+             <button onclick="startGame()">⚔️ 開始挑戰</button>
+             <button class="gacha-btn" onclick="drawGacha()">🎰 扭蛋盲盒 (消耗 50🪙)</button>
+             <div id="gacha-result" style="color: #e040fb; font-weight: bold; height: 20px;"></div>
+         </div>
+
+         <!-- Roguelike 三選一升級選單 -->
+         <div id="buff-overlay" class="overlay hidden">
+             <h2 style="color: #4caf50; margin-bottom: 20px;">🎉 下沉突破!選擇你的祝福</h2>
+             <button class="buff-btn" onclick="chooseBuff('hp')">❤️ 治療:恢復 4 點生命值</button>
+             <button class="buff-btn" onclick="chooseBuff('magnet')">🧲 磁鐵:金幣自動吸附範圍擴大</button>
+             <button class="buff-btn" onclick="chooseBuff('shield')">🛡️ 護盾:獲得 20% 刺針免傷</button>
+         </div>
+
+         <!-- 結束畫面 -->
+         <div id="gameover-overlay" class="overlay hidden">
+             <h1 style="color: #f44336;">💀 挑戰失敗</h1>
+             <p id="final-stats" style="font-size: 18px;"></p>
+             <button onclick="backToMenu()">🏠 返回大廳</button>
+         </div>
+     </div>
+
+     <div class="controls-hint">鍵盤 ←→ 或 觸控/滑鼠 點擊畫面控制移動</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// --- 遊戲永久資料 (存檔) ---
+let gachaPool = [
+     { name: '普通人', emoji: '🧍', speedMod: 1, hpMod: 0, magnet: 40, shield: 0 },
+     { name: '小忍者', emoji: '🥷', speedMod: 1.3, hpMod: -2, magnet: 40, shield: 0 },
+     { name: '機器人', emoji: '🤖', speedMod: 0.9, hpMod: 4, magnet: 40, shield: 0.2 },
+     { name: '太空人', emoji: '👨‍🚀', speedMod: 1.1, hpMod: 1, magnet: 80, shield: 0 }
+];
+let currentCharacter = gachaPool[0];
+let globalCoins = 100;
+
+// --- 局內即時變數 ---
+let player, platforms, particles;
+let score, gameActive, isPaused, nextBuffScore;
+let keys = {};
+let shakeTime = 0;
+let touchDirection = 0;
+let isMouseDown = false;
+
+// --- 鍵盤監聽 ---
+window.addEventListener('keydown', e => keys[e.key] = true);
+window.addEventListener('keyup', e => keys[e.key] = false);
+
+// --- 觸控 / 滑鼠監聽 ---
+function getCanvasX(clientX) {
+    return clientX - canvas.getBoundingClientRect().left;
+}
+
+canvas.addEventListener('touchstart', handlePointer, { passive: false });
+canvas.addEventListener('touchmove', handlePointer, { passive: false });
+canvas.addEventListener('touchend', () => { touchDirection = 0; });
+
+function handlePointer(e) {
+    e.preventDefault();
+    if (!player) return;
+    let px = getCanvasX(e.touches[0].clientX);
+    let playerCenter = player.x + player.width / 2;
+    touchDirection = px < playerCenter ? -1 : 1;
+}
+
+canvas.addEventListener('mousedown', (e) => {
+    isMouseDown = true;
+    if (!player) return;
+    let mx = getCanvasX(e.clientX);
+    let playerCenter = player.x + player.width / 2;
+    touchDirection = mx < playerCenter ? -1 : 1;
+});
+canvas.addEventListener('mousemove', (e) => {
+    if (!isMouseDown || !player) return;
+    let mx = getCanvasX(e.clientX);
+    let playerCenter = player.x + player.width / 2;
+    touchDirection = mx < playerCenter ? -1 : 1;
+});
+canvas.addEventListener('mouseup', () => { isMouseDown = false; touchDirection = 0; });
+canvas.addEventListener('mouseleave', () => { isMouseDown = false; touchDirection = 0; });
+
+// --- 初始化 UI 顯示 ---
+function updateGlobalUI() {
+    document.getElementById('ui-coins').innerText = `🪙 ${globalCoins}`;
+    document.getElementById('current-char-emoji').innerText = currentCharacter.emoji;
+}
+updateGlobalUI();
+
+// --- 抽盲盒機制 ---
+function drawGacha() {
+    if (globalCoins < 50) {
+        document.getElementById('gacha-result').innerText = "❌ 金幣不足 50 🪙!";
+        return;
+     }
+    globalCoins -= 50;
+    let reward = gachaPool[Math.floor(Math.random() * gachaPool.length)];
+    currentCharacter = reward;
+    document.getElementById('gacha-result').innerText = `🎉 抽中:${reward.name} ${reward.emoji}!`;
+    updateGlobalUI();
+}
+
+// --- 遊戲初始化與開始 ---
+function startGame() {
+    document.getElementById('menu-overlay').classList.add('hidden');
+    document.getElementById('gameover-overlay').classList.add('hidden');
+
+     // 初始化玩家狀態(套用角色加成)
+    player = {
+        x: 180, y: 100,
+        vx: 0, vy: 0,
+        width: 30, height: 30,
+        speed: 5 * currentCharacter.speedMod,
+        gravity: 0.4,
+        hp: 10 + currentCharacter.hpMod,
+        maxHp: 10 + currentCharacter.hpMod,
+        magnetRange: currentCharacter.magnet,
+        shield: currentCharacter.shield,
+        combo: 0
+     };
+
+    platforms = [];
+    particles = [];
+    score = 0;
+    nextBuffScore = 5;
+    gameActive = true;
+    isPaused = false;
+    shakeTime = 0;
+
+     // 建立初始安全梯
+    platforms.push({ x: 150, y: 200, width: 100, height: 15, type: 'normal', stepped: false });
+    for(let i = 1; i <= 5; i++) { spawnPlatform(200 + i * 90); }
+
+    updateGameUI();
+    requestAnimationFrame(gameLoop);
+}
+
+function spawnPlatform(yPosition) {
+    let types = ['normal', 'normal', 'spike', 'spring', 'fake'];
+    let type = types[Math.floor(Math.random() * types.length)];
+    platforms.push({
+        x: Math.random() * (canvas.width - 90),
+        y: yPosition || canvas.height,
+        width: 90,
+        height: 15,
+        type: type,
+        stepped: false,
+        hasCoin: Math.random() < 0.4
+     });
+}
+
+// --- 主遊戲迴圈 ---
+function gameLoop() {
+    if (!gameActive || isPaused) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+     // 畫面震動效果 (Juice 回饋)
+    ctx.save();
+    if (shakeTime > 0) {
+        let dx = (Math.random() - 0.5) * 6;
+        let dy = (Math.random() - 0.5) * 6;
+        ctx.translate(dx, dy);
+        shakeTime--;
+     }
+
+    updatePhysics();
+    drawObjects();
+
+    ctx.restore();
+    requestAnimationFrame(gameLoop);
+}
+
+// --- 物理與邏輯更新 ---
+function updatePhysics() {
+     // 1. 玩家水平控制 (鍵盤 + 觸控/滑鼠)
+    if (keys['ArrowLeft']) {
+        player.vx = -player.speed;
+    } else if (keys['ArrowRight']) {
+        player.vx = player.speed;
+    } else if (touchDirection === -1) {
+        player.vx = -player.speed;
+    } else if (touchDirection === 1) {
+        player.vx = player.speed;
+    } else {
+        player.vx = 0;
+    }
+
+    player.x += player.vx;
+    if (player.x < 0) player.x = 0;
+    if (player.x > canvas.width - player.width) player.x = canvas.width - player.width;
+
+     // 2. 玩家重力
+    player.vy += player.gravity;
+    player.y += player.vy;
+
+     // 3. 樓梯集體上移與生成
+    let scrollSpeed = 2 + (score * 0.1);
+    let onPlatform = false;
+
+    platforms.forEach((plat, index) => {
+        plat.y -= scrollSpeed;
+
+         // 玩家與樓梯碰撞偵測 (AABB)
+        if (player.x + player.width > plat.x && player.x < plat.x + plat.width &&
+            player.y + player.height >= plat.y && player.y + player.height <= plat.y + plat.height + 5 &&
+            player.vy >= 0) {
+
+             // 踩上樓梯
+            player.y = plat.y - player.height;
+            player.vy = 0;
+            onPlatform = true;
+
+            if (!plat.stepped) {
+                plat.stepped = true;
+                score++;
+                player.combo++;
+                updateGameUI();
+                createParticles(player.x + 15, player.y + 30, '#4caf50', 5);
+
+                 // 處理特殊樓梯邏輯
+                if (plat.type === 'spike') {
+                    let dmg = Math.max(1, Math.round(3 * (1 - player.shield)));
+                    player.hp -= dmg;
+                    player.combo = 0;
+                    shakeTime = 10;
+                    createParticles(player.x + 15, player.y + 15, '#f44336', 15);
+                    updateGameUI();
+                 } else if (plat.type === 'spring') {
+                    player.vy = -10;
+                    shakeTime = 5;
+                    createParticles(player.x + 15, player.y + 30, '#ffeb3b', 12);
+                 } else if (plat.type === 'fake') {
+                    setTimeout(() => { platforms = platforms.filter(p => p !== plat); }, 200);
+                 }
+
+                 // 觸發 Roguelike 升級
+                if (score >= nextBuffScore) {
+                    triggerBuffSelection();
+                 }
+             }
+         }
+
+         // 金幣吸附功能 (磁鐵機制)
+        if (plat.hasCoin) {
+            let coinX = plat.x + plat.width / 2;
+            let coinY = plat.y - 15;
+            let dist = Math.hypot((player.x + 15) - coinX, (player.y + 15) - coinY);
+            if (dist < player.magnetRange) {
+                plat.hasCoin = false;
+                globalCoins += 5 + Math.floor(player.combo / 3);
+                createParticles(coinX, coinY, '#ffeb3b', 8);
+                updateGlobalUI();
+             }
+         }
+     });
+
+     // 清除超出畫面上方的樓梯並再生
+    if (platforms[0] && platforms[0].y < -20) {
+        platforms.shift();
+        spawnPlatform();
+     }
+
+     // 4. 勝負判定
+    if (player.y <= 0) {
+        player.hp -= 0.05;
+        shakeTime = 2;
+        if (Math.random() < 0.1) player.combo = 0;
+        updateGameUI();
+     }
+    if (player.y > canvas.height || player.hp <= 0) {
+        endGame();
+     }
+
+     // 5. 更新粒子特效
+    particles.forEach((p, i) => {
+        p.x += p.vx; p.y += p.vy; p.alpha -= 0.02;
+        if (p.alpha <= 0) particles.splice(i, 1);
+     });
+}
+
+// --- 視覺渲染 ---
+function drawObjects() {
+     // 1. 繪製所有樓梯
+    platforms.forEach(plat => {
+        if (plat.type === 'normal') ctx.fillStyle = '#8bc34a';
+        else if (plat.type === 'spike') ctx.fillStyle = '#b71c1c';
+        else if (plat.type === 'spring') ctx.fillStyle = '#0288d1';
+        else if (plat.type === 'fake') ctx.fillStyle = '#ff9800';
+        ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
+
+         // 刺針三角形
+        if (plat.type === 'spike') {
+            ctx.fillStyle = '#ffc107';
+            for (let i = 0; i < plat.width; i += 15) {
+                ctx.beginPath();
+                ctx.moveTo(plat.x + i, plat.y);
+                ctx.lineTo(plat.x + i + 7.5, plat.y - 8);
+                ctx.lineTo(plat.x + i + 15, plat.y);
+                ctx.fill();
+             }
+         }
+
+         // 繪製金幣
+        if (plat.hasCoin) {
+            ctx.font = '16px Arial';
+            ctx.fillText('🪙', plat.x + plat.width / 2 - 8, plat.y - 8);
+         }
+     });
+
+     // 2. 繪製玩家角色
+    ctx.font = '28px Arial';
+    ctx.fillText(currentCharacter.emoji, player.x, player.y + 25);
+
+     // Combo 連擊字樣
+    if (player.combo >= 3) {
+        ctx.fillStyle = '#ffeb3b';
+        ctx.font = 'italic bold 16px Arial';
+        ctx.fillText(`🔥 Combo ${player.combo}`, player.x + 30, player.y - 5);
+     }
+
+     // 3. 繪製粒子
+    particles.forEach(p => {
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+     });
+}
+
+// --- 輔助特效生成 ---
+function createParticles(x, y, color, count) {
+    for (let i = 0; i < count; i++) {
+        particles.push({
+            x: x, y: y,
+            vx: (Math.random() - 0.5) * 6,
+            vy: (Math.random() - 0.5) * 6,
+            alpha: 1,
+            size: Math.random() * 4 + 2,
+            color: color
+         });
+     }
+}
+
+// --- UI 更新與系統轉換 ---
+function updateGameUI() {
+    document.getElementById('ui-hp').innerText = `❤️ HP: ${Math.max(0, Math.ceil(player.hp))}/${player.maxHp}`;
+    document.getElementById('ui-score').innerText = `🪵 層數: ${score}`;
+    updateGlobalUI();
+}
+
+function triggerBuffSelection() {
+    isPaused = true;
+    nextBuffScore += 5;
+    document.getElementById('buff-overlay').classList.remove('hidden');
+}
+
+function chooseBuff(type) {
+    if (type === 'hp') player.hp = Math.min(player.maxHp, player.hp + 4);
+    else if (type === 'magnet') player.magnetRange += 50;
+    else if (type === 'shield') player.shield += 0.15;
+    isPaused = false;
+    document.getElementById('buff-overlay').classList.add('hidden');
+    updateGameUI();
+    requestAnimationFrame(gameLoop);
+}
+
+function endGame() {
+    gameActive = false;
+    document.getElementById('final-stats').innerText = `你成功下達了 ${score} 層,沿途斬獲大量回饋!`;
+    document.getElementById('gameover-overlay').classList.remove('hidden');
+    updateGlobalUI();
+}
+
+function backToMenu() {
+    document.getElementById('gameover-overlay').classList.add('hidden');
+    document.getElementById('menu-overlay').classList.remove('hidden');
+    updateGlobalUI();
+}
+</script>
+</body>
+</html>
+
+							<script>
+                            	
+							</script>
+                        </body>
+                        </html>
+                    
