@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>電梯保全卡密碼設定 動態說明書</title>
+<style>
+  :root {
+    --primary: #007bff;
+    --bg-dark: #1a1d24;
+    --panel-bg: #2c313c;
+    --lcd-bg: #0d1b0d;
+    --lcd-text: #00ff00;
+    --key-bg: linear-gradient(145deg, #e6e6e6, #cccccc);
+    --key-active: linear-gradient(145deg, #cccccc, #b3b3b3);
+  }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f7f6;
+    color: #333;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 1000px;
+    width: 100%;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  header h1 {
+    color: var(--bg-dark);
+    margin-bottom: 10px;
+    font-size: 28px;
+  }
+
+  header p {
+    color: #666;
+    font-size: 16px;
+  }
+
+  .main-content {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+  }
+
+  /* 左側步驟區 */
+  .steps-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .step-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    border-left: 5px solid #ddd;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+  }
+
+  .step-card:hover {
+    transform: translateX(5px);
+  }
+
+  .step-card.active {
+    border-left-color: var(--primary);
+    background: #f0f8ff;
+    transform: scale(1.02);
+    box-shadow: 0 8px 15px rgba(0,123,255,0.15);
+  }
+
+  .step-card h3 {
+    margin: 0 0 8px 0;
+    color: var(--bg-dark);
+    font-size: 18px;
+  }
+
+  .step-card p {
+    margin: 0;
+    color: #555;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .step-card code {
+    background: #eee;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    color: #d63384;
+    font-weight: bold;
+  }
+
+  /* 右側模擬面板區 */
+  .elevator-panel {
+    width: 320px;
+    background: var(--panel-bg);
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+    position: sticky;
+    top: 20px;
+  }
+
+  .lcd {
+    background: var(--lcd-bg);
+    color: var(--lcd-text);
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 24px;
+    font-weight: bold;
+    padding: 15px;
+    border-radius: 6px;
+    border: 3px solid #111;
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+    text-shadow: 0 0 8px var(--lcd-text);
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    letter-spacing: 3px;
+    margin-bottom: 20px;
+    transition: all 0.3s;
+  }
+
+  .keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .key {
+    height: 55px;
+    background: var(--key-bg);
+    border: 1px solid #999;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: bold;
+    color: #333;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.6);
+    transition: all 0.1s;
+    user-select: none;
+  }
+
+  .key:active, .key.active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+    background: var(--key-active);
+  }
+
+  .key.special {
+    background: linear-gradient(145deg, #ffcc00, #e6b800);
+    color: #000;
+    font-size: 20px;
+  }
+
+  .func-info {
+    display: flex;
+    justify-content: space-between;
+    color: #aaa;
+    font-size: 14px;
+    margin-bottom: 20px;
+    padding: 0 5px;
+  }
+
+  .controls {
+    display: flex;
+    gap: 10px;
+  }
+
+  .controls button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-prev { background: #6c757d; color: white; }
+  .btn-next { background: var(--primary); color: white; }
+  .btn-reset { background: #dc3545; color: white; }
+  
+  .controls button:hover { opacity: 0.9; transform: translateY(-2px); }
+  .controls button:active { transform: translateY(0); }
+
+  /* RWD 響應式設計 */
+  @media (max-width: 768px) {
+    .main-content {
+      flex-direction: column-reverse;
+    }
+    .elevator-panel {
+      width: 100%;
+      position: static;
+      margin-bottom: 20px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>🛗 電梯保全卡密碼設定 動態說明書</h1>
+    <p>跟著步驟與動畫演示，輕鬆完成密碼設定！</p>
+  </header>
+  
+  <div class="main-content">
+    <!-- 左側：步驟說明 -->
+    <div class="steps-panel" id="stepsPanel">
+      <!-- 由 JS 動態生成 -->
+    </div>
+    
+    <!-- 右側：模擬電梯主機 -->
+    <div class="elevator-panel">
+      <div class="lcd" id="lcd">HOST PWD: </div>
+      
+      <div class="keypad">
+        <div class="key" data-key="1">1</div>
+        <div class="key" data-key="2">2</div>
+        <div class="key" data-key="3">3</div>
+        <div class="key" data-key="4">4</div>
+        <div class="key" data-key="5">5</div>
+        <div class="key" data-key="6">6</div>
+        <div class="key" data-key="7">7</div>
+        <div class="key" data-key="8">8</div>
+        <div class="key" data-key="9">9</div>
+        <div class="key special" data-key="*">*</div>
+        <div class="key" data-key="0">0</div>
+        <div class="key special" data-key="#">#</div>
+      </div>
+      
+      <div class="func-info">
+        <span>「 * 」 退出</span>
+        <span>「 # 」 確定</span>
+      </div>
+      
+      <div class="controls">
+        <button class="btn-prev" onclick="prevStep()">⏮ 上一步</button>
+        <button class="btn-next" onclick="nextStep()">下一步 ⏭</button>
+        <button class="btn-reset" onclick="resetAll()">🔄 重置</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 步驟資料定義
+  const steps = [
+    {
+      id: 1,
+      title: "步驟 1：輸入主機密碼",
+      desc: "請輸入主機密碼：<code>0246890</code>",
+      keys: ['0', '2', '4', '6', '8', '9', '0'],
+      prefix: "HOST PWD:"
+    },
+    {
+      id: 2,
+      title: "步驟 2：選擇設定選項",
+      desc: "輸入：<code>4</code>（設定密碼選項）",
+      keys: ['4'],
+      prefix: "OPTION:"
+    },
+    {
+      id: 3,
+      title: "步驟 3：設定第一組密碼",
+      desc: "輸入：<code>4601</code>（設定第一組密碼）",
+      keys: ['4', '6', '0', '1'],
+      prefix: "SET PWD 1:"
+    },
+    {
+      id: 4,
+      title: "步驟 4：輸入新密碼並確定",
+      desc: "輸入新密碼（四碼數字，ex: <code>1234</code>），輸入完成後按「<code>#</code>」確定。",
+      keys: ['1', '2', '3', '4', '#'],
+      prefix: "NEW PWD:"
+    },
+    {
+      id: 5,
+      title: "步驟 5：完成與使用",
+      desc: "設定完成！使用電梯密碼：<code>7</code> + 新密碼（ex: <code>71234</code>）",
+      keys: ['7', '1', '2', '3', '4'],
+      prefix: "USE PWD:"
+    }
+  ];
+
+  let currentStep = 0;
+  let isAnimating = false;
+
+  // 初始化步驟卡片
+  function initSteps() {
+    const panel = document.getElementById('stepsPanel');
+    steps.forEach((step, index) => {
+      const card = document.createElement('div');
+      card.className = 'step-card';
+      card.id = `step-${index}`;
+      card.innerHTML = `<h3>${step.title}</h3><p>${step.desc}</p>`;
+      card.onclick = () => goToStep(index);
+      panel.appendChild(card);
+    });
+    updateUI();
+  }
+
+  // 更新 UI 狀態
+  function updateUI() {
+    document.querySelectorAll('.step-card').forEach((card, index) => {
+      card.classList.toggle('active', index === currentStep);
+    });
+    
+    const lcd = document.getElementById('lcd');
+    const step = steps[currentStep];
+    lcd.style.color = 'var(--lcd-text)';
+    lcd.style.textShadow = '0 0 8px var(--lcd-text)';
+    lcd.textContent = step.prefix + " ";
+    
+    // 自動滾動到當前步驟
+    document.getElementById(`step-${currentStep}`).scrollIntoView({behavior: 'smooth', block: 'nearest'});
+  }
+
+  // 按鍵動畫
+  function animateKeys(stepIndex) {
+    if (isAnimating) return;
+    isAnimating = true;
+    
+    const step = steps[stepIndex];
+    const lcd = document.getElementById('lcd');
+    let i = 0;
+    
+    lcd.textContent = step.prefix + " ";
+    
+    const interval = setInterval(() => {
+      if (i >= step.keys.length) {
+        clearInterval(interval);
+        isAnimating = false;
+        
+        // 步驟 4 按下 # 後的特殊動畫
+        if (stepIndex === 3) {
+          lcd.textContent = "✔ 設定完成！";
+          lcd.style.color = '#00ff00';
+          lcd.style.textShadow = '0 0 15px #00ff00, 0 0 5px #fff';
+        }
+        return;
+      }
+      
+      const key = step.keys[i];
+      const keyEl = document.querySelector(`.key[data-key="${key}"]`);
+      
+      if (keyEl) {
+        keyEl.classList.add('active');
+        lcd.textContent += key;
+        
+        setTimeout(() => {
+          keyEl.classList.remove('active');
+        }, 250);
+      }
+      i++;
+    }, 400);
+  }
+
+  // 控制函數
+  function nextStep() {
+    if (currentStep < steps.length - 1 && !isAnimating) {
+      currentStep++;
+      updateUI();
+      animateKeys(currentStep);
+    }
+  }
+
+  function prevStep() {
+    if (currentStep > 0 && !isAnimating) {
+      currentStep--;
+      updateUI();
+      animateKeys(currentStep);
+    }
+  }
+
+  function goToStep(index) {
+    if (!isAnimating && index !== currentStep) {
+      currentStep = index;
+      updateUI();
+      animateKeys(currentStep);
+    }
+  }
+
+  function resetAll() {
+    if (!isAnimating) {
+      currentStep = 0;
+      updateUI();
+      animateKeys(currentStep);
+    }
+  }
+
+  // 初始化
+  window.onload = () => {
+    initSteps();
+    // 頁面載入時自動播放第一步
+    setTimeout(() => animateKeys(0), 500);
+  };
+</script>
+
+</body>
+</html>
