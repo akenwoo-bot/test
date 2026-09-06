@@ -1,0 +1,487 @@
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+							<style>
+								body {
+									background-color: white; /* Ensure the iframe has a white background */
+								}
+
+								
+							</style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>見縫插針 Coreball</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a1e;overflow:hidden;display:flex;justify-content:center;align-items:center;height:100vh;touch-action:none;user-select:none;-webkit-user-select:none}
+canvas{display:block}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+/* ========== 基礎設定 ========== */
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+let W,H,cx,cy;
+function resize(){W=canvas.width=Math.min(innerWidth,480);H=canvas.height=Math.min(innerHeight,780);cx=W/2;cy=H*0.38}
+addEventListener('resize',resize);resize();
+
+const CORE_R=26,BALL_R=6,BALL_SPD=7,TRAIL=10;
+const SNAIL_DUR=300,SNAIL_MULT=0.3;
+const COLS=['#ff6b6b','#ffa502','#6c5ce7','#00b894','#e17055'];
+
+/* ========== 前 5 關手動設計 ========== */
+const LEVELS=[
+ [6,2,0.008,[[75,1,14,0.015,0,0]]],
+ [6,3,0.012,[[75,1,13,0.022,0,0]]],
+ [7,3,0.012,[[65,2,12,0.022,0,0],[120,1,12,-0.015,1,1]]],
+ [7,4,0.015,[[55,2,12,0.028,0,0],[110,2,11,-0.02,1,1],[160,1,10,0.012,2,2]]],
+ [8,4,0.018,[[50,3,10,0.03,0,0],[95,3,10,-0.025,1,1],[145,2,10,0.018,2,2],[180,1,9,-0.01,3,3]]]
+];
+
+/* ========== 遊戲狀態 ========== */
+let state='menu',level=1,score=0,ballsLeft=0,hitsNeeded=0,hits=0,combo=0;
+let core={angle:0,speed:0},obs=[],ball=null,parts=[],msg='',msgT=0;
+let snails=0,hearts=0,snailTimer=0,heartFlash=0,notifs=[];
+let maxLevel=1,completed=new Set(),selectPage=0;
+
+/* ========== 程序化生成 ========== */
+function hash(n){let x=Math.sin(n*12.9898)*43758.5453;return x-Math.floor(x)}
+function genLevel(n){
+ const d=n-5;
+ const balls=Math.min(6+Math.floor(d/3),16);
+ const hits=Math.min(2+Math.floor(d/2.5),10);
+ const coreSpd=Math.min(0.008+d*0.0012,0.065);
+ const ringCount=Math.min(1+Math.floor(d/2),7);
+ const rings=[];
+ for(let i=0;i<ringCount;i++){
+  const seed=n*100+i;
+  let oR=45+i*30+hash(seed*1.3)*15;
+  oR=Math.max(40,Math.min(200,oR));
+  let count=1+Math.floor(hash(seed*2.7)*(1+i*0.5+d*0.15));
+  count=Math.max(1,Math.min(count,6));
+  const size=Math.max(7,12-d*0.07-i*0.2);
+  const dir=hash(seed*3.1)>0.5?1:-1;
+  const spd=dir*(0.012+hash(seed*4.3)*0.02+d*0.0008);
+  const phase=hash(seed*5.7)*Math.PI*2;
+  const coverage=count*2*size/oR;
+  if(coverage>Math.PI*1.5)count=Math.max(1,Math.floor(count*Math.PI*1.5/coverage));
+  rings.push([Math.round(oR),count,Math.round(size),spd,phase,i%COLS.length]);
+ }
+ return[balls,hits,coreSpd,rings];
+}
+function diffTier(n){
+ if(n<=5)return'教學';if(n<=15)return'初級';
+ if(n<=25)return'中級';if(n<=35)return'高級';
+ if(n<=50)return'專家';return'大師';
+}
+function diffColor(n){
+ if(n<=5)return'#95afc7';if(n<=15)return'#00b894';
+ if(n<=25)return'#0984e3';if(n<=35)return'#6c5ce7';
+ if(n<=50)return'#e17055';return'#d63031';
+}
+
+/* ========== 關卡載入 ========== */
+function loadLvl(n){
+ level=n;
+ const L=n<=LEVELS.length?LEVELS[n-1]:genLevel(n);
+ const d=1+Math.floor((n-1)/LEVELS.length)*0.35;
+ ballsLeft=L[0];hitsNeeded=L[1];hits=0;combo=0;
+ core={angle:0,speed:L[2]*d};obs=[];ball=null;parts=[];
+ snailTimer=0;heartFlash=0;
+ for(const r of L[3])
+  for(let i=0;i<r[1];i++)
+   obs.push({orbit:r[0],size:r[2],speed:r[3]*d,angle:r[4]+i/r[1]*Math.PI*2,color:COLS[r[5]%COLS.length],x:0,y:0});
+}
+
+/* ========== 粒子 & 通知 ========== */
+function spark(x,y,c,n=12){
+ for(let i=0;i<n;i++){
+  const a=Math.random()*Math.PI*2,s=1+Math.random()*3;
+  parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,dec:0.02+Math.random()*0.02,sz:2+Math.random()*3,c});
+ }
+}
+function notify(text,color='#fff'){notifs.push({text,timer:120,color})}
+
+/* ========== 音效 ========== */
+let ac;
+function beep(f,d,t='sine',v=0.13){
+ try{
+  if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();
+  const o=ac.createOscillator(),g=ac.createGain();
+  o.type=t;o.frequency.value=f;
+  g.gain.setValueAtTime(v,ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+d);
+  o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+d);
+ }catch(e){}
+}
+const sHit=()=>{beep(880,.12);setTimeout(()=>beep(1100,.1,'sine',.1),50)};
+const sMiss=()=>beep(200,.25,'sawtooth',.1);
+const sLaunch=()=>beep(600,.04,'sine',.08);
+const sWin=()=>{beep(523,.12);setTimeout(()=>beep(659,.12),100);setTimeout(()=>beep(784,.18),200)};
+const sLose=()=>{beep(400,.15,'sawtooth',.1);setTimeout(()=>beep(250,.25,'sawtooth',.1),150)};
+const sSnail=()=>{beep(300,.1,'sine',.12);setTimeout(()=>beep(500,.15,'sine',.12),80)};
+const sHeart=()=>{beep(660,.1,'sine',.12);setTimeout(()=>beep(880,.12,'sine',.1),70)};
+
+/* ========== 按鈕 & 繪製工具 ========== */
+function snailBtn(){return{x:10,y:H-52,w:100,h:38}}
+function heartBtn(){return{x:W-110,y:H-52,w:100,h:38}}
+function inBtn(px,py,b){return px>=b.x&&px<=b.x+b.w&&py>=b.y&&py<=b.y+b.h}
+function roundRect(x,y,w,h,r){
+ ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+ ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+ ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+ ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+}
+
+/* ========== 關卡選擇按鈕 ========== */
+const LS_COLS=5,LS_ROWS=6,LS_BW=70,LS_BH=44,LS_GAP=10;
+function lsGridX(){return(cx-(LS_COLS*LS_BW+(LS_COLS-1)*LS_GAP))/2}
+function lsGridY(){return 155}
+function lsLevelBtn(n){
+ const idx=n-1,page=Math.floor(idx/(LS_COLS*LS_ROWS)),idxIn=idx%(LS_COLS*LS_ROWS);
+ if(page!==selectPage)return null;
+ const col=idxIn%LS_COLS,row=Math.floor(idxIn/LS_COLS);
+ return{x:lsGridX()+col*(LS_BW+LS_GAP),y:lsGridY()+row*(LS_BH+LS_GAP),w:LS_BW,h:LS_BH};
+}
+function lsPrevBtn(){return{x:10,y:105,w:50,h:36}}
+function lsNextBtn(){return{x:W-60,y:105,w:50,h:36}}
+function lsBackBtn(){return{x:cx-60,y:H-60,w:120,h:40}}
+
+/* ========== 輸入處理 ========== */
+function tap(px,py){
+ if(state==='menu'){
+  if(inBtn(px,py,{x:cx-80,y:H*0.65,w:160,h:44})){state='play';score=0;loadLvl(1)}
+  else if(inBtn(px,py,{x:cx-80,y:H*0.73,w:160,h:44})){state='levelSelect';selectPage=0}
+  return;
+ }
+ if(state==='levelSelect'){
+  if(inBtn(px,py,lsPrevBtn())&&selectPage>0)selectPage--;
+  else if(inBtn(px,py,lsNextBtn())){const tp=Math.ceil(maxLevel/(LS_COLS*LS_ROWS));if(selectPage<tp-1)selectPage++}
+  else if(inBtn(px,py,lsBackBtn())){state='menu'}
+  else{
+   for(let n=1;n<=maxLevel;n++){
+    const b=lsLevelBtn(n);
+    if(b&&inBtn(px,py,b)){state='play';score=0;loadLvl(n);return}
+    }
+  }
+  return;
+ }
+ if(state==='win'){state='play';loadLvl(level+1);return}
+ if(state==='lose'){state='menu';return}
+ if(state!=='play')return;
+
+ /* 蝸牛按鈕 */
+ const sb=snailBtn();
+ if(inBtn(px,py,sb)&&snails>0&&snailTimer<=0){
+  snails--;snailTimer=SNAIL_DUR;sSnail();
+  spark(cx,cy,'#74b9ff',18);notify('🐌 蝸牛啟動！旋轉減速 5 秒','#74b9ff');
+  return;
+ }
+ /* 愛心按鈕（僅顯示） */
+ if(inBtn(px,py,heartBtn()))return;
+
+ /* 發射小球 */
+ if(!ball&&ballsLeft>0){
+  ball={x:cx,y:H-35,trail:[]};ballsLeft--;sLaunch();
+  if(ballsLeft===0)notify('⚠️ 最後一顆球！','#ff6b6b');
+ }
+}
+canvas.addEventListener('click',e=>{const r=canvas.getBoundingClientRect();tap(e.clientX-r.left,e.clientY-r.top)});
+canvas.addEventListener('touchstart',e=>{e.preventDefault();const r=canvas.getBoundingClientRect(),t=e.touches[0];tap(t.clientX-r.left,t.clientY-r.top)},{passive:false});
+
+/* ========== 遊戲結束檢查（修正核心） ========== */
+function checkGameOver(){
+ if(ball===null&&ballsLeft<=0&&hits<hitsNeeded&&state==='play'){
+  state='lose';msg='遊戲結束';msgT=120;sLose();
+ }
+}
+
+/* ========== 更新邏輯 ========== */
+function update(){
+ core.angle+=core.speed*(snailTimer>0?SNAIL_MULT:1);
+ for(const o of obs){
+  o.angle+=o.speed*(snailTimer>0?SNAIL_MULT:1);
+  o.x=cx+Math.cos(o.angle)*o.orbit;
+  o.y=cy+Math.sin(o.angle)*o.orbit;
+ }
+ if(snailTimer>0)snailTimer--;
+ if(heartFlash>0)heartFlash--;
+
+ if(ball){
+  ball.trail.push({x:ball.x,y:ball.y});
+  if(ball.trail.length>TRAIL)ball.trail.shift();
+  ball.y-=BALL_SPD;
+
+  /* --- 路徑 A：撞障礙物 --- */
+  let blocked=false;
+  for(const o of obs){
+   const dx=ball.x-o.x,dy=ball.y-o.y;
+   if(dx*dx+dy*dy<(o.size+BALL_R)*(o.size+BALL_R)){
+    ball=null;blocked=true;
+    if(hearts>0){
+     hearts--;heartFlash=30;sHeart();
+     spark(o.x,o.y,'#fd79a8',20);notify('❤️ 愛心保護！','#fd79a8');
+     }else{
+     spark(o.x,o.y,'#ff4757',15);sMiss();combo=0;
+     }
+    break;
+    }
+   }
+  if(blocked){checkGameOver();return}
+
+  /* --- 路徑 B：命中核心 --- */
+  const dcx=ball.x-cx,dcy=ball.y-cy;
+  if(dcx*dcx+dcy*dcy<(CORE_R+BALL_R)*(CORE_R+BALL_R)){
+   combo++;score+=100*combo;hits++;
+   spark(cx,cy,'#00d4ff',20);ball=null;sHit();
+   if(hits>=hitsNeeded){
+    state='win';score+=500*level;msg='第 '+level+' 關完成!';msgT=120;sWin();
+    snails++;hearts++;notify('🎁 獎勵 +1🐌 +1❤️','#ffd700');
+    completed.add(level);maxLevel=Math.max(maxLevel,level+1);
+    }else{
+    /* 命中但未達次數 → 球已消失，檢查是否用完 */
+    checkGameOver();
+    }
+   return;
+   }
+
+  /* --- 路徑 C：飛出畫面 --- */
+  if(ball.y<-20){
+   ball=null;combo=0;
+   checkGameOver();
+   return;
+   }
+ }
+
+ /* 粒子 */
+ for(let i=parts.length-1;i>=0;i--){
+  const p=parts[i];p.x+=p.vx;p.y+=p.vy;p.vx*=0.97;p.vy*=0.97;p.life-=p.dec;
+  if(p.life<=0)parts.splice(i,1);
+ }
+ /* 通知 */
+ for(let i=notifs.length-1;i>=0;i--){notifs[i].timer--;if(notifs[i].timer<=0)notifs.splice(i,1)}
+ if(msgT>0)msgT--;
+}
+
+/* ========== 繪製 ========== */
+function drawBg(){
+ ctx.fillStyle='#0a0a1e';ctx.fillRect(0,0,W,H);
+ for(let i=0;i<60;i++){
+  const sx=(i*137.5+W*0.3)%W,sy=(i*217.3+H*0.1)%H;
+  ctx.globalAlpha=0.15+0.3*Math.abs(Math.sin(Date.now()*0.001+i*0.7));
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(sx,sy,0.5+Math.random()*0.3,0,Math.PI*2);ctx.fill();
+ }
+ ctx.globalAlpha=1;
+}
+function drawCore(){
+ ctx.save();ctx.shadowBlur=30;ctx.shadowColor='#00d4ff';
+ const g=ctx.createRadialGradient(cx,cy,0,cx,cy,CORE_R);
+ g.addColorStop(0,'#fff');g.addColorStop(0.4,'#00d4ff');g.addColorStop(1,'#006099');
+ ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,CORE_R,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='rgba(255,255,255,0.5)';
+ ctx.beginPath();ctx.arc(cx+Math.cos(core.angle)*CORE_R*0.55,cy+Math.sin(core.angle)*CORE_R*0.55,4,0,Math.PI*2);ctx.fill();
+ ctx.restore();
+}
+function drawObs(){
+ for(const o of obs){
+  ctx.save();ctx.shadowBlur=12;ctx.shadowColor=o.color;
+  ctx.fillStyle=o.color;ctx.beginPath();ctx.arc(o.x,o.y,o.size,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,0.3)';
+  ctx.beginPath();ctx.arc(o.x-o.size*0.25,o.y-o.size*0.25,o.size*0.35,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+ }
+}
+function drawBall(){
+ if(!ball)return;
+ for(let i=0;i<ball.trail.length;i++){
+  const t=ball.trail[i],a=(i+1)/ball.trail.length*0.4,s=BALL_R*(i+1)/ball.trail.length;
+  ctx.globalAlpha=a;ctx.fillStyle='#00d4ff';ctx.beginPath();ctx.arc(t.x,t.y,s,0,Math.PI*2);ctx.fill();
+ }
+ ctx.globalAlpha=1;
+ if(heartFlash>0){
+  ctx.save();ctx.globalAlpha=heartFlash/30*0.5;
+  ctx.shadowBlur=20;ctx.shadowColor='#fd79a8';
+  ctx.fillStyle='#fd79a8';ctx.beginPath();ctx.arc(cx,cy,CORE_R+15,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+ }
+ ctx.save();ctx.shadowBlur=15;ctx.shadowColor='#fff';
+ ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(ball.x,ball.y,BALL_R,0,Math.PI*2);ctx.fill();ctx.restore();
+}
+function drawParts(){
+ for(const p of parts){
+  ctx.globalAlpha=Math.max(0,p.life);ctx.fillStyle=p.c;
+  ctx.beginPath();ctx.arc(p.x,p.y,p.sz*p.life,0,Math.PI*2);ctx.fill();
+ }
+ ctx.globalAlpha=1;
+}
+function drawSnailOverlay(){
+ if(snailTimer<=0)return;
+ const a=0.08*(snailTimer/SNAIL_DUR);
+ ctx.fillStyle='rgba(116,185,255,'+a+')';ctx.fillRect(0,0,W,H);
+ const bw=120,bh=4,bx=cx-bw/2,by=H-70;
+ ctx.fillStyle='rgba(255,255,255,0.15)';ctx.fillRect(bx,by,bw,bh);
+ ctx.fillStyle='#74b9ff';ctx.fillRect(bx,by,bw*(snailTimer/SNAIL_DUR),bh);
+}
+function drawPowerBtns(){
+ const sb=snailBtn(),sOn=snails>0&&snailTimer<=0;
+ ctx.save();
+ ctx.fillStyle=sOn?'rgba(116,185,255,0.25)':'rgba(60,60,80,0.35)';
+ ctx.shadowBlur=sOn?10:0;ctx.shadowColor='#74b9ff';
+ roundRect(sb.x,sb.y,sb.w,sb.h,10);ctx.fill();
+ ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font='14px sans-serif';
+ ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.fillText('🐌 x'+snails,sb.x+sb.w/2,sb.y+sb.h/2);
+ if(snailTimer>0){ctx.fillStyle='#74b9ff';ctx.font='bold 11px sans-serif';ctx.fillText('生效中',sb.x+sb.w/2,sb.y-8)}
+ ctx.restore();
+ const hb=heartBtn();
+ ctx.save();
+ ctx.fillStyle='rgba(253,121,168,0.2)';
+ ctx.shadowBlur=hearts>0?8:0;ctx.shadowColor='#fd79a8';
+ roundRect(hb.x,hb.y,hb.w,hb.h,10);ctx.fill();
+ ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font='14px sans-serif';
+ ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.fillText('❤️ x'+hearts,hb.x+hb.w/2,hb.y+hb.h/2);
+ ctx.restore();
+}
+function drawHUD(){
+ ctx.fillStyle='#fff';ctx.font='14px sans-serif';ctx.textAlign='left';ctx.textBaseline='top';
+ ctx.fillText('關卡 '+level,10,10);
+ ctx.font='11px sans-serif';ctx.fillStyle=diffColor(level);
+ ctx.fillText('['+diffTier(level)+']',10,28);
+ ctx.fillStyle='#fff';ctx.font='14px sans-serif';
+ ctx.fillText('分數 '+score,10,46);
+ if(combo>1){ctx.fillStyle='#ffd700';ctx.font='bold 15px sans-serif';ctx.fillText('連擊 x'+combo,10,66)}
+ ctx.fillStyle='#fff';ctx.font='14px sans-serif';ctx.textAlign='right';
+ ctx.fillText('球: '+ballsLeft,W-10,10);
+ ctx.fillText('命中: '+hits+'/'+hitsNeeded,W-10,30);
+ if(!ball&&ballsLeft>0){
+  ctx.fillStyle='rgba(255,255,255,'+(0.3+0.2*Math.sin(Date.now()*0.004))+')';
+  ctx.font='13px sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';
+  ctx.fillText('點擊發射 ↑',cx,H-55);
+ }
+ drawPowerBtns();
+ for(let i=0;i<notifs.length;i++){
+  const n=notifs[i],a=Math.min(1,n.timer/20);
+  ctx.globalAlpha=a;ctx.fillStyle=n.color;ctx.font='bold 14px sans-serif';
+  ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText(n.text,cx,70+i*20);
+ }
+ ctx.globalAlpha=1;
+}
+function drawMsg(){
+ if(msgT<=0)return;
+ const a=Math.min(1,msgT/30);
+ ctx.save();ctx.globalAlpha=a;
+ ctx.fillStyle='rgba(0,0,0,0.55)';ctx.fillRect(0,H*0.4,W,H*0.22);
+ ctx.fillStyle='#fff';ctx.font='bold 26px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.fillText(msg,cx,H*0.5);
+ ctx.font='15px sans-serif';ctx.fillStyle='rgba(255,255,255,0.6)';
+ if(state==='win')ctx.fillText('點擊進入下一關',cx,H*0.5+35);
+ else if(state==='lose')ctx.fillText('點擊返回選單',cx,H*0.5+35);
+ ctx.restore();
+}
+function drawLevelSelect(){
+ ctx.fillStyle='#fff';ctx.font='bold 24px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.fillText('選擇關卡',cx,40);
+ const tp=Math.max(1,Math.ceil(maxLevel/(LS_COLS*LS_ROWS)));
+ ctx.font='13px sans-serif';ctx.fillStyle='rgba(255,255,255,0.5)';
+ ctx.fillText('第 '+(selectPage+1)+' / '+tp+' 頁 · 已解鎖 '+maxLevel+' 關',cx,75);
+ /* 翻頁按鈕 */
+ ctx.fillStyle=selectPage>0?'rgba(108,92,231,0.35)':'rgba(60,60,80,0.3)';
+ ctx.font='18px sans-serif';ctx.textBaseline='middle';
+ const pb=lsPrevBtn();roundRect(pb.x,pb.y,pb.w,pb.h,8);ctx.fill();
+ ctx.fillStyle='#fff';ctx.fillText('◀',pb.x+pb.w/2,pb.y+pb.h/2);
+ const nb=lsNextBtn();
+ ctx.fillStyle=selectPage<tp-1?'rgba(108,92,231,0.35)':'rgba(60,60,80,0.3)';
+ roundRect(nb.x,nb.y,nb.w,nb.h,8);ctx.fill();
+ ctx.fillStyle='#fff';ctx.fillText('▶',nb.x+nb.w/2,nb.y+nb.h/2);
+ /* 關卡格子 */
+ for(let n=1;n<=maxLevel+LS_COLS*LS_ROWS;n++){
+  const b=lsLevelBtn(n);if(!b)continue;
+  const done=completed.has(n),isMax=n===maxLevel,locked=n>maxLevel;
+  let bg='rgba(60,60,80,0.35)';
+  if(done)bg='rgba(0,184,148,0.3)';
+  if(isMax)bg='rgba(0,212,255,0.3)';
+  ctx.save();
+  ctx.fillStyle=bg;
+  if(isMax){ctx.shadowBlur=10;ctx.shadowColor='#00d4ff'}
+  roundRect(b.x,b.y,b.w,b.h,8);ctx.fill();
+  ctx.shadowBlur=0;
+  if(isMax){ctx.strokeStyle='#00d4ff';ctx.lineWidth=2;roundRect(b.x,b.y,b.w,b.h,8);ctx.stroke()}
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  if(locked){
+   ctx.fillStyle='rgba(255,255,255,0.2)';ctx.font='18px sans-serif';ctx.fillText('🔒',b.x+b.w/2,b.y+b.h/2);
+   }else{
+   ctx.fillStyle='#fff';ctx.font='bold 18px sans-serif';ctx.fillText(''+n,b.x+b.w/2,b.y+b.h/2-6);
+   ctx.font='9px sans-serif';ctx.fillStyle=diffColor(n);ctx.fillText(diffTier(n),b.x+b.w/2,b.y+b.h/2+10);
+   if(done){ctx.fillStyle='#00b894';ctx.font='10px sans-serif';ctx.fillText('✓',b.x+b.w-12,b.y+10)}
+   }
+  ctx.restore();
+ }
+ /* 返回 */
+ const bb=lsBackBtn();
+ ctx.fillStyle='rgba(225,112,85,0.35)';roundRect(bb.x,bb.y,bb.w,bb.h,10);ctx.fill();
+ ctx.fillStyle='#fff';ctx.font='15px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.fillText('返回選單',bb.x+bb.w/2,bb.y+bb.h/2);
+}
+function drawMenu(){
+ drawBg();
+ ctx.save();ctx.shadowBlur=25;ctx.shadowColor='#00d4ff';
+ ctx.fillStyle='#fff';ctx.font='bold 38px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.fillText('見縫插針',cx,H*0.18);ctx.restore();
+ ctx.fillStyle='#00d4ff';ctx.font='18px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.fillText('Coreball ∞',cx,H*0.18+38);
+ ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='14px sans-serif';
+ ctx.fillText('點擊螢幕發射小球，命中核心',cx,H*0.38);
+ ctx.fillText('🐌 蝸牛：點擊按鈕減慢旋轉 5 秒',cx,H*0.43);
+ ctx.fillText('❤️ 愛心：碰撞時自動消耗一次保護',cx,H*0.48);
+ ctx.fillText('過關可得 +1🐌 +1❤️',cx,H*0.53);
+ ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='12px sans-serif';
+ ctx.fillText('第 1–5 關手動設計 · 第 6 關起程序化 · 無限關卡',cx,H*0.58);
+ /* 開始按鈕 */
+ ctx.fillStyle='rgba(0,212,255,0.3)';roundRect(cx-80,H*0.65,160,44,12);ctx.fill();
+ ctx.fillStyle='#fff';ctx.font='bold 18px sans-serif';ctx.fillText('▶ 開始遊戲',cx,H*0.65+22);
+ /* 選關按鈕 */
+ ctx.fillStyle='rgba(108,92,231,0.3)';roundRect(cx-80,H*0.73,160,44,12);ctx.fill();
+ ctx.fillStyle='#fff';ctx.font='bold 18px sans-serif';ctx.fillText('選擇關卡',cx,H*0.73+22);
+ ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='12px sans-serif';
+ ctx.fillText('已解鎖至第 '+maxLevel+' 關',cx,H*0.85);
+}
+
+/* ========== 主循環 ========== */
+function loop(){
+ if(state==='play'||state==='win'||state==='lose')update();
+ drawBg();
+ if(state==='menu')drawMenu();
+ else if(state==='levelSelect')drawLevelSelect();
+ else{
+  drawSnailOverlay();
+  drawCore();drawObs();drawBall();drawParts();
+  drawHUD();drawMsg();
+ }
+ requestAnimationFrame(loop);
+}
+loadLvl(1);
+loop();
+</script>
+</body>
+</html>
+
+							<script>
+                            	ball === null          // 球已消失
+&& ballsLeft <= 0      // 沒有球可發
+&& hits < hitsNeeded   // 還沒達到命中次數
+&& state === 'play'    // 還在遊戲中
+							</script>
+                        </body>
+                        </html>
+                    
