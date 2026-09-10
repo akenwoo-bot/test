@@ -1,26 +1,11 @@
-
-                        <!DOCTYPE html>
-                        <html lang="en">
-                        <head>
-                            <meta charset="UTF-8">
-                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-							<style>
-								body {
-									background-color: white; /* Ensure the iframe has a white background */
-								}
-
-								
-							</style>
-                        </head>
-                        <body>
-                            <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-      <title>極速賽車 | Speed Racer</title>
-      <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+     <title>極速賽車 | Speed Racer</title>
+     <style>
+       * { margin: 0; padding: 0; box-sizing: border-box; }
 
       body {
          background: linear-gradient(135deg, #0a0a2e 0%, #1a1a4e 50%, #0a0a2e 100%);
@@ -32,32 +17,35 @@
          flex-direction: column;
          align-items: center;
          justify-content: center;
-         padding: 10px;
+         padding: 5px;
          touch-action: none;
          overflow: hidden;
-         }
+        }
 
       h1 {
-         font-size: 28px;
-         margin: 10px 0 5px;
+         font-size: clamp(18px, 5vw, 28px);
+         margin: 5px 0 3px;
          background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcf7f, #4ecdc4);
            -webkit-background-clip: text;
            -webkit-text-fill-color: transparent;
          background-clip: text;
          letter-spacing: 2px;
-         }
+         flex-shrink: 0;
+        }
 
         #instructions {
-         font-size: 13px;
+         font-size: clamp(10px, 2.5vw, 13px);
          color: #8888aa;
-         margin-bottom: 10px;
-         line-height: 1.6;
-         }
+         margin-bottom: 5px;
+         line-height: 1.5;
+         flex-shrink: 0;
+        }
 
         #gameContainer {
          position: relative;
          display: inline-block;
-         }
+         max-width: 100%;
+        }
 
       canvas {
          background: #1a1a2e;
@@ -68,24 +56,22 @@
            0 0 60px rgba(107, 207, 127, 0.1),
            inset 0 0 30px rgba(0, 0, 0, 0.5);
          display: block;
-         max-width: 100%;
-         height: auto;
          touch-action: none;
-         }
+        }
 
         /* ===== HUD 面板 ===== */
         #hud {
          position: absolute;
-         top: 10px;
-         left: 10px;
-         right: 10px;
+         top: 8px;
+         left: 8px;
+         right: 8px;
          display: flex;
          justify-content: space-between;
          align-items: flex-start;
          pointer-events: none;
          opacity: 0;
          transition: opacity 0.3s;
-         }
+        }
 
         #hud.show { opacity: 1; }
 
@@ -94,34 +80,34 @@
          backdrop-filter: blur(5px);
          border: 1px solid rgba(255, 255, 255, 0.1);
          border-radius: 8px;
-         padding: 6px 14px;
-         font-size: 14px;
+         padding: 4px 10px;
+         font-size: clamp(11px, 2.5vw, 14px);
          font-weight: bold;
          color: #4ecdc4;
-         min-width: 80px;
-         }
+         min-width: 60px;
+        }
 
         .hud-item .label {
-         font-size: 10px;
+         font-size: clamp(8px, 1.5vw, 10px);
          color: #888;
          display: block;
-         margin-bottom: 2px;
+         margin-bottom: 1px;
          letter-spacing: 1px;
-         }
+        }
 
         /* 道具狀態列 */
         #powerupHud {
          position: absolute;
-         bottom: 10px;
-         left: 10px;
-         right: 10px;
+         bottom: 8px;
+         left: 50%;
+         transform: translateX(-50%);
          display: flex;
          justify-content: center;
-         gap: 10px;
+         gap: 8px;
          pointer-events: none;
          opacity: 0;
          transition: opacity 0.3s;
-         }
+        }
 
         #powerupHud.show { opacity: 1; }
 
@@ -130,31 +116,31 @@
          backdrop-filter: blur(5px);
          border: 2px solid;
          border-radius: 20px;
-         padding: 5px 14px;
-         font-size: 13px;
+         padding: 4px 10px;
+         font-size: clamp(10px, 2vw, 13px);
          font-weight: bold;
          display: none;
          align-items: center;
-         gap: 6px;
-         }
+         gap: 4px;
+        }
 
         .powerup-tag.active { display: flex; }
 
-        .powerup-tag .tag-emoji { font-size: 16px; }
+        .powerup-tag .tag-emoji { font-size: 14px; }
 
         .powerup-tag .tag-bar {
-         width: 40px;
-         height: 4px;
+         width: 30px;
+         height: 3px;
          background: rgba(255,255,255,0.2);
          border-radius: 2px;
          overflow: hidden;
-         }
+        }
 
         .powerup-tag .tag-bar-fill {
          height: 100%;
          border-radius: 2px;
          transition: width 0.1s linear;
-         }
+        }
 
         .tag-shield { border-color: #4ecdc4; color: #4ecdc4; }
         .tag-shield .tag-bar-fill { background: #4ecdc4; }
@@ -172,108 +158,104 @@
          justify-content: center;
          border-radius: 12px;
          z-index: 10;
-         }
+        }
 
         .overlay.show { display: flex; animation: fadeIn 0.3s ease; }
 
         @keyframes fadeIn {
          from { opacity: 0; }
-         to     { opacity: 1; }
-         }
+         to      { opacity: 1; }
+        }
 
         /* ===== 選單 ===== */
         #menuOverlay { background: rgba(10, 10, 46, 0.95); }
 
         .menu-title {
-         font-size: 32px;
+         font-size: clamp(22px, 6vw, 32px);
          font-weight: 900;
-         margin-bottom: 8px;
+         margin-bottom: 4px;
          background: linear-gradient(90deg, #4ecdc4, #6bcf7f);
            -webkit-background-clip: text;
            -webkit-text-fill-color: transparent;
          background-clip: text;
-         }
+        }
 
         .menu-subtitle {
-         font-size: 13px;
+         font-size: clamp(10px, 2vw, 13px);
          color: #8888aa;
-         margin-bottom: 20px;
-         }
+         margin-bottom: 15px;
+        }
 
         .menu-hint {
-         font-size: 11px;
+         font-size: clamp(9px, 1.8vw, 11px);
          color: #666;
-         margin-top: 15px;
+         margin-top: 12px;
          line-height: 1.5;
-         max-width: 80%;
-         }
+         max-width: 85%;
+        }
 
         .menu-buttons {
          display: flex;
          flex-direction: column;
-         gap: 12px;
-         width: 70%;
-         }
+         gap: 8px;
+         width: 75%;
+         max-width: 280px;
+        }
 
         .menu-btn {
-         padding: 14px 20px;
-         font-size: 16px;
+         padding: 10px 14px;
+         font-size: clamp(12px, 3vw, 16px);
          font-weight: bold;
          border: 2px solid transparent;
-         border-radius: 12px;
+         border-radius: 10px;
          cursor: pointer;
          transition: all 0.2s;
          text-align: left;
          display: flex;
          align-items: center;
-         gap: 12px;
-         }
+         gap: 10px;
+        }
 
-        .menu-btn:hover  { transform: scale(1.03); }
-        .menu-btn:active { transform: scale(0.97); }
+        .menu-btn:hover    { transform: scale(1.03); }
+        .menu-btn:active   { transform: scale(0.97); }
 
-        .menu-btn .emoji { font-size: 24px; }
-        .menu-btn .text  { flex: 1; }
-        .menu-btn .desc  { font-size: 11px; color: rgba(255,255,255,0.6); font-weight: normal; }
+        .menu-btn .emoji   { font-size: clamp(18px, 4vw, 24px); }
+        .menu-btn .text     { flex: 1; }
+        .menu-btn .desc     { font-size: clamp(8px, 1.5vw, 11px); color: rgba(255,255,255,0.6); font-weight: normal; }
 
-        .btn-easy   { background: linear-gradient(135deg, #27ae60, #2ecc71); color: #fff; border-color: #2ecc71; box-shadow: 0 4px 15px rgba(39,174,96,0.3); }
-        .btn-normal { background: linear-gradient(135deg, #2980b9, #3498db); color: #fff; border-color: #3498db; box-shadow: 0 4px 15px rgba(52,152,219,0.3); }
-        .btn-hard   { background: linear-gradient(135deg, #c0392b, #e74c3c); color: #fff; border-color: #e74c3c; box-shadow: 0 4px 15px rgba(231,76,60,0.3); }
+        .btn-easy    { background: linear-gradient(135deg, #27ae60, #2ecc71); color: #fff; border-color: #2ecc71; box-shadow: 0 3px 12px rgba(39,174,96,0.3); }
+        .btn-normal  { background: linear-gradient(135deg, #2980b9, #3498db); color: #fff; border-color: #3498db; box-shadow: 0 3px 12px rgba(52,152,219,0.3); }
+        .btn-hard    { background: linear-gradient(135deg, #c0392b, #e74c3c); color: #fff; border-color: #e74c3c; box-shadow: 0 3px 12px rgba(231,76,60,0.3); }
 
         /* ===== 遊戲結束 ===== */
         #gameOverOverlay { background: rgba(10, 10, 46, 0.92); }
 
         .go-title {
-         font-size: 36px;
+         font-size: clamp(24px, 6vw, 36px);
          font-weight: 900;
          color: #ff6b6b;
-         margin-bottom: 10px;
-         text-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
-         }
+         margin-bottom: 8px;
+         text-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
+        }
 
-        .go-score { font-size: 20px; color: #ffd93d; margin-bottom: 8px; }
-        .go-highscore { font-size: 14px; color: #888; margin-bottom: 8px; }
-
-        .go-pickups {
-         font-size: 12px;
-         color: #aaa;
-         margin-bottom: 25px;
-         }
+        .go-score      { font-size: clamp(14px, 3.5vw, 20px); color: #ffd93d; margin-bottom: 5px; }
+        .go-highscore   { font-size: clamp(11px, 2.5vw, 14px); color: #888; margin-bottom: 5px; }
+        .go-pickups     { font-size: clamp(10px, 2vw, 12px); color: #aaa; margin-bottom: 18px; }
 
         .go-btn {
-         padding: 12px 36px;
-         font-size: 16px;
+         padding: 10px 28px;
+         font-size: clamp(13px, 3vw, 16px);
          font-weight: bold;
          color: #0a0a2e;
          background: linear-gradient(135deg, #4ecdc4, #6bcf7f);
          border: none;
-         border-radius: 30px;
+         border-radius: 25px;
          cursor: pointer;
          transition: transform 0.15s, box-shadow 0.15s;
-         box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
-         }
+         box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
+        }
 
-        .go-btn:hover    { transform: scale(1.05); box-shadow: 0 6px 20px rgba(78,205,196,0.5); }
+        .go-btn:hover    { transform: scale(1.05); box-shadow: 0 5px 16px rgba(78,205,196,0.5); }
         .go-btn:active   { transform: scale(0.97); }
 
         /* ===== 倒數 ===== */
@@ -281,27 +263,27 @@
          position: absolute;
          top: 50%; left: 50%;
          transform: translate(-50%, -50%);
-         font-size: 80px;
+         font-size: clamp(50px, 15vw, 80px);
          font-weight: 900;
          color: #fff;
-         text-shadow: 0 0 30px rgba(78, 205, 196, 0.8);
+         text-shadow: 0 0 25px rgba(78, 205, 196, 0.8);
          display: none;
          z-index: 20;
          pointer-events: none;
-         }
+        }
 
         #countdown.show {
          display: block;
          animation: pulse 0.8s ease-out;
-         }
+        }
 
         @keyframes pulse {
-           0%    { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-           30%   { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-           70%   { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
-           100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
-         }
-      </style>
+          0%    { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+          30%   { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+          70%   { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
+          100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+        }
+    </style>
 </head>
 <body>
 
@@ -312,38 +294,36 @@
 </div>
 
 <div id="gameContainer">
-      <canvas id="gameCanvas" width="400" height="600"></canvas>
+      <canvas id="gameCanvas"></canvas>
 
       <div id="hud">
           <div class="hud-item">
-             <span class="label">分數</span>
-             <span id="score">0</span>
+              <span class="label">分數</span>
+              <span id="score">0</span>
            </div>
            <div class="hud-item">
-             <span class="label">速度 km/h</span>
-             <span id="speed">0</span>
+              <span class="label">速度</span>
+              <span id="speed">0</span>
            </div>
            <div class="hud-item">
-             <span class="label">最高分</span>
-             <span id="highScore">0</span>
+              <span class="label">最高分</span>
+              <span id="highScore">0</span>
            </div>
       </div>
 
-      <!-- 道具狀態列 -->
       <div id="powerupHud">
           <div id="tagShield" class="powerup-tag tag-shield">
               <span class="tag-emoji">🛡️</span>
               <span id="shieldTime">3.0</span>s
               <div class="tag-bar"><div class="tag-bar-fill" id="shieldBar"></div></div>
-           </div>
-           <div id="tagSpeed" class="powerup-tag tag-speed">
-             <span class="tag-emoji">⚡</span>
-             <span id="speedTime">3.0</span>s
-             <div class="tag-bar"><div class="tag-bar-fill" id="speedBar"></div></div>
+          </div>
+          <div id="tagSpeed" class="powerup-tag tag-speed">
+              <span class="tag-emoji">⚡</span>
+              <span id="speedTime">3.0</span>s
+              <div class="tag-bar"><div class="tag-bar-fill" id="speedBar"></div></div>
           </div>
       </div>
 
-      <!-- 選單 -->
       <div id="menuOverlay" class="overlay">
           <div class="menu-title">選擇難度</div>
           <div class="menu-subtitle">Select Difficulty</div>
@@ -351,30 +331,29 @@
               <button class="menu-btn btn-easy" data-difficulty="easy">
                   <span class="emoji">🌱</span>
                   <span class="text">
-                    簡單 (Easy)<br><span class="desc">低速度、少障礙物，適合練習</span>
-                   </span>
-               </button>
-               <button class="menu-btn btn-normal" data-difficulty="normal">
+                   簡單 (Easy)<br><span class="desc">低速度、少障礙物，適合練習</span>
+                  </span>
+              </button>
+              <button class="menu-btn btn-normal" data-difficulty="normal">
                   <span class="emoji">⚡</span>
                   <span class="text">
-                    普通 (Normal)<br><span class="desc">標準速度與密度，經典體驗</span>
-                   </span>
-               </button>
-               <button class="menu-btn btn-hard" data-difficulty="hard">
+                   普通 (Normal)<br><span class="desc">標準速度與密度，經典體驗</span>
+                  </span>
+              </button>
+              <button class="menu-btn btn-hard" data-difficulty="hard">
                   <span class="emoji">🔥</span>
                   <span class="text">
-                    困難 (Hard)<br><span class="desc">高速度、密集障礙，挑戰極限</span>
-                   </span>
-               </button>
-           </div>
-           <div class="menu-hint">
-             🛡️ 無敵盾牌：3 秒內碰撞自動摧毀障礙物<br>
-            ⚡ 加速：3 秒內車輛移動速度提升 1.8 倍<br>
+                   困難 (Hard)<br><span class="desc">高速度、密集障礙，挑戰極限</span>
+                  </span>
+              </button>
+          </div>
+          <div class="menu-hint">
+             🛡️ 無敵盾牌：3 秒內碰撞自動摧毀障礙物 (+20 分)<br>
+            ⚡ 加速：3 秒內移動速度 ×1.8<br>
             ⭐ 加分星：撿取立即 +50 分
-           </div>
+          </div>
       </div>
 
-      <!-- 遊戲結束 -->
       <div id="gameOverOverlay" class="overlay">
           <div class="go-title">💥 撞車了！</div>
           <div class="go-score">本局分數: <span id="finalScore">0</span></div>
@@ -389,41 +368,72 @@
 </div>
 
 <script>
-   const canvas          = document.getElementById("gameCanvas");
-   const ctx             = canvas.getContext("2d");
-   const scoreEl         = document.getElementById("score");
-   const speedEl         = document.getElementById("speed");
-   const highScoreEl     = document.getElementById("highScore");
-   const menuOverlay     = document.getElementById("menuOverlay");
-   const goOverlay       = document.getElementById("gameOverOverlay");
-   const finalScoreEl    = document.getElementById("finalScore");
-   const goHighScoreEl   = document.getElementById("goHighScore");
-   const goShieldEl      = document.getElementById("goShield");
-   const goSpeedEl       = document.getElementById("goSpeed");
-   const goStarEl        = document.getElementById("goStar");
-   const restartBtn      = document.getElementById("restartBtn");
-   const countdownEl     = document.getElementById("countdown");
-   const hudEl           = document.getElementById("hud");
-   const powerupHud      = document.getElementById("powerupHud");
-   const tagShield       = document.getElementById("tagShield");
-   const tagSpeed        = document.getElementById("tagSpeed");
-   const shieldTimeEl    = document.getElementById("shieldTime");
-   const speedTimeEl     = document.getElementById("speedTime");
-   const shieldBarEl     = document.getElementById("shieldBar");
-   const speedBarEl      = document.getElementById("speedBar");
-   const menuBtns        = document.querySelectorAll(".menu-btn");
+   const canvas    = document.getElementById("gameCanvas");
+   const ctx        = canvas.getContext("2d");
 
-     // ─── 難度設定 ───
+    // ── 遊戲內部解析度（固定，繪圖座標以此為基準） ──
+   const GAME_W = 400;
+   const GAME_H = 600;
+
+    // ── DOM 引用 ──
+   const scoreEl      = document.getElementById("score");
+   const speedEl      = document.getElementById("speed");
+   const highScoreEl  = document.getElementById("highScore");
+   const menuOverlay  = document.getElementById("menuOverlay");
+   const goOverlay    = document.getElementById("gameOverOverlay");
+   const finalScoreEl = document.getElementById("finalScore");
+   const goHighScoreEl= document.getElementById("goHighScore");
+   const goShieldEl   = document.getElementById("goShield");
+   const goSpeedEl    = document.getElementById("goSpeed");
+   const goStarEl     = document.getElementById("goStar");
+   const restartBtn   = document.getElementById("restartBtn");
+   const countdownEl  = document.getElementById("countdown");
+   const hudEl        = document.getElementById("hud");
+   const powerupHud   = document.getElementById("powerupHud");
+   const tagShield    = document.getElementById("tagShield");
+   const tagSpeed     = document.getElementById("tagSpeed");
+   const shieldTimeEl = document.getElementById("shieldTime");
+   const speedTimeEl  = document.getElementById("speedTime");
+   const shieldBarEl  = document.getElementById("shieldBar");
+   const speedBarEl   = document.getElementById("speedBar");
+   const menuBtns     = document.querySelectorAll(".menu-btn");
+
+    // ── 自動適應螢幕大小 ──
+   function resizeCanvas() {
+      const availW = window.innerWidth - 14;
+      const availH = window.innerHeight - 80;
+
+      let displayW = availW;
+      let displayH = availW * (GAME_H / GAME_W);
+
+      if (displayH > availH) {
+         displayH = availH;
+         displayW = availH * (GAME_W / GAME_H);
+       }
+
+      canvas.style.width  = displayW + "px";
+      canvas.style.height = displayH + "px";
+
+       // 內部解析度固定不變
+      canvas.width  = GAME_W;
+      canvas.height = GAME_H;
+   }
+
+   window.addEventListener("resize", resizeCanvas);
+   window.addEventListener("orientationchange", () => setTimeout(resizeCanvas, 100));
+   resizeCanvas();
+
+    // ── 難度設定 ──
    const DIFFICULTY = {
       easy:   { label: "簡單", baseSpeed: 3, spawnRate: 0.015, carSpeed: 6,   minGap: 220, powerupRate: 0.012 },
       normal: { label: "普通", baseSpeed: 4, spawnRate: 0.02,  carSpeed: 5,   minGap: 180, powerupRate: 0.015 },
       hard:   { label: "困難", baseSpeed: 6, spawnRate: 0.035, carSpeed: 4,   minGap: 140, powerupRate: 0.018 }
-   };
+    };
 
-     // ─── 玩家車輛 ───
+    // ── 玩家車輛 ──
    let car = { x: 175, y: 500, width: 50, height: 80, speed: 5 };
 
-     // ─── 遊戲狀態 ───
+    // ── 遊戲狀態 ──
    let obstacles      = [];
    let powerups       = [];
    let particles      = [];
@@ -437,26 +447,26 @@
    let currentDiff    = "normal";
    let diffConfig     = DIFFICULTY.normal;
 
-     // 道具狀態
+    // 道具狀態
    let shieldTimer    = 0;
    let speedBoostTimer= 0;
    let pickupCount    = { shield: 0, speed: 0, star: 0 };
 
-     // 道具類型
+    // 道具類型
    const POWERUP_TYPES = [
-      { type: "shield", emoji: "🛡️", color: "#4ecdc4" },
-      { type: "speed",  emoji: "⚡", color: "#ffd93d" },
-      { type: "star",   emoji: "⭐", color: "#ff6b6b" }
-   ];
+       { type: "shield", emoji: "🛡️", color: "#4ecdc4" },
+       { type: "speed",  emoji: "⚡",  color: "#ffd93d" },
+       { type: "star",   emoji: "⭐",  color: "#ff6b6b" }
+    ];
 
-     // 障礙物 emoji
+    // 障礙物 emoji
    const obstacleEmojis = ["🚗", "🚙", "🚕", "🚐", "🚌", "🚛"];
 
-     // ─── 鍵盤事件 ───
+    // ── 鍵盤事件 ──
    window.addEventListener("keydown", (e) => { keys[e.key] = true; });
-   window.addEventListener("keyup",    (e) => { keys[e.key] = false; });
+   window.addEventListener("keyup",   (e) => { keys[e.key] = false; });
 
-     // ─── 觸控事件 ───
+    // ── 觸控事件（含座標縮換） ──
    canvas.addEventListener("touchstart", (e) => {
       e.preventDefault();
       if (isGameOver || !isPlaying) return;
@@ -469,64 +479,58 @@
     });
    canvas.addEventListener("touchend", (e) => {
       e.preventDefault();
-      keys["ArrowLeft"]    = false;
-      keys["ArrowRight"]  = false;
+      keys["ArrowLeft"]   = false;
+      keys["ArrowRight"] = false;
     });
 
    function handleTouch(touch) {
-      const rect   = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const x      = (touch.clientX - rect.left) * scaleX;
-      if (x < canvas.width / 2) {
-         keys["ArrowLeft"]    = true;
-         keys["ArrowRight"]  = false;
+      const rect    = canvas.getBoundingClientRect();
+      const scaleX = GAME_W / rect.width;
+      const x       = (touch.clientX - rect.left) * scaleX;
+      if (x < GAME_W / 2) {
+         keys["ArrowLeft"]   = true;
+         keys["ArrowRight"] = false;
        } else {
-         keys["ArrowLeft"]    = false;
-         keys["ArrowRight"]  = true;
+         keys["ArrowLeft"]   = false;
+         keys["ArrowRight"] = true;
        }
     }
 
-     // ─── 選單按鈕 ───
+    // ── 選單按鈕 ──
    menuBtns.forEach(btn => {
       btn.addEventListener("click", () => {
          currentDiff = btn.dataset.difficulty;
          diffConfig   = DIFFICULTY[currentDiff];
          startGame();
-       });
+      });
     });
 
-     // ─── 產生障礙物 ───
+    // ── 產生障礙物 ──
    function spawnObstacle() {
-      const lanes      = [50, 135, 215, 300];
+      const lanes       = [50, 135, 215, 300];
       const randomLane = lanes[Math.floor(Math.random() * lanes.length)];
-      const emoji      = obstacleEmojis[Math.floor(Math.random() * obstacleEmojis.length)];
-      obstacles.push({
-         x: randomLane,
-         y: -100,
-         width: 50,
-         height: 80,
-         emoji: emoji
-       });
+      const emoji       = obstacleEmojis[Math.floor(Math.random() * obstacleEmojis.length)];
+      obstacles.push({ x: randomLane, y: -100, width: 50, height: 80, emoji });
     }
 
-     // ─── 產生道具 ───
+    // ── 產生道具 ──
    function spawnPowerup() {
-      const lanes      = [50, 135, 215, 300];
+      const lanes       = [50, 135, 215, 300];
       const randomLane = lanes[Math.floor(Math.random() * lanes.length)];
-      const type       = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
+      const type        = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
       powerups.push({
          x: randomLane + 10,
-         y: -60,
+         y: -50,
          width: 40,
          height: 40,
          type: type.type,
          emoji: type.emoji,
          color: type.color,
          pulse: 0
-       });
+      });
     }
 
-     // ─── 粒子效果 ───
+    // ── 粒子效果 ──
    function spawnParticles(x, y, count, colors) {
       const colorSet = colors || ["#ff6b6b", "#ffd93d", "#4ecdc4", "#fff"];
       for (let i = 0; i < count; i++) {
@@ -540,7 +544,7 @@
             life: 1
          });
       }
-   }
+    }
 
    function spawnPickupBurst(x, y, color) {
       for (let i = 0; i < 18; i++) {
@@ -555,42 +559,42 @@
             life: 1
          });
       }
-   }
+    }
 
    function updateParticles() {
       for (let i = particles.length - 1; i >= 0; i--) {
          const p = particles[i];
-         p.x    += p.vx;
-         p.y    += p.vy;
+         p.x     += p.vx;
+         p.y     += p.vy;
          p.life -= 0.025;
          if (p.life <= 0) particles.splice(i, 1);
-       }
-   }
+      }
+    }
 
    function drawParticles() {
       particles.forEach(p => {
          ctx.globalAlpha = p.life;
-         ctx.fillStyle     = p.color;
+         ctx.fillStyle    = p.color;
          ctx.beginPath();
          ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
          ctx.fill();
-       });
+      });
       ctx.globalAlpha = 1;
-   }
+    }
 
-     // ─── 繪製玩家車（emoji + 特效） ───
+    // ── 繪製玩家車（emoji + 特效） ──
    function drawCar() {
       ctx.save();
-      ctx.font           = "56px serif";
-      ctx.textAlign      = "center";
-      ctx.textBaseline   = "middle";
+      ctx.font          = "56px serif";
+      ctx.textAlign     = "center";
+      ctx.textBaseline  = "middle";
 
        // 盾牌光暈
       if (shieldTimer > 0) {
          ctx.shadowColor = "#4ecdc4";
-         ctx.shadowBlur   = 25;
-         ctx.strokeStyle   = "rgba(78, 205, 196, " + (0.4 + 0.3 * Math.sin(Date.now() / 100)) + ")";
-         ctx.lineWidth      = 3;
+         ctx.shadowBlur    = 25;
+         ctx.strokeStyle     = "rgba(78,205,196," + (0.4 + 0.3 * Math.sin(Date.now() / 100)) + ")";
+         ctx.lineWidth        = 3;
          ctx.beginPath();
          ctx.arc(car.x + car.width / 2, car.y + car.height / 2, 40, 0, Math.PI * 2);
          ctx.stroke();
@@ -601,102 +605,100 @@
          for (let i = 1; i <= 3; i++) {
             ctx.globalAlpha = 0.15 / i;
             ctx.fillText("🏎️", car.x + car.width / 2, car.y + car.height / 2 + i * 12);
-         }
+          }
          ctx.globalAlpha = 1;
-      }
+       }
 
       ctx.shadowColor = speedBoostTimer > 0 ? "#ffd93d" : "#4ecdc4";
-      ctx.shadowBlur  = speedBoostTimer > 0 ? 20 : 15;
+      ctx.shadowBlur   = speedBoostTimer > 0 ? 20 : 15;
       ctx.fillText("🏎️", car.x + car.width / 2, car.y + car.height / 2);
       ctx.restore();
     }
 
-     // ─── 繪製障礙物（emoji） ───
+    // ── 繪製障礙物 ──
    function drawObstacles() {
       obstacles.forEach(obs => {
          ctx.save();
-         ctx.font           = "52px serif";
-         ctx.textAlign      = "center";
-         ctx.textBaseline   = "middle";
-         ctx.shadowColor    = "rgba(0,0,0,0.5)";
-         ctx.shadowBlur     = 8;
+         ctx.font          = "52px serif";
+         ctx.textAlign     = "center";
+         ctx.textBaseline  = "middle";
+         ctx.shadowColor   = "rgba(0,0,0,0.5)";
+         ctx.shadowBlur    = 8;
          ctx.fillText(obs.emoji, obs.x + obs.width / 2, obs.y + obs.height / 2);
          ctx.restore();
        });
     }
 
-     // ─── 繪製道具（emoji + 光暈） ───
+    // ── 繪製道具（emoji + 脈動光暈） ──
    function drawPowerups() {
       powerups.forEach(pu => {
          ctx.save();
-         ctx.font           = "36px serif";
-         ctx.textAlign      = "center";
-         ctx.textBaseline   = "middle";
+         ctx.font          = "34px serif";
+         ctx.textAlign     = "center";
+         ctx.textBaseline  = "middle";
 
-          // 脈動光暈
-         pu.pulse += 0.05;
+          pu.pulse += 0.05;
          const glow = 10 + Math.sin(pu.pulse) * 8;
          ctx.shadowColor = pu.color;
-         ctx.shadowBlur   = glow;
+         ctx.shadowBlur    = glow;
 
           // 圓形底
          ctx.beginPath();
-         ctx.arc(pu.x + pu.width / 2, pu.y + pu.height / 2, 22, 0, Math.PI * 2);
-         ctx.fillStyle = "rgba(0,0,0,0.4)";
+         ctx.arc(pu.x + pu.width / 2, pu.y + pu.height / 2, 20, 0, Math.PI * 2);
+         ctx.fillStyle   = "rgba(0,0,0,0.4)";
          ctx.fill();
          ctx.strokeStyle = pu.color;
-         ctx.lineWidth    = 2;
+         ctx.lineWidth      = 2;
          ctx.stroke();
 
-         ctx.fillText(pu.emoji, pu.x + pu.width / 2, pu.y + pu.height / 2 + 2);
+         ctx.fillText(pu.emoji, pu.x + pu.width / 2, pu.y + pu.height / 2 + 1);
          ctx.restore();
        });
     }
 
-     // ─── 繪製馬路 ───
+    // ── 繪製馬路 ──
    function drawRoad() {
       ctx.fillStyle = "#1a3a1a";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0, 0, GAME_W, GAME_H);
 
-      const roadGrad = ctx.createLinearGradient(20, 0, canvas.width - 20, 0);
-      roadGrad.addColorStop(0,     "#2a2a3e");
+      const roadGrad = ctx.createLinearGradient(20, 0, GAME_W - 20, 0);
+      roadGrad.addColorStop(0,   "#2a2a3e");
       roadGrad.addColorStop(0.5, "#3a3a52");
-      roadGrad.addColorStop(1,     "#2a2a3e");
+      roadGrad.addColorStop(1,   "#2a2a3e");
       ctx.fillStyle = roadGrad;
-      ctx.fillRect(20, 0, canvas.width - 40, canvas.height);
+      ctx.fillRect(20, 0, GAME_W - 40, GAME_H);
 
       for (let i = 0; i < 22; i++) {
          const stripeY = (i * 50) - (lineOffset % 50);
          ctx.fillStyle = i % 2 === 0 ? "#e74c3c" : "#ffffff";
          ctx.fillRect(14, stripeY, 6, 25);
-         ctx.fillRect(canvas.width - 20, stripeY, 6, 25);
+         ctx.fillRect(GAME_W - 20, stripeY, 6, 25);
        }
 
       ctx.strokeStyle = "rgba(255,255,255,0.3)";
-      ctx.lineWidth     = 3;
+      ctx.lineWidth    = 3;
       ctx.setLineDash([30, 25]);
       ctx.lineDashOffset = -lineOffset;
 
        [107, 183, 260, 335].forEach(laneX => {
          ctx.beginPath();
          ctx.moveTo(laneX, 0);
-         ctx.lineTo(laneX, canvas.height);
+         ctx.lineTo(laneX, GAME_H);
          ctx.stroke();
        });
       ctx.setLineDash([]);
     }
 
-     // ─── 碰撞偵測（AABB） ───
+    // ── 碰撞偵測（AABB） ──
    function checkCollision(r1, r2) {
-      return r1.x < r2.x + r2.width    &&
-             r1.x + r1.width > r2.x    &&
+      return r1.x < r2.x + r2.width  &&
+             r1.x + r1.width > r2.x  &&
              r1.y < r2.y + r2.height &&
              r1.y + r1.height > r2.y;
     }
 
-     // ─── 吃到道具效果 ───
+    // ── 吃到道具效果 ──
    function activatePowerup(pu) {
-      const colors = ["#4ecdc4", "#ffd93d", "#fff"];
       spawnPickupBurst(pu.x, pu.y, pu.color);
 
       if (pu.type === "shield") {
@@ -717,11 +719,11 @@
        }
     }
 
-     // ─── 更新邏輯 ───
+    // ── 更新邏輯 ──
    function update() {
       if (isGameOver || !isPlaying) return;
 
-       // 道具計時器倒數
+       // 道具計時器
       if (shieldTimer > 0) {
          shieldTimer -= 1 / 60;
          shieldTimeEl.innerText = shieldTimer.toFixed(1);
@@ -729,7 +731,7 @@
          if (shieldTimer <= 0) {
             shieldTimer = 0;
             tagShield.classList.remove("active");
-         }
+          }
        }
       if (speedBoostTimer > 0) {
          speedBoostTimer -= 1 / 60;
@@ -738,17 +740,17 @@
          if (speedBoostTimer <= 0) {
             speedBoostTimer = 0;
             tagSpeed.classList.remove("active");
-         }
+          }
        }
 
-       // 計算當前車輛速度（加速道具生效時 ×1.8）
+       // 當前車輛移動速度
       let moveSpeed = diffConfig.carSpeed;
       if (speedBoostTimer > 0) moveSpeed *= 1.8;
 
        // 左右移動
-      if ((keys["ArrowLeft"]   || keys["a"] || keys["A"])    && car.x > 22)
+      if ((keys["ArrowLeft"]   || keys["a"] || keys["A"])   && car.x > 22)
          car.x -= moveSpeed;
-      if ((keys["ArrowRight"] || keys["d"] || keys["D"])    && car.x < canvas.width - car.width - 22)
+      if ((keys["ArrowRight"] || keys["d"] || keys["D"])   && car.x < GAME_W - car.width - 22)
          car.x += moveSpeed;
 
       lineOffset += gameSpeed;
@@ -761,7 +763,7 @@
 
        // 處理障礙物
       for (let i = obstacles.length - 1; i >= 0; i--) {
-         if (obstacles[i].y > canvas.height + 50) {
+         if (obstacles[i].y > GAME_H + 50) {
             obstacles.splice(i, 1);
             score += 10;
             scoreEl.innerText = score;
@@ -770,12 +772,11 @@
           } else {
             if (checkCollision(car, obstacles[i])) {
                if (shieldTimer > 0) {
-                  // 無敵狀態：摧毀障礙物
                   spawnParticles(obstacles[i].x, obstacles[i].y, 15, ["#4ecdc4", "#fff", "#ff6b6b"]);
                   obstacles.splice(i, 1);
                   score += 20;
                   scoreEl.innerText = score;
-                } else {
+               } else {
                   isGameOver = true;
                   spawnParticles(car.x, car.y, 25, ["#ff6b6b", "#ffd93d", "#4ecdc4", "#fff"]);
                   spawnParticles(obstacles[i].x, obstacles[i].y, 15, ["#ff6b6b", "#fff"]);
@@ -784,19 +785,19 @@
                   finalScoreEl.innerText = score;
                   goHighScoreEl.innerText = highScore;
                   goShieldEl.innerText = pickupCount.shield;
-                  goSpeedEl.innerText = pickupCount.speed;
-                  goStarEl.innerText = pickupCount.star;
+                  goSpeedEl.innerText  = pickupCount.speed;
+                  goStarEl.innerText   = pickupCount.star;
                   goOverlay.classList.add("show");
                   hudEl.classList.remove("show");
                   powerupHud.classList.remove("show");
-                }
-            }
+               }
+             }
           }
        }
 
        // 處理道具碰撞
       for (let i = powerups.length - 1; i >= 0; i--) {
-         if (powerups[i].y > canvas.height + 50) {
+         if (powerups[i].y > GAME_H + 50) {
             powerups.splice(i, 1);
           } else if (checkCollision(car, powerups[i])) {
             activatePowerup(powerups[i]);
@@ -813,7 +814,7 @@
           }
        }
 
-       // 產生新道具（較少出現）
+       // 產生新道具
       if (Math.random() < diffConfig.powerupRate) {
          if (powerups.length === 0 || powerups[powerups.length - 1].y > 200) {
             spawnPowerup();
@@ -821,7 +822,7 @@
        }
     }
 
-     // ─── 繪製 ───
+    // ── 繪製 ──
    function draw() {
       drawRoad();
       drawObstacles();
@@ -832,36 +833,36 @@
        // 高速光線
       if (gameSpeed > diffConfig.baseSpeed + 2 || speedBoostTimer > 0) {
          ctx.strokeStyle = speedBoostTimer > 0 ? "rgba(255,217,61,0.4)" : "rgba(78,205,196,0.3)";
-         ctx.lineWidth     = 2;
+         ctx.lineWidth    = 2;
          for (let i = 0; i < 5; i++) {
-            const y = Math.random() * canvas.height;
+            const y = Math.random() * GAME_H;
             ctx.beginPath();
             ctx.moveTo(0, y);
             ctx.lineTo(12 + Math.random() * 8, y);
             ctx.stroke();
             ctx.beginPath();
-            ctx.moveTo(canvas.width, y);
-            ctx.lineTo(canvas.width - 12 - Math.random() * 8, y);
+            ctx.moveTo(GAME_W, y);
+            ctx.lineTo(GAME_W - 12 - Math.random() * 8, y);
             ctx.stroke();
           }
        }
 
        // 盾牌全螢幕邊框
       if (shieldTimer > 0) {
-         ctx.strokeStyle = "rgba(78, 205, 196, " + (0.3 + 0.2 * Math.sin(Date.now() / 150)) + ")";
-         ctx.lineWidth     = 3;
-         ctx.strokeRect(2, 2, canvas.width - 4, canvas.height - 4);
+         ctx.strokeStyle = "rgba(78,205,196," + (0.3 + 0.2 * Math.sin(Date.now() / 150)) + ")";
+         ctx.lineWidth    = 3;
+         ctx.strokeRect(2, 2, GAME_W - 4, GAME_H - 4);
        }
     }
 
-     // ─── 主迴圈 ───
+    // ── 主迴圈 ──
    function loop() {
       update();
       draw();
       if (!isGameOver) requestAnimationFrame(loop);
     }
 
-     // ─── 3-2-1-GO 倒數 ───
+    // ── 3-2-1-GO 倒數 ──
    function startCountdown() {
       let count = 3;
       countdownEl.textContent = count;
@@ -890,33 +891,33 @@
        }, 800);
     }
 
-     // ─── 啟動遊戲 ───
+    // ── 啟動遊戲（選完難度後） ──
    function startGame() {
       menuOverlay.classList.remove("show");
       goOverlay.classList.remove("show");
-      car.x              = 175;
-      car.speed          = diffConfig.carSpeed;
-      obstacles          = [];
-      powerups           = [];
-      particles          = [];
-      score              = 0;
-      gameSpeed          = diffConfig.baseSpeed;
-      isGameOver         = false;
-      isPlaying          = false;
-      keys               = {};
-      lineOffset         = 0;
-      shieldTimer        = 0;
-      speedBoostTimer    = 0;
-      pickupCount        = { shield: 0, speed: 0, star: 0 };
+      car.x             = 175;
+      car.speed         = diffConfig.carSpeed;
+      obstacles         = [];
+      powerups          = [];
+      particles         = [];
+      score             = 0;
+      gameSpeed         = diffConfig.baseSpeed;
+      isGameOver        = false;
+      isPlaying         = false;
+      keys              = {};
+      lineOffset        = 0;
+      shieldTimer       = 0;
+      speedBoostTimer   = 0;
+      pickupCount       = { shield: 0, speed: 0, star: 0 };
       tagShield.classList.remove("active");
       tagSpeed.classList.remove("active");
-      scoreEl.innerText  = "0";
-      speedEl.innerText  = "0";
+      scoreEl.innerText = "0";
+      speedEl.innerText = "0";
       startCountdown();
     }
 
-     // ─── 返回選單 ───
-   restartBtn.addEventListener("click",     showMenu);
+    // ── 返回選單 ──
+   restartBtn.addEventListener("click", showMenu);
    restartBtn.addEventListener("touchstart", (e) => { e.preventDefault(); showMenu(); });
 
    function showMenu() {
@@ -929,16 +930,9 @@
       drawRoad();
     }
 
-     // ─── 初始：顯示選單 ───
+    // ── 初始：繪製馬路 + 顯示選單 ──
    drawRoad();
    menuOverlay.classList.add("show");
 </script>
 </body>
 </html>
-
-							<script>
-                            	
-							</script>
-                        </body>
-                        </html>
-                    
