@@ -1,0 +1,782 @@
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+							<style>
+								body {
+									background-color: white; /* Ensure the iframe has a white background */
+								}
+
+								
+							</style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>網址（Domain）結構教學</title>
+     <style>
+         /* ===== 基礎 ===== */
+         * { box-sizing: border-box; margin: 0; padding: 0; }
+         body {
+             font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+             min-height: 100vh;
+             padding: 40px 20px;
+             color: #333;
+         }
+         .container {
+             max-width: 960px;
+             margin: 0 auto;
+             background: #fff;
+             border-radius: 16px;
+             padding: 40px;
+             box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+         }
+         h1 { text-align: center; margin-bottom: 10px; color: #2c3e50; }
+         .subtitle { text-align: center; color: #7f8c8d; margin-bottom: 30px; }
+
+         /* ===== 打字機網址展示 ===== */
+         .url-display {
+             background: #1a1a2e;
+             border: 2px solid #333;
+             border-radius: 12px;
+             padding: 18px 24px;
+             text-align: center;
+             margin-bottom: 12px;
+             font-family: "Courier New", monospace;
+             font-size: 1.4em;
+             letter-spacing: 1px;
+             position: relative;
+             min-height: 60px;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+         }
+         .url-typed { color: #00ff88; }
+         /* 閃爍游標 */
+         .cursor {
+             display: inline-block;
+             width: 2px;
+             height: 1.2em;
+             background: #00ff88;
+             margin-left: 2px;
+             animation: blink 0.7s step-end infinite;
+             vertical-align: middle;
+         }
+         @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+         /* 可點擊的零件顏色（和卡片對應） */
+         .url-part {
+             cursor: pointer;
+             padding: 2px 4px;
+             border-radius: 4px;
+             transition: background 0.3s, transform 0.2s;
+         }
+         .url-part:hover { transform: scale(1.15); }
+         .url-part.p-protocol { color: #e74c3c; }
+         .url-part.p-host     { color: #3498db; }
+         .url-part.p-name     { color: #2ecc71; }
+         .url-part.p-unit     { color: #f39c12; }
+         .url-part.p-country  { color: #9b59b6; }
+         .url-part.p-path     { color: #1abc9c; }
+
+         .url-hint {
+             text-align: center;
+             font-size: 0.85em;
+             color: #888;
+             margin-bottom: 30px;
+         }
+         .url-hint span {
+             display: inline-block;
+             padding: 2px 8px;
+             border-radius: 10px;
+             margin: 2px;
+         }
+
+         /* ===== 卡片 ===== */
+         .grid {
+             display: grid;
+             grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+             gap: 18px;
+             margin-bottom: 30px;
+         }
+         .card {
+             border: 2px solid #eee;
+             border-radius: 12px;
+             padding: 18px;
+             text-align: center;
+             background: #fafafa;
+             transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+             cursor: default;
+             animation: fadeInUp 0.6s ease both;
+         }
+         .card:hover {
+             transform: translateY(-6px);
+             box-shadow: 0 10px 25px rgba(0,0,0,0.13);
+         }
+         .card.flash {
+             animation: flash 0.6s ease;
+         }
+         @keyframes flash {
+             0%   { transform: scale(1); }
+             30%  { transform: scale(1.08); }
+             60%  { transform: scale(0.97); }
+             100% { transform: scale(1); }
+         }
+         .grid .card:nth-child(1){animation-delay:0.1s}
+         .grid .card:nth-child(2){animation-delay:0.2s}
+         .grid .card:nth-child(3){animation-delay:0.3s}
+         .grid .card:nth-child(4){animation-delay:0.4s}
+         .grid .card:nth-child(5){animation-delay:0.5s}
+         @keyframes fadeInUp {
+             from { opacity:0; transform:translateY(30px); }
+             to   { opacity:1; transform:translateY(0); }
+         }
+         .card-protocol{border-top:4px solid #e74c3c}
+         .card-host    {border-top:4px solid #3498db}
+         .card-name    {border-top:4px solid #2ecc71}
+         .card-unit    {border-top:4px solid #f39c12}
+         .card-country {border-top:4px solid #9b59b6}
+         .card h3 { margin-bottom: 6px; font-size: 1.05em; }
+         .card p  { font-size: 0.88em; color: #555; margin-bottom: 8px; }
+         .card ul {
+             list-style: none; text-align: left;
+             font-size: 0.83em; color: #666; line-height: 1.7;
+         }
+         .card code {
+             background: #eef; padding: 2px 5px;
+             border-radius: 4px; font-size: 0.95em;
+         }
+
+         /* ===== 課本延伸 ===== */
+         .notes {
+             background: #fffde7; border-left: 4px solid #ffc107;
+             border-radius: 8px; padding: 20px; margin-bottom: 30px;
+         }
+         .notes h3 { margin-bottom: 10px; color: #f57f17; }
+         .notes ol { padding-left: 20px; line-height: 1.9; font-size: 0.95em; }
+         .notes code { background: #fff3e0; padding: 2px 5px; border-radius: 3px; }
+
+         /* ===== 組裝小遊戲 ===== */
+         .builder-section {
+             background: linear-gradient(135deg, #e8f8f5, #d5f5e3);
+             border: 2px solid #a3e4d7;
+             border-radius: 14px;
+             padding: 26px;
+             margin-bottom: 30px;
+         }
+         .builder-section h3 {
+             text-align: center;
+             color: #1abc9c;
+             margin-bottom: 6px;
+             font-size: 1.2em;
+         }
+         .builder-section .builder-desc {
+             text-align: center;
+             color: #555;
+             font-size: 0.9em;
+             margin-bottom: 18px;
+         }
+         .builder-prompt {
+             text-align: center;
+             font-size: 1.05em;
+             margin-bottom: 14px;
+             min-height: 26px;
+             font-weight: bold;
+             color: #2c3e50;
+         }
+         .builder-buttons {
+             display: flex;
+             flex-wrap: wrap;
+             justify-content: center;
+             gap: 10px;
+             margin-bottom: 18px;
+         }
+         .builder-btn {
+             padding: 10px 18px;
+             border: 2px solid #1abc9c;
+             border-radius: 25px;
+             background: #fff;
+             font-size: 0.95em;
+             cursor: pointer;
+             transition: all 0.2s;
+         }
+         .builder-btn:hover {
+             background: #1abc9c;
+             color: #fff;
+             transform: scale(1.08);
+         }
+         .builder-btn.chosen {
+             background: #1abc9c;
+             color: #fff;
+             transform: scale(1.05);
+             animation: pop 0.3s ease;
+         }
+         @keyframes pop {
+             0%  {transform:scale(0.6); opacity:0;}
+             60% {transform:scale(1.15);}
+             100%{transform:scale(1.05); opacity:1;}
+         }
+         .builder-result {
+             text-align: center;
+             font-family: "Courier New", monospace;
+             font-size: 1.2em;
+             background: #1a1a2e;
+             color: #00ff88;
+             padding: 14px;
+             border-radius: 10px;
+             min-height: 44px;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             word-break: break-all;
+         }
+         .builder-feedback {
+             text-align: center;
+             margin-top: 12px;
+             font-size: 1.1em;
+             font-weight: bold;
+             min-height: 28px;
+         }
+         .builder-btn-reset {
+             display: block;
+             margin: 14px auto 0;
+             padding: 8px 22px;
+             background: #e74c3c;
+             color: #fff;
+             border: none;
+             border-radius: 20px;
+             cursor: pointer;
+             font-size: 0.9em;
+             transition: transform 0.2s;
+         }
+         .builder-btn-reset:hover { transform: scale(1.05); }
+
+         /* ===== 測驗 ===== */
+         .quiz-section {
+             background: #f0f7ff;
+             border: 2px dashed #3498db;
+             border-radius: 12px;
+             padding: 30px;
+         }
+         .quiz-section h3 {
+             margin-bottom: 16px; color: #2980b9;
+             display: flex; align-items: center; gap: 8px;
+         }
+         .progress-bar {
+             width: 100%; height: 8px;
+             background: #d5e8f7; border-radius: 4px;
+             margin-bottom: 20px; overflow: hidden;
+         }
+         .progress-fill {
+             height: 100%;
+             background: linear-gradient(90deg, #3498db, #2ecc71);
+             border-radius: 4px;
+             transition: width 0.5s ease;
+         }
+         .quiz-question { display: none; animation: fadeInUp 0.4s ease; }
+         .quiz-question.active { display: block; }
+         .quiz-question p {
+             font-size: 1.05em; margin-bottom: 18px; line-height: 1.6;
+         }
+         .quiz-question p code {
+             background: #eef; padding: 2px 6px; border-radius: 4px;
+         }
+         .quiz-options {
+             display: flex; flex-wrap: wrap;
+             gap: 10px; margin-bottom: 16px;
+         }
+         .quiz-option {
+             background: #fff;
+             border: 2px solid #3498db;
+             border-radius: 20px;
+             padding: 10px 22px;
+             cursor: pointer;
+             font-size: 0.95em;
+             transition: all 0.25s;
+             user-select: none;
+         }
+         .quiz-option:hover {
+             background: #3498db; color: #fff;
+             transform: scale(1.05);
+         }
+         .quiz-option.correct {
+             background: #2ecc71; border-color: #27ae60;
+             color: #fff; pointer-events: none;
+         }
+         .quiz-option.wrong {
+             background: #e74c3c; border-color: #c0392b;
+             color: #fff; pointer-events: none;
+         }
+         .quiz-option.disabled { opacity: 0.5; pointer-events: none; }
+         .quiz-feedback {
+             margin-top: 10px; font-size: 1em;
+             font-weight: bold; min-height: 24px;
+         }
+         .quiz-feedback.correct { color: #27ae60; }
+         .quiz-feedback.wrong   { color: #c0392b; }
+         .btn-next {
+             display: none; margin-top: 14px;
+             padding: 10px 28px;
+             background: #3498db; color: #fff;
+             border: none; border-radius: 20px;
+             font-size: 1em; cursor: pointer;
+             transition: all 0.2s;
+         }
+         .btn-next:hover { background: #2980b9; transform: scale(1.05); }
+         .btn-next.show { display: inline-block; }
+         .quiz-result {
+             display: none; text-align: center;
+             animation: pop 0.5s ease;
+         }
+         .quiz-result.show { display: block; }
+         .quiz-result .score {
+             font-size: 3em; font-weight: bold; margin: 10px 0;
+         }
+         .quiz-result .score-label {
+             font-size: 1.1em; color: #555; margin-bottom: 10px;
+         }
+         .quiz-result .message {
+             font-size: 1.3em; margin: 16px 0; line-height: 1.5;
+         }
+         .score-details {
+             text-align: left;
+             background: #f9f9f9; border-radius: 8px;
+             padding: 14px 20px; margin: 14px auto;
+             max-width: 400px; font-size: 0.9em; line-height: 2;
+         }
+         .btn-replay {
+             padding: 12px 32px;
+             background: #9b59b6; color: #fff;
+             border: none; border-radius: 25px;
+             font-size: 1em; cursor: pointer;
+             transition: all 0.2s; margin-top: 10px;
+         }
+         .btn-replay:hover { background: #7d3c98; transform: scale(1.05); }
+     </style>
+</head>
+<body>
+<div class="container">
+
+     <h1>🌐 網址（Domain）結構拆解</h1>
+     <p class="subtitle">认识一個完整網址的組成零件</p>
+
+     <!-- ========== 打字機網址展示 ========== -->
+     <div class="url-display" id="urlDisplay">
+         <span class="url-typed" id="urlTyped"></span>
+         <span class="cursor"></span>
+     </div>
+     <p class="url-hint">👆 試試點點看各彩色部分，下方卡片會跳起來！</p>
+
+     <!-- ========== 五張卡片 ========== -->
+     <div class="grid">
+         <div class="card card-protocol" id="card-protocol">
+             <h3>🔒 通訊協定</h3>
+             <p>目前安全協定採 <b>https</b></p>
+             <ul>
+                 <li>傳統協定為 http</li>
+                 <li>輸入網址時可省略，系統會自動辨識</li>
+             </ul>
+         </div>
+         <div class="card card-host" id="card-host">
+             <h3>💻 主機名稱</h3>
+             <p>表示全球資訊網（World Wide Web）</p>
+             <ul>
+                 <li>常見為 <b>www</b></li>
+                 <li>其他主機：E-mail 電子信箱、drive 雲端硬碟</li>
+             </ul>
+         </div>
+         <div class="card card-name" id="card-name">
+             <h3>🏷️ 網站名稱</h3>
+             <p>資訊網專屬的名稱</p>
+             <ul>
+                 <li>每個網站各有不同名稱，也可省略</li>
+                 <li>範例中為：<code>taiwan</code></li>
+             </ul>
+         </div>
+         <div class="card card-unit" id="card-unit">
+             <h3>🏢 單位別</h3>
+             <p>代表該機構的類型</p>
+             <ul>
+                 <li><code>edu</code> 教育單位</li>
+                 <li><code>gov</code> 政府機關</li>
+                 <li><code>org</code> 機構組織</li>
+                 <li><code>com</code> 公司行號</li>
+                 <li><code>net</code> 網路提供者</li>
+             </ul>
+         </div>
+         <div class="card card-country" id="card-country">
+             <h3>🌍 國別地區</h3>
+             <p>代表網站註冊的國家</p>
+             <ul>
+                 <li><code>tw</code> 臺灣</li>
+                 <li><code>jp</code> 日本</li>
+                 <li><code>kr</code> 韓國</li>
+                 <li><code>cn</code> 中國</li>
+                 <li><i>*向美國申請者不加國別</i></li>
+             </ul>
+         </div>
+     </div>
+
+     <!-- ========== 組裝小遊戲 ========== -->
+     <div class="builder-section">
+         <h3>🧩 組裝小遊戲：自己拼一個網址！</h3>
+         <p class="builder-desc">依提示選擇零件，看看你能不能拼出正確的網址！</p>
+
+         <div class="builder-prompt" id="builderPrompt"></div>
+         <div class="builder-buttons" id="builderButtons"></div>
+         <div class="builder-result" id="builderResult"></div>
+         <div class="builder-feedback" id="builderFeedback"></div>
+         <button class="builder-btn-reset" onclick="nextChallenge()">🔄 下一關</button>
+     </div>
+
+     <!-- ========== 課本延伸 ===== -->
+     <div class="notes">
+         <h3>💡 上課小筆記</h3>
+         <ol>
+             <li><b>Chrome 瀏覽器特色：</b>瀏覽時為求簡潔，常自動省略前面的 <code>https://www.</code> [1]</li>
+             <li><b>路徑與頁面：</b>網址後方會包含「路徑」（如 <code>/food/</code>）或「頁面名稱」（如 <code>ml.aspx</code>）來指向具體頁面 [1]</li>
+         </ol>
+     </div>
+
+     <!-- ========== 5 題串題測驗 ========== -->
+     <div class="quiz-section">
+         <h3>✏️ 課堂小測驗：5 題挑戰！</h3>
+         <div class="progress-bar">
+             <div class="progress-fill" id="progress" style="width:0%"></div>
+         </div>
+
+         <div class="quiz-question active" id="q1">
+             <p><b>第 1 題：</b>如果學校網站的網址包含 <code>.edu.tw</code>，這代表什麼意思？</p>
+             <div class="quiz-options">
+                 <span class="quiz-option" onclick="answer(1,0,this)">日本的商業公司</span>
+                 <span class="quiz-option" onclick="answer(1,1,this)">臺灣的教育單位</span>
+                 <span class="quiz-option" onclick="answer(1,2,this)">美國政府機關</span>
+             </div>
+             <div class="quiz-feedback" id="fb1"></div>
+             <button class="btn-next" id="next1" onclick="nextQuestion(1)">下一題 →</button>
+         </div>
+
+         <div class="quiz-question" id="q2">
+             <p><b>第 2 題：</b>目前最常用的安全通訊協定是哪一個？</p>
+             <div class="quiz-options">
+                 <span class="quiz-option" onclick="answer(2,0,this)">http</span>
+                 <span class="quiz-option" onclick="answer(2,1,this)">https</span>
+                 <span class="quiz-option" onclick="answer(2,2,this)">ftp</span>
+             </div>
+             <div class="quiz-feedback" id="fb2"></div>
+             <button class="btn-next" id="next2" onclick="nextQuestion(2)">下一題 →</button>
+         </div>
+
+         <div class="quiz-question" id="q3">
+             <p><b>第 3 題：</b>主機名稱 <code>www</code> 代表什麼意思？</p>
+             <div class="quiz-options">
+                 <span class="quiz-option" onclick="answer(3,0,this)">網路伺服器（Server）</span>
+                 <span class="quiz-option" onclick="answer(3,1,this)">全球資訊網（World Wide Web）</span>
+                 <span class="quiz-option" onclick="answer(3,2,this)">網域註冊機構</span>
+             </div>
+             <div class="quiz-feedback" id="fb3"></div>
+             <button class="btn-next" id="next3" onclick="nextQuestion(3)">下一題 →</button>
+         </div>
+
+         <div class="quiz-question" id="q4">
+             <p><b>第 4 題：</b>某公司申請了 <code>.com.tw</code>，其中 <code>com</code> 代表哪種機構？</p>
+             <div class="quiz-options">
+                 <span class="quiz-option" onclick="answer(4,0,this)">教育單位</span>
+                 <span class="quiz-option" onclick="answer(4,1,this)">公司行號</span>
+                 <span class="quiz-option" onclick="answer(4,2,this)">政府機關</span>
+             </div>
+             <div class="quiz-feedback" id="fb4"></div>
+             <button class="btn-next" id="next4" onclick="nextQuestion(4)">下一題 →</button>
+         </div>
+
+         <div class="quiz-question" id="q5">
+             <p><b>第 5 題：</b>Chrome 瀏覽器顯示網址時，為求簡潔常省略哪部分？</p>
+             <div class="quiz-options">
+                 <span class="quiz-option" onclick="answer(5,0,this)">網站名稱</span>
+                 <span class="quiz-option" onclick="answer(5,1,this)">https://www.</span>
+                 <span class="quiz-option" onclick="answer(5,2,this)">國別地區</span>
+             </div>
+             <div class="quiz-feedback" id="fb5"></div>
+             <button class="btn-next" id="next5" onclick="nextQuestion(5)">查看成績 →</button>
+         </div>
+
+         <div class="quiz-result" id="quiz-result">
+             <div class="score" id="score-num">0 / 5</div>
+             <div class="score-label">你的正確題數</div>
+             <div class="message" id="result-msg"></div>
+             <div class="score-details" id="score-details"></div>
+             <button class="btn-replay" onclick="replay()">🔄 再玩一次</button>
+         </div>
+     </div>
+
+</div>
+
+<script>
+/* ============================================================
+   1. 打字機效果：把網址一鍵一鍵打出來，打完后顯示彩色可點擊版本
+   ============================================================ */
+const urlFull = "https://www.taiwan.edu.tw/food/ml.aspx";
+const typedEl = document.getElementById('urlTyped');
+let charIdx = 0;
+
+function typeUrl() {
+    if (charIdx <= urlFull.length) {
+        typedEl.textContent = urlFull.slice(0, charIdx);
+        charIdx++;
+        setTimeout(typeUrl, 70);   // 每字間隔 70ms，可调
+    } else {
+        // 打完 → 換成彩色可點擊版本
+        showColorfulUrl();
+    }
+}
+
+function showColorfulUrl() {
+    const display = document.getElementById('urlDisplay');
+    display.innerHTML = `
+        <span class="url-part p-protocol" onclick="flashCard('protocol')" title="通訊協定">https</span><span style="color:#aaa">://</span>
+        <span class="url-part p-host" onclick="flashCard('host')" title="主機名稱">www</span><span style="color:#aaa">.</span>
+        <span class="url-part p-name" onclick="flashCard('name')" title="網站名稱">taiwan</span><span style="color:#aaa">.</span>
+        <span class="url-part p-unit" onclick="flashCard('unit')" title="單位別">edu</span><span style="color:#aaa">.</span>
+        <span class="url-part p-country" onclick="flashCard('country')" title="國別地區">tw</span>
+        <span style="color:#aaa">/</span><span class="url-part p-path">food/</span>
+        <span class="url-part p-path">ml.aspx</span>
+    `;
+}
+
+// 點擊網址零件 → 對應卡片跳動高亮
+function flashCard(type) {
+    const card = document.getElementById('card-' + type);
+    if (!card) return;
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    card.classList.remove('flash');
+    void card.offsetWidth;   // 重啟動畫
+    card.classList.add('flash');
+}
+
+// 頁面載入後啟動打字機
+window.addEventListener('load', () => setTimeout(typeUrl, 400));
+
+
+/* ============================================================
+   2. 組裝小遊戲
+   ============================================================ */
+const challenges = [
+    {
+        prompt: "🏫 拼出「臺灣某政府機關」的網址（含路徑 /news/）",
+        options: {
+            protocol: ["https", "http"],
+            host:     ["www", "mail"],
+            name:     ["govt", "school"],
+            unit:     ["gov", "edu"],
+            country:  ["tw", "jp"],
+            path:     ["/news/", "/food/"]
+        },
+        answer: { protocol:"https", host:"www", name:"govt", unit:"gov", country:"tw", path:"/news/" },
+        result: "https://www.govt.gov.tw/news/"
+    },
+    {
+        prompt: "🛒 拼出「日本某公司」的網址（含路徑 /shop/）",
+        options: {
+            protocol: ["https", "ftp"],
+            host:     ["www", "drive"],
+            name:     ["nintendo", "twbank"],
+            unit:     ["com", "gov"],
+            country:  ["jp", "kr"],
+            path:     ["/shop/", "/food/"]
+        },
+        answer: { protocol:"https", host:"www", name:"nintendo", unit:"com", country:"jp", path:"/shop/" },
+        result: "https://www.nintendo.com.jp/shop/"
+    },
+    {
+        prompt: "📧 拼出「韓國某機構組織」的網址（含路徑 /about/）",
+        options: {
+            protocol: ["http", "https"],
+            host:     ["mail", "www"],
+            name:     ["kaist", "twbank"],
+            unit:     ["org", "com"],
+            country:  ["kr", "cn"],
+            path:     ["/about/", "/news/"]
+        },
+        answer: { protocol:"https", host:"www", name:"kaist", unit:"org", country:"kr", path:"/about/" },
+        result: "https://www.kaist.org.kr/about/"
+    }
+];
+
+let curChallenge = 0;
+let selected = {};
+const parts = ["protocol","host","name","unit","country","path"];
+const partLabels = {
+    protocol:"通訊協定", host:"主機名稱", name:"網站名稱",
+    unit:"單位別", country:"國別地區", path:"路徑/頁面"
+};
+
+function loadChallenge() {
+    selected = {};
+    const c = challenges[curChallenge];
+    document.getElementById('builderPrompt').textContent = c.prompt;
+    document.getElementById('builderResult').textContent = "？ / ？ / ？ …";
+    document.getElementById('builderFeedback').textContent = "";
+    document.getElementById('builderFeedback').style.color = "#555";
+
+    const btnBox = document.getElementById('builderButtons');
+    btnBox.innerHTML = "";
+
+    parts.forEach(part => {
+        // 每格：標題 + 選項按鈕
+        const group = document.createElement('div');
+        group.style.cssText = "text-align:center; margin-bottom:8px;";
+        group.innerHTML = `<small style="color:#1abc9c;font-weight:bold;">${partLabels[part]}：</small>`;
+        c.options[part].forEach(val => {
+            const btn = document.createElement('button');
+            btn.className = "builder-btn";
+            btn.textContent = val;
+            btn.onclick = () => pickPart(part, val, btn, c.options[part].length);
+            btn.dataset.part = part;
+            btn.dataset.val = val;
+            group.appendChild(btn);
+        });
+        btnBox.appendChild(group);
+    });
+}
+
+function pickPart(part, val, btn, total) {
+    // 同格內互斥
+    document.querySelectorAll(`.builder-btn[data-part="${part}"]`).forEach(b => {
+        b.classList.remove('chosen');
+    });
+    btn.classList.add('chosen');
+    selected[part] = val;
+
+    // 拼出目前進度
+    const c = challenges[curChallenge];
+    let result = selected.protocol || "？";
+    result += "://" + (selected.host || "？") + "." + (selected.name || "？");
+    result += "." + (selected.unit || "？") + "." + (selected.country || "？");
+    result += (selected.path || "");
+    document.getElementById('builderResult').textContent = result;
+
+    // 全部選完 → 判斷
+    if (Object.keys(selected).length === parts.length) {
+        const fb = document.getElementById('builderFeedback');
+        if (result === c.result) {
+            fb.textContent = "🎉 拼對了！超厲害！";
+            fb.style.color = "#27ae60";
+        } else {
+            fb.textContent = "❌ 再檢查一下，看看哪里選錯了～";
+            fb.style.color = "#c0392b";
+        }
+    }
+}
+
+function nextChallenge() {
+    curChallenge = (curChallenge + 1) % challenges.length;
+    loadChallenge();
+}
+
+// 頁面載入時顯示第一關
+window.addEventListener('load', loadChallenge);
+
+
+/* ============================================================
+   3. 5 題串題測驗（同之前邏輯）
+   ============================================================ */
+const correctAnswers = { 1:1, 2:1, 3:1, 4:1, 5:1 };
+const totalQuestions = 5;
+let currentQ = 1, score = 0, answered = false;
+const userAnswers = {};
+
+function answer(qNum, optionIdx, el) {
+    if (answered) return;
+    answered = true;
+    const isCorrect = (optionIdx === correctAnswers[qNum]);
+    const feedback = document.getElementById('fb' + qNum);
+    const allOpts = el.parentElement.querySelectorAll('.quiz-option');
+
+    allOpts[correctAnswers[qNum]].classList.add('correct');
+    if (!isCorrect) el.classList.add('wrong');
+    allOpts.forEach(o => {
+        if (o !== el && o !== allOpts[correctAnswers[qNum]])
+            o.classList.add('disabled');
+    });
+
+    if (isCorrect) {
+        feedback.textContent = "✅ 答對了！";
+        feedback.className = "quiz-feedback correct";
+        score++;
+    } else {
+        feedback.textContent = "❌ 答錯了，看綠色選項！";
+        feedback.className = "quiz-feedback wrong";
+    }
+    userAnswers[qNum] = isCorrect;
+    document.getElementById('progress').style.width =
+        (qNum / totalQuestions * 100) + "%";
+    document.getElementById('next' + qNum).classList.add('show');
+}
+
+function nextQuestion(qNum) {
+    document.getElementById('q' + qNum).classList.remove('active');
+    answered = false;
+    if (qNum < totalQuestions) {
+        currentQ = qNum + 1;
+        document.getElementById('q' + currentQ).classList.add('active');
+    } else {
+        showResult();
+    }
+}
+
+function showResult() {
+    document.getElementById('quiz-result').classList.add('show');
+    document.getElementById('score-num').textContent = score + " / " + totalQuestions;
+
+    const msg = document.getElementById('result-msg');
+    if (score === 5)      msg.textContent = "🏆 太厲害了，全對！你是網址達人！";
+    else if (score >= 3)  msg.textContent = "👍 不錯喔，基本觀念都掌握了！";
+    else if (score === 0) msg.textContent = "😅 別灰心，再回去看一次卡片內容吧！";
+    else                  msg.textContent = "💪 再複習一下卡片就能全對囉！";
+
+    const titles = {
+        1:"Q1：.edu.tw 代表什麼？",
+        2:"Q2：安全通訊協定？",
+        3:"Q3：www 代表什麼？",
+        4:"Q4：com 代表哪種機構？",
+        5:"Q5：Chrome 省略哪部分？"
+    };
+    let html = "";
+    for (let i = 1; i <= totalQuestions; i++) {
+        html += (userAnswers[i] ? "✅" : "❌") + " " + titles[i] + "<br>";
+    }
+    document.getElementById('score-details').innerHTML = html;
+    document.getElementById('progress').style.width = "100%";
+}
+
+function replay() {
+    score = 0; answered = false; currentQ = 1;
+    for (let i = 1; i <= totalQuestions; i++) {
+        delete userAnswers[i];
+        const qDiv = document.getElementById('q' + i);
+        qDiv.querySelectorAll('.quiz-option').forEach(o =>
+            o.classList.remove('correct','wrong','disabled'));
+        document.getElementById('fb' + i).textContent = "";
+        document.getElementById('next' + i).classList.remove('show');
+        qDiv.classList.remove('active');
+    }
+    document.getElementById('quiz-result').classList.remove('show');
+    document.getElementById('progress').style.width = "0%";
+    document.getElementById('q1').classList.add('active');
+}
+</script>
+</body>
+</html>
+
+							<script>
+                            	
+							</script>
+                        </body>
+                        </html>
+                    
