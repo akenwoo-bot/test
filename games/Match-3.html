@@ -1,0 +1,1255 @@
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+							<style>
+								body {
+									background-color: white; /* Ensure the iframe has a white background */
+								}
+
+								
+							</style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>經典消消樂</title>
+<style>
+     * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 14px;
+    background: #1a1530; color: #fff;
+    font-family: "PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+    user-select: none; -webkit-tap-highlight-color: transparent;
+        }
+  h1 { margin: 0; font-size: 22px; letter-spacing: 1px; }
+        .hud { display: flex; gap: 18px; font-size: 15px; flex-wrap: wrap; justify-content: center; }
+        .hud b { color: #ffd24d; font-size: 20px; }
+        .board-wrap { position: relative; }
+  canvas {
+    background: #241d44; border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.5);
+    touch-action: none;
+        }
+  button {
+    background: #b388ff; color: #1a1530; border: 0; border-radius: 8px;
+    padding: 8px 18px; font-size: 15px; font-weight: 700; cursor: pointer;
+        }
+  button:hover { background: #c9a8ff; }
+  button:disabled { opacity: 0.5; cursor: default; }
+        .hint { font-size: 13px; color: #9a8fd0; max-width: 560px; text-align: center; line-height: 1.6; }
+        .btn-row { display: flex; gap: 10px; }
+
+      /* 目標進度條 */
+      .progress { width: 480px; max-width: 90vw; height: 10px; background: #3a3170; border-radius: 6px; overflow: hidden; }
+      .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg,#7cf03d,#ffd24d); transition: width 0.3s ease; }
+      .tune { font-size: 13px; color: #8fd8ff; min-height: 18px; text-align: center; }
+
+      #overlay { display: none; position: fixed; inset: 0; z-index: 10;
+    background: rgba(10,8,25,0.75);
+    align-items: center; justify-content: center; }
+      #overlay.show { display: flex; }
+      .overlay-card {
+    background: #2a2350; border: 1px solid #4a3f80; border-radius: 16px;
+    padding: 32px 40px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.6);
+    animation: pop 0.35s ease;
+        }
+     @keyframes pop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .overlay-card h2 { margin: 0 0 8px; font-size: 26px; }
+        .overlay-card p { margin: 0 0 20px; color: #b8aee0; font-size: 16px; }
+        .overlay-card button { font-size: 16px; padding: 10px 28px; }
+        .overlay-card button.revive { background: #7cf03d; }
+</style>
+</head>
+<body>
+        <h1>經典消消樂</h1>
+        <div class="hud">
+            <span>關卡 <b id="level">1 / 5</b></span>
+            <span>步數 <b id="moves">0</b></span>
+            <span>分數 <b id="score">0</b> / 目標 <b id="target">0</b></span>
+          </div>
+        <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="board-wrap"><canvas id="canvas" width="480" height="480"></canvas></div>
+        <div class="btn-row">
+            <button id="newGame">重頭開始</button>
+            <button id="tuneBtn">調參（跑 30 局看難度）</button>
+          </div>
+        <div class="tune" id="tuneReadout"></div>
+        <p class="hint">
+         點擊 / 滑動交換相鄰棋子；<b style="color:#ffd24d">4 連出炸彈</b>、<b style="color:#7cf03d">5 連出彩虹</b>；<b style="color:#8fd8ff">冰塊</b>消 2 次破、<b style="color:#8890a0">石頭牆</b>阻擋掉落。<br>
+         分數會顯示進度條；4 秒沒操作會自動提示可行移動；步數用完可續命 +3。首次點擊啟動音效。
+          </p>
+
+      <div id="overlay">
+        <div class="overlay-card">
+          <h2 id="overlayTitle"></h2>
+          <p id="overlayText"></p>
+          <button id="overlayBtn">下一關</button>
+        </div>
+      </div>
+
+<script>
+/* =====================================================================
+ *  常量 + 關卡資料（A：拍平曲線，每關只引入一個新變數）
+ * ===================================================================== */
+const COLS = 8, ROWS = 8;
+const CELL = 60;
+const LERP = 0.2;
+const CLEAR_MS = 180;
+const GEM_COLORS = ['#ff4d6d','#4dd0e1','#ffd24d','#7cf03d','#b388ff','#ff9f43'];
+
+// 難度曲線：L3 先只加障礙物（顏色不變）→ L4 才加 6 色（撤障礙物）→ L5 兩者合體
+const levels = [
+      { colors: 5, moves: 22, target: 500 },
+      { colors: 5, moves: 20, target: 900 },
+      { colors: 5, moves: 18, target: 1300, ice: 2 },
+      { colors: 6, moves: 18, target: 1800 },
+      { colors: 6, moves: 16, target: 2400, ice: 3, stone: 1 },
+];
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
+const movesEl = document.getElementById('moves');
+const targetEl = document.getElementById('target');
+const levelEl = document.getElementById('level');
+const progressFill = document.getElementById('progressFill');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlayText = document.getElementById('overlayText');
+const overlayBtn = document.getElementById('overlayBtn');
+const tuneBtn = document.getElementById('tuneBtn');
+const tuneReadout = document.getElementById('tuneReadout');
+
+/* =====================================================================
+ *  MODEL 層
+ * ===================================================================== */
+let grid;
+let score = 0, maxCombo = 0;
+let locked = false;
+let gameOver = false;
+let currentLevel = 0;
+let moves = 0;
+let target = 0;
+let activeColors = 5;
+let canRevive = false;        // B：失敗續命旗標
+let hintCells = null;         // B：離線提示的高亮格
+let idleTimer = null;
+// M6 特效狀態
+let particles = [];
+let floaters = [];
+let audioCtx = null;
+
+function pixelX(c){ return c * CELL + CELL / 2; }
+function pixelY(r){ return r * CELL + CELL / 2; }
+function randColor(){ return Math.floor(Math.random() * activeColors); }
+function isObstacle(t){ return t && !!t.obstacle; }
+
+function makeToken(color, x, y){
+  return { color, x, y, tx: x, ty: y, scale: 1, state: 'idle', special: null };
+}
+function makeObstacle(type, r, c){
+  const o = { obstacle: type, x: pixelX(c), y: pixelY(r), tx: pixelX(c), ty: pixelY(r), scale: 1, state: 'idle' };
+  if (type === 'ice') o.hp = 2;
+  return o;
+}
+
+function generateBoard(){
+  const cfg = levels[currentLevel];
+  let guard = 0;
+  do {
+    grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+    for (let r = 0; r < ROWS; r++)
+      for (let c = 0; c < COLS; c++)
+        grid[r][c] = makeToken(randColor(), pixelX(c), pixelY(r));
+    placeObstacles(cfg.stone || 0, 'stone');
+    placeObstacles(cfg.ice || 0, 'ice');
+    guard++;
+        } while ((findMatches().size > 0 || !hasValidMoves()) && guard < 100);
+}
+
+function placeObstacles(count, type){
+  let placed = 0, guard = 0;
+  while (placed < count && guard++ < 500){
+    const r = Math.floor(Math.random() * ROWS);
+    const c = Math.floor(Math.random() * COLS);
+    const t = grid[r][c];
+    if (!t || t.obstacle) continue;
+    grid[r][c] = makeObstacle(type, r, c);
+    placed++;
+        }
+}
+
+// 核心 1：掃描匹配（障礙物中斷連續）
+function scanMatches(){
+  const cells = new Set();
+  const specials = new Map();
+  const add = (r, c) => cells.add(r + ',' + c);
+
+    for (let r = 0; r < ROWS; r++){
+    let c = 0;
+    while (c < COLS){
+      const t = grid[r][c];
+      if (!t || t.obstacle){ c++; continue; }
+      let end = c;
+      while (end + 1 < COLS && grid[r][end + 1] && !grid[r][end + 1].obstacle
+               && grid[r][end + 1].color === t.color) end++;
+      const len = end - c + 1;
+      if (len >= 3){
+        for (let k = c; k <= end; k++) add(r, k);
+        const pivot = c + Math.floor((len - 1) / 2);
+        if (len >= 5) markSpecial(specials, r, pivot, 'rainbow');
+        else if (len === 4) markSpecial(specials, r, pivot, 'bomb');
+              }
+      c = end + 1;
+          }
+        }
+    for (let c = 0; c < COLS; c++){
+    let r = 0;
+    while (r < ROWS){
+      const t = grid[r][c];
+      if (!t || t.obstacle){ r++; continue; }
+      let end = r;
+      while (end + 1 < ROWS && grid[end + 1][c] && !grid[end + 1][c].obstacle
+               && grid[end + 1][c].color === t.color) end++;
+      const len = end - r + 1;
+      if (len >= 3){
+        for (let k = r; k <= end; k++) add(k, c);
+        const pivot = r + Math.floor((len - 1) / 2);
+        if (len >= 5) markSpecial(specials, pivot, c, 'rainbow');
+        else if (len === 4) markSpecial(specials, pivot, c, 'bomb');
+              }
+      r = end + 1;
+          }
+        }
+  return { cells, specials };
+}
+
+function findMatches(){ return scanMatches().cells; }
+
+function markSpecial(map, r, c, type){
+  const key = r + ',' + c;
+  if (type === 'rainbow') map.set(key, 'rainbow');
+  else if (type === 'bomb' && map.get(key) !== 'rainbow') map.set(key, 'bomb');
+}
+
+// 核心 2：按列分段重力（石頭切段）
+function applyGravityAndRefill(){
+  for (let c = 0; c < COLS; c++){
+     let r = ROWS - 1;
+    while (r >= 0){
+      if (isObstacle(grid[r][c])){ r--; continue; }
+      let bottom = r;
+      while (r >= 0 && !isObstacle(grid[r][c])) r--;
+      const top = r + 1;
+      gravitySegment(c, top, bottom);
+          }
+        }
+}
+
+function gravitySegment(c, top, bottom){
+  let write = bottom;
+  for (let r = bottom; r >= top; r--){
+    const t = grid[r][c];
+    if (t && !t.obstacle){
+      if (r !== write){ grid[write][c] = t; grid[r][c] = null; }
+      grid[write][c].tx = pixelX(c);
+      grid[write][c].ty = pixelY(write);
+      write--;
+           }
+         }
+  for (let r = write; r >= top; r--){
+    const t = makeToken(randColor(), pixelX(c), pixelY(r) - CELL * (write - r + 1));
+    t.ty = pixelY(r);
+    grid[r][c] = t;
+          }
+}
+
+function hasValidMoves(){
+  const trySwap = (r1, c1, r2, c2) => {
+    if (r2 >= ROWS || c2 >= COLS || !grid[r1][c1] || !grid[r2][c2]) return false;
+    if (grid[r1][c1].obstacle || grid[r2][c2].obstacle) return false;
+    swapCells(r1, c1, r2, c2);
+    const ok = findMatches().size > 0;
+    swapCells(r1, c1, r2, c2);
+    return ok;
+           };
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
+      if (trySwap(r, c, r, c + 1) || trySwap(r, c, r + 1, c)) return true;
+  return false;
+}
+
+async function shuffleBoard(){
+  let guard = 0;
+  do {
+    for (let r = 0; r < ROWS; r++)
+      for (let c = 0; c < COLS; c++)
+        if (grid[r][c] && !grid[r][c].obstacle){ grid[r][c].color = randColor(); grid[r][c].scale = 0.1; }
+    guard++;
+            } while ((findMatches().size > 0 || !hasValidMoves()) && guard < 50);
+  await waitFrame(10);
+}
+
+function swapCells(r1, c1, r2, c2){
+  const a = grid[r1][c1], b = grid[r2][c2];
+  grid[r1][c1] = b; grid[r2][c2] = a;
+  if (a){ a.tx = pixelX(c2); a.ty = pixelY(r2); }
+  if (b){ b.tx = pixelX(c1); b.ty = pixelY(r1); }
+}
+
+function repairBoard(){
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++){
+      const t = grid[r][c];
+      if (!t) grid[r][c] = makeToken(randColor(), pixelX(c), pixelY(r));
+      else if (t.obstacle === undefined){ t.state = 'idle'; t.scale = 1; }
+              }
+}
+
+/* =====================================================================
+ *  特殊棋子 + 冰塊受擊
+ * ===================================================================== */
+function mostCommonColor(){
+  const count = new Array(GEM_COLORS.length).fill(0);
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++){
+      const t = grid[r][c];
+      if (t && !t.special && !t.obstacle) count[t.color]++;
+              }
+  let best = -1, bi = 0;
+  for (let i = 0; i < count.length; i++)
+    if (count[i] > best){ best = count[i]; bi = i; }
+  return bi;
+}
+
+function triggerSpecial(t, r, c, clearSet, triggerColor){
+  const key = r + ',' + c;
+  if (clearSet.has(key)) return;
+  clearSet.add(key);
+  if (t.special === 'bomb'){
+    for (let dr = -1; dr <= 1; dr++)
+      for (let dc = -1; dc <= 1; dc++){
+        const nr = r + dr, nc = c + dc;
+        if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+        const nt = grid[nr][nc];
+        if (nt && nt.obstacle === 'stone') continue;
+        clearSet.add(nr + ',' + nc);
+        if (nt && nt.special) triggerSpecial(nt, nr, nc, clearSet, triggerColor);
+                }
+            } else if (t.special === 'rainbow'){
+    const color = (triggerColor != null) ? triggerColor : mostCommonColor();
+    for (let rr = 0; rr < ROWS; rr++)
+      for (let cc = 0; cc < COLS; cc++){
+        const g = grid[rr][cc];
+        if (g && g.color === color && !g.special && !g.obstacle) clearSet.add(rr + ',' + cc);
+                }
+               }
+}
+
+function applyIceHits(clearSet){
+  const hitThisCycle = new Set();
+  for (const key of clearSet){
+    const [r, c] = key.split(',').map(Number);
+    const neighbors = [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]];
+    for (const [nr, nc] of neighbors){
+      if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+      const t = grid[nr][nc];
+      const ikey = nr + ',' + nc;
+      if (t && t.obstacle === 'ice' && !hitThisCycle.has(ikey)){
+        hitThisCycle.add(ikey);
+        t.hp--;
+                }
+              }
+            }
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++){
+      const t = grid[r][c];
+      if (t && t.obstacle === 'ice' && t.hp <= 0) clearSet.add(r + ',' + c);
+              }
+}
+
+/* =====================================================================
+ *  遊戲流程
+ * ===================================================================== */
+function addScore(count, combo){
+  score += count * 10 * combo;
+  maxCombo = Math.max(maxCombo, combo);
+  updateHUD();
+}
+
+async function collapse(clearSet, specialsMap){
+  for (const key of specialsMap.keys()) clearSet.delete(key);
+  clearCellsVisual(clearSet);
+  await delay(CLEAR_MS);
+  for (const key of clearSet){
+    const [r, c] = key.split(',').map(Number);
+    if (grid[r][c] && grid[r][c].obstacle !== 'stone') grid[r][c] = null;
+            }
+  for (const [key, type] of specialsMap){
+    const [r, c] = key.split(',').map(Number);
+    if (grid[r][c]){
+      grid[r][c].special = type;
+      grid[r][c].state = 'idle';
+                } else {
+      const t = makeToken(randColor(), pixelX(c), pixelY(r));
+      t.special = type;
+      grid[r][c] = t;
+                  }
+              }
+  applyGravityAndRefill();
+  await waitForSettle();
+}
+
+async function resolveBoard(){
+  let combo = 0;
+  while (true){
+    const { cells, specials } = scanMatches();
+    if (cells.size === 0 && specials.size === 0) break;
+    combo++;
+    playTone(300 + combo * 70, 0.09, 'triangle', 0.1);
+    if (combo >= 2) addFloater(canvas.width / 2, 60, `COMBO x${combo}`, '#ffd24d');
+
+     const toTrigger = [];
+    for (const key of cells){
+      const [r, c] = key.split(',').map(Number);
+      const t = grid[r][c];
+      if (t && t.special) toTrigger.push([r, c]);
+              }
+    for (const [r, c] of toTrigger){
+      const t = grid[r][c];
+      if (t && t.special) triggerSpecial(t, r, c, cells, t.color);
+              }
+
+    applyIceHits(cells);
+    addScore(cells.size + specials.size, combo);
+    await collapse(cells, specials);
+            }
+  if (!hasValidMoves()) await shuffleBoard();
+  return combo;
+}
+
+async function triggerSwapSpecial(a, b){
+  const clearSet = new Set();
+  const ta = grid[a.r][a.c], tb = grid[b.r][b.c];
+  if (ta && ta.special) triggerSpecial(ta, a.r, a.c, clearSet, tb ? tb.color : undefined);
+  if (tb && tb.special) triggerSpecial(tb, b.r, b.c, clearSet, ta ? ta.color : undefined);
+  if (clearSet.size === 0) return;
+  applyIceHits(clearSet);
+  addScore(clearSet.size, 1);
+  await collapse(clearSet, new Map());
+}
+
+async function attemptSwap(a, b){
+  if (locked || gameOver || !adjacent(a, b)) return;
+  const ta0 = grid[a.r][a.c], tb0 = grid[b.r][b.c];
+  if ((ta0 && ta0.obstacle) || (tb0 && tb0.obstacle)) return;
+  locked = true;
+  hintCells = null;
+  try {
+    swapCells(a.r, a.c, b.r, b.c);
+    await waitForSettle();
+    const ta = grid[a.r][a.c], tb = grid[b.r][b.c];
+    const matched = findMatches().size > 0;
+    const specialSwap = (ta && ta.special) || (tb && tb.special);
+    if (matched){
+      moves--; updateHUD();
+      playTone(440, 0.06, 'sine', 0.08);
+      await resolveBoard();
+      checkWinLose();
+            } else if (specialSwap){
+      moves--; updateHUD();
+      playTone(520, 0.08, 'sine', 0.09);
+      await triggerSwapSpecial(a, b);
+      await resolveBoard();
+      checkWinLose();
+                } else {
+      playTone(160, 0.1, 'sawtooth', 0.07);
+      swapCells(a.r, a.c, b.r, b.c);
+      await waitForSettle();
+                }
+               } catch (err){
+    console.error('消除流程例外，強制解鎖：', err);
+    repairBoard();
+               } finally {
+    locked = false;
+    scheduleIdleHint();
+               }
+}
+
+function checkWinLose(){
+  if (score >= target) winLevel();
+  else if (moves <= 0) loseLevel();
+}
+
+function winLevel(){
+  gameOver = true;
+  celebrate();
+  const isLast = currentLevel >= levels.length - 1;
+  setTimeout(() => {
+    overlayTitle.textContent = isLast ? '🎉 過完所有關卡！' : `第 ${currentLevel + 1} 關 過關！`;
+    overlayText.textContent = `分數 ${score} / 目標 ${target}｜最大連擊 ${maxCombo}`;
+    overlayBtn.textContent = isLast ? '再玩一次' : '下一關 →';
+    overlayBtn.classList.remove('revive');
+    overlayBtn.onclick = () => {
+      overlay.classList.remove('show');
+      gameOver = false;
+      startLevel(isLast ? 0 : currentLevel + 1);
+                };
+    overlay.classList.add('show');
+       }, 750);
+}
+
+// B：失敗續命（每關一次 +3 步）
+function loseLevel(){
+  gameOver = true;
+  playTone(220, 0.25, 'sawtooth', 0.12);
+  setTimeout(() => {
+    if (canRevive){
+      overlayTitle.textContent = '步數用完了…';
+      overlayText.textContent = `分數 ${score} / 目標 ${target}｜再給你 3 步？`;
+      overlayBtn.textContent = '續命 +3 步';
+      overlayBtn.classList.add('revive');
+      overlayBtn.onclick = () => {
+        canRevive = false;
+        overlayBtn.classList.remove('revive');
+        overlay.classList.remove('show');
+        gameOver = false;
+        moves += 3;
+        updateHUD();
+        scheduleIdleHint();
+              };
+     } else {
+      overlayTitle.textContent = '步數用完了…';
+      overlayText.textContent = `分數 ${score} / 目標 ${target}｜再試一次吧`;
+      overlayBtn.textContent = '重試本關';
+      overlayBtn.classList.remove('revive');
+      overlayBtn.onclick = () => {
+        overlay.classList.remove('show');
+        gameOver = false;
+        startLevel(currentLevel);
+              };
+     }
+    overlay.classList.add('show');
+       }, 300);
+}
+
+function startLevel(index){
+  currentLevel = index;
+  const cfg = levels[index];
+  activeColors = cfg.colors;
+  moves = cfg.moves;
+  target = cfg.target;
+  score = 0; maxCombo = 0;
+  gameOver = false;
+  canRevive = true;
+  hintCells = null;
+  particles = []; floaters = [];
+  generateBoard();
+  updateHUD();
+  scheduleIdleHint();
+}
+
+function updateHUD(){
+  scoreEl.textContent = score;
+  movesEl.textContent = moves;
+  targetEl.textContent = target;
+  levelEl.textContent = `${currentLevel + 1} / ${levels.length}`;
+  const pct = target > 0 ? Math.min(100, score / target * 100) : 0;
+  progressFill.style.width = pct + '%';
+}
+
+/* =====================================================================
+ *  B：離線提示（idle hint）
+ * ===================================================================== */
+function findValidMove(){
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++){
+      const t = grid[r][c];
+      if (!t || t.obstacle) continue;
+      if (c + 1 < COLS && grid[r][c + 1] && !grid[r][c + 1].obstacle){
+        swapCells(r, c, r, c + 1);
+        const ok = findMatches().size > 0;
+        swapCells(r, c, r, c + 1);
+        if (ok) return { a: { r, c }, b: { r, c: c + 1 } };
+            }
+      if (r + 1 < ROWS && grid[r + 1][c] && !grid[r + 1][c].obstacle){
+        swapCells(r, c, r + 1, c);
+        const ok = findMatches().size > 0;
+        swapCells(r, c, r + 1, c);
+        if (ok) return { a: { r, c }, b: { r: r + 1, c } };
+            }
+        }
+  return null;
+}
+
+function scheduleIdleHint(){
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => {
+    if (!locked && !gameOver && !overlay.classList.contains('show')){
+      hintCells = findValidMove();
+      }
+     }, 4000);
+}
+
+/* =====================================================================
+ *  M6 特效 + 音效
+ * ===================================================================== */
+function initAudio(){
+  if (!audioCtx){
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+        }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}
+function playTone(freq, duration = 0.12, type = 'sine', gain = 0.15){
+  if (!audioCtx) return;
+  try {
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    g.gain.value = gain;
+    osc.connect(g); g.connect(audioCtx.destination);
+    const now = audioCtx.currentTime;
+    g.gain.setValueAtTime(gain, now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    osc.start(now);
+    osc.stop(now + duration);
+        } catch (e) {}
+}
+function playBoom(){ playTone(90, 0.25, 'sawtooth', 0.18); }
+
+function spawnParticles(x, y, color, count, power){
+  for (let i = 0; i < count; i++){
+    const angle = Math.random() * Math.PI * 2;
+    const speed = power * (0.4 + Math.random());
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 1,
+      life: 1,
+      decay: 0.02 + Math.random() * 0.03,
+      size: 3 + Math.random() * 4,
+      color
+     });
+        }
+  if (particles.length > 500) particles.splice(0, particles.length - 500);
+}
+
+function clearCellsVisual(clearSet){
+  let boom = false;
+  for (const key of clearSet){
+    const [r, c] = key.split(',').map(Number);
+    const t = grid[r][c];
+    if (!t) continue;
+    if (t.special === 'bomb') boom = true;
+    if (t.obstacle === 'ice'){
+      spawnParticles(t.x, t.y, '#8fd8ff', 12, 3);
+       } else if (t.special === 'rainbow'){
+      spawnParticles(t.x, t.y, '#ffffff', 16, 3.5);
+       } else {
+      spawnParticles(t.x, t.y, GEM_COLORS[t.color] || '#ffffff', 8, 2.5);
+       }
+    t.state = 'clearing';
+     }
+  if (boom) playBoom();
+}
+
+function updateParticles(){
+  for (let i = particles.length - 1; i >= 0; i--){
+    const p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.12;
+    p.vx *= 0.99;
+    p.life -= p.decay;
+    if (p.life <= 0) particles.splice(i, 1);
+        }
+}
+function renderParticles(){
+  for (const p of particles){
+    ctx.globalAlpha = Math.max(0, p.life);
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+    ctx.fill();
+        }
+  ctx.globalAlpha = 1;
+}
+
+function addFloater(x, y, text, color){
+  floaters.push({ x, y, text, color, life: 1 });
+}
+function updateFloaters(){
+  for (let i = floaters.length - 1; i >= 0; i--){
+    const f = floaters[i];
+    f.y -= 0.6;
+    f.life -= 0.015;
+    if (f.life <= 0) floaters.splice(i, 1);
+        }
+}
+function renderFloaters(){
+  for (const f of floaters){
+    ctx.globalAlpha = Math.max(0, f.life);
+    ctx.fillStyle = f.color;
+    ctx.font = 'bold 22px "PingFang TC", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(f.text, f.x, f.y);
+        }
+  ctx.globalAlpha = 1;
+}
+
+function celebrate(){
+   [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => playTone(f, 0.18, 'triangle', 0.14), i * 90));
+  for (let i = 0; i < 90; i++){
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: -10,
+      vx: (Math.random() - 0.5) * 3,
+      vy: 1 + Math.random() * 2,
+      life: 1,
+      decay: 0.006 + Math.random() * 0.008,
+      size: 4 + Math.random() * 4,
+      color: GEM_COLORS[Math.floor(Math.random() * GEM_COLORS.length)]
+     });
+        }
+}
+
+/* =====================================================================
+ *  VIEW 層：棋子渲染 + 主迴圈
+ * ===================================================================== */
+function drawGem(t){
+  if (!t || t.scale <= 0.02) return;
+  const s = CELL * 0.42 * t.scale;
+  const x = t.x - s, y = t.y - s, size = s * 2;
+  const color = GEM_COLORS[t.color] || GEM_COLORS[0];
+
+    if (t.obstacle === 'ice'){
+    ctx.save();
+    ctx.globalAlpha = t.hp > 1 ? 0.75 : 0.5;
+    ctx.fillStyle = '#8fd8ff';
+    roundRect(x, y, size, size, 10 * t.scale);
+    ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(t.x - size * 0.2, t.y - size * 0.15);
+    ctx.lineTo(t.x + size * 0.1, t.y + size * 0.2);
+    ctx.stroke();
+    ctx.fillStyle = '#eaf7ff';
+    ctx.font = `${Math.floor(size * 0.42)}px sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(t.hp), t.x, t.y);
+    return;
+        }
+
+    if (t.obstacle === 'stone'){
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 6; ctx.shadowOffsetY = 3;
+    ctx.fillStyle = '#555a66';
+    roundRect(x, y, size, size, 8 * t.scale);
+    ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    roundRect(x + 3, y + 3, size - 6, size * 0.3, 6 * t.scale);
+    ctx.fill();
+    return;
+        }
+
+    if (t.special === 'rainbow'){
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.35)';
+    ctx.shadowBlur = 6; ctx.shadowOffsetY = 3;
+    const g = ctx.createLinearGradient(x, y, x + size, y + size);
+    GEM_COLORS.forEach((col, i) => g.addColorStop(i / (GEM_COLORS.length - 1), col));
+    ctx.fillStyle = g;
+    roundRect(x, y, size, size, 12 * t.scale);
+    ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+    roundRect(x + 1, y + 1, size - 2, size - 2, 12 * t.scale);
+    ctx.stroke();
+    return;
+        }
+
+    if (t.special === 'bomb'){
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.45)';
+    ctx.shadowBlur = 8; ctx.shadowOffsetY = 3;
+    ctx.fillStyle = '#2a2350';
+    roundRect(x, y, size, size, 12 * t.scale);
+    ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = '#ffd24d'; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(t.x, t.y, size * 0.34, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = '#ffd24d';
+    ctx.beginPath();
+    ctx.arc(t.x, t.y, size * 0.12, 0, Math.PI * 2);
+    ctx.fill();
+    return;
+        }
+
+    ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.35)';
+  ctx.shadowBlur = 6;
+  ctx.shadowOffsetY = 3;
+  const g = ctx.createLinearGradient(x, y, x, y + size);
+  g.addColorStop(0, lighten(color, 30));
+  g.addColorStop(1, color);
+  ctx.fillStyle = g;
+  roundRect(x, y, size, size, 12 * t.scale);
+  ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  roundRect(x + size * 0.18, y + size * 0.15, size * 0.5, size * 0.28, 6 * t.scale);
+  ctx.fill();
+}
+
+function roundRect(x, y, w, h, r){
+  r = Math.max(0, Math.min(r, Math.min(w, h) / 2));
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function lighten(hex, amt){
+  const n = parseInt(hex.slice(1), 16);
+  const r = Math.min(255, (n >> 16) + amt);
+  const g = Math.min(255, ((n >> 8) & 255) + amt);
+  const b = Math.min(255, (n & 255) + amt);
+  return `rgb(${r},${g},${b})`;
+}
+
+function render(){
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for (let i = 1; i < COLS; i++){
+    ctx.beginPath(); ctx.moveTo(i * CELL, 0); ctx.lineTo(i * CELL, canvas.height); ctx.stroke();
+          }
+  for (let i = 1; i < ROWS; i++){
+    ctx.beginPath(); ctx.moveTo(0, i * CELL); ctx.lineTo(canvas.width, i * CELL); ctx.stroke();
+          }
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
+      drawGem(grid[r][c]);
+  if (selected && !gameOver){
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(selected.c * CELL + 4, selected.r * CELL + 4, CELL - 8, CELL - 8);
+          }
+   // B：離線提示（脈動高亮）
+  if (hintCells && !gameOver && !overlay.classList.contains('show')){
+    const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 150);
+    ctx.strokeStyle = `rgba(255,255,255,${0.25 + 0.55 * pulse})`;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(hintCells.a.c * CELL + 3, hintCells.a.r * CELL + 3, CELL - 6, CELL - 6);
+    ctx.strokeRect(hintCells.b.c * CELL + 3, hintCells.b.r * CELL + 3, CELL - 6, CELL - 6);
+          }
+}
+
+function updateAnimations(){
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++){
+      const t = grid[r][c];
+      if (!t) continue;
+      t.x += (t.tx - t.x) * LERP;
+      t.y += (t.ty - t.y) * LERP;
+      if (t.state === 'clearing') t.scale -= 0.18;
+      else if (t.scale < 1) t.scale = Math.min(1, t.scale + 0.12);
+      if (Math.abs(t.x - t.tx) < 1) t.x = t.tx;
+      if (Math.abs(t.y - t.ty) < 1) t.y = t.ty;
+              }
+}
+
+function allSettled(){
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++){
+      const t = grid[r][c];
+      if (!t) continue;
+      if (t.state === 'clearing') return false;
+      if (Math.abs(t.x - t.tx) >= 1 || Math.abs(t.y - t.ty) >= 1) return false;
+      if (t.scale < 0.99) return false;
+              }
+  return true;
+}
+
+function loop(){
+  try {
+    updateAnimations();
+    updateParticles();
+    updateFloaters();
+    render();
+    renderParticles();
+    renderFloaters();
+          } catch (e){
+    console.error('渲染例外（已攔截，迴圈繼續）：', e);
+          }
+  requestAnimationFrame(loop);
+}
+
+function waitForSettle(){
+  return new Promise(resolve => {
+    let guard = 0;
+          (function check(){
+      if (allSettled() || ++guard > 300) resolve();
+      else requestAnimationFrame(check);
+            })();
+          });
+}
+function delay(ms){ return new Promise(r => setTimeout(r, ms)); }
+function waitFrame(n){ return new Promise(r => setTimeout(r, n * 16)); }
+
+/* =====================================================================
+ *  CONTROLLER 層
+ * ===================================================================== */
+let selected = null;
+let startCell = null;
+
+function adjacent(a, b){
+  return Math.abs(a.r - b.r) + Math.abs(a.c - b.c) === 1;
+}
+
+function cellFromEvent(e){
+  const rect = canvas.getBoundingClientRect();
+  const sx = canvas.width / rect.width;
+  const sy = canvas.height / rect.height;
+  const px = (e.clientX - rect.left) * sx;
+  const py = (e.clientY - rect.top) * sy;
+  const c = Math.floor(px / CELL), r = Math.floor(py / CELL);
+  if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return null;
+  return { r, c };
+}
+
+canvas.addEventListener('pointerdown', e => {
+  initAudio();
+  hintCells = null;
+  scheduleIdleHint();
+  if (locked || gameOver) return;
+  const cell = cellFromEvent(e);
+  if (!cell) return;
+  startCell = cell;
+  if (selected && adjacent(selected, cell)){
+    attemptSwap(selected, cell);
+    selected = null; startCell = null;
+    return;
+          }
+  selected = cell;
+});
+
+canvas.addEventListener('pointermove', e => {
+  if (locked || gameOver || !startCell) return;
+  const cell = cellFromEvent(e);
+  if (!cell) return;
+  if (cell.r !== startCell.r || cell.c !== startCell.c){
+    if (adjacent(startCell, cell)){
+      attemptSwap(startCell, cell);
+      selected = null; startCell = null;
+              }
+            }
+});
+
+canvas.addEventListener('pointerup', () => { startCell = null; });
+
+document.getElementById('newGame').addEventListener('click', () => {
+  initAudio();
+  overlay.classList.remove('show');
+  startLevel(0);
+});
+
+/* =====================================================================
+ *  A：自動調參工具（同步模擬，不碰 UI/動畫，計分與正式遊戲一致）
+ * ===================================================================== */
+function simRand(n){ return Math.floor(Math.random() * n); }
+function simMark(map, r, c, type){
+  const k = r + ',' + c;
+  if (type === 'rainbow') map.set(k, 'rainbow');
+  else if (type === 'bomb' && map.get(k) !== 'rainbow') map.set(k, 'bomb');
+}
+function simFindMatches(g){
+  const cells = new Set(), specials = new Map();
+  const add = (r, c) => cells.add(r + ',' + c);
+  for (let r = 0; r < ROWS; r++){
+    let c = 0;
+    while (c < COLS){
+      const t = g[r][c];
+      if (!t || t.obstacle){ c++; continue; }
+      let end = c;
+      while (end + 1 < COLS && g[r][end + 1] && !g[r][end + 1].obstacle && g[r][end + 1].color === t.color) end++;
+      const len = end - c + 1;
+      if (len >= 3){
+        for (let k = c; k <= end; k++) add(r, k);
+        const p = c + Math.floor((len - 1) / 2);
+        if (len >= 5) simMark(specials, r, p, 'rainbow');
+        else if (len === 4) simMark(specials, r, p, 'bomb');
+            }
+      c = end + 1;
+        }
+      }
+  for (let c = 0; c < COLS; c++){
+    let r = 0;
+    while (r < ROWS){
+      const t = g[r][c];
+      if (!t || t.obstacle){ r++; continue; }
+      let end = r;
+      while (end + 1 < ROWS && g[end + 1][c] && !g[end + 1][c].obstacle && g[end + 1][c].color === t.color) end++;
+      const len = end - r + 1;
+      if (len >= 3){
+        for (let k = r; k <= end; k++) add(k, c);
+        const p = r + Math.floor((len - 1) / 2);
+        if (len >= 5) simMark(specials, p, c, 'rainbow');
+        else if (len === 4) simMark(specials, p, c, 'bomb');
+            }
+      r = end + 1;
+        }
+      }
+  return { cells, specials };
+}
+function simGravity(g, colors){
+  for (let c = 0; c < COLS; c++){
+     let r = ROWS - 1;
+    while (r >= 0){
+      if (g[r][c] && g[r][c].obstacle){ r--; continue; }
+      let bottom = r;
+      while (r >= 0 && !(g[r][c] && g[r][c].obstacle)) r--;
+      const top = r + 1;
+      let write = bottom;
+      for (let rr = bottom; rr >= top; rr--){
+        const t = g[rr][c];
+        if (t && !t.obstacle){
+          if (rr !== write){ g[write][c] = t; g[rr][c] = null; }
+          write--;
+              }
+            }
+      for (let rr = write; rr >= top; rr--)
+        g[rr][c] = { color: simRand(colors), obstacle: null, special: null, hp: 0 };
+            }
+          }
+}
+function simMostCommon(g){
+  const cnt = {};
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++){
+      const t = g[r][c];
+      if (t && !t.special && !t.obstacle) cnt[t.color] = (cnt[t.color] || 0) + 1;
+              }
+  let best = -1, bi = 0;
+  for (const k in cnt) if (cnt[k] > best){ best = cnt[k]; bi = +k; }
+  return bi;
+}
+function simTrigger(g, t, r, c, clearSet, triggerColor){
+  const k = r + ',' + c;
+  if (clearSet.has(k)) return;
+  clearSet.add(k);
+  if (t.special === 'bomb'){
+    for (let dr = -1; dr <= 1; dr++)
+      for (let dc = -1; dc <= 1; dc++){
+        const nr = r + dr, nc = c + dc;
+        if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+        const nt = g[nr][nc];
+        if (nt && nt.obstacle === 'stone') continue;
+        clearSet.add(nr + ',' + nc);
+        if (nt && nt.special) simTrigger(g, nt, nr, nc, clearSet, triggerColor);
+                }
+            } else if (t.special === 'rainbow'){
+    const color = (triggerColor != null) ? triggerColor : simMostCommon(g);
+    for (let rr = 0; rr < ROWS; rr++)
+      for (let cc = 0; cc < COLS; cc++){
+        const x = g[rr][cc];
+        if (x && x.color === color && !x.special && !x.obstacle) clearSet.add(rr + ',' + cc);
+                }
+               }
+}
+function simIceHits(g, clearSet){
+  const hit = new Set();
+  for (const k of clearSet){
+    const [r, c] = k.split(',').map(Number);
+    for (const [nr, nc] of [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]]){
+      if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+      const t = g[nr][nc];
+      const ik = nr + ',' + nc;
+      if (t && t.obstacle === 'ice' && !hit.has(ik)){ hit.add(ik); t.hp--; }
+              }
+            }
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++){
+      const t = g[r][c];
+      if (t && t.obstacle === 'ice' && t.hp <= 0) clearSet.add(r + ',' + c);
+              }
+}
+function simResolve(g, colors){
+  let total = 0, combo = 0;
+  while (true){
+    const { cells, specials } = simFindMatches(g);
+    if (cells.size === 0 && specials.size === 0) break;
+    combo++;
+    const toTrig = [];
+    for (const k of cells){
+      const [r, c] = k.split(',').map(Number);
+      const t = g[r][c];
+      if (t && t.special) toTrig.push([r, c]);
+              }
+    for (const [r, c] of toTrig){
+      const t = g[r][c];
+      if (t && t.special) simTrigger(g, t, r, c, cells, t.color);
+              }
+    simIceHits(g, cells);
+    total += (cells.size + specials.size) * 10 * combo;   // 與 addScore 一致
+    for (const k of cells){
+      const [r, c] = k.split(',').map(Number);
+      if (g[r][c] && g[r][c].obstacle !== 'stone') g[r][c] = null;
+              }
+    for (const [k, type] of specials){
+      const [r, c] = k.split(',').map(Number);
+      if (g[r][c]) g[r][c].special = type;
+      else g[r][c] = { color: simRand(colors), obstacle: null, special: type, hp: 0 };
+              }
+    simGravity(g, colors);
+            }
+  return total;
+}
+function simHasValid(g){
+  const trySwap = (r1, c1, r2, c2) => {
+    if (r2 >= ROWS || c2 >= COLS || !g[r1][c1] || !g[r2][c2]) return false;
+    if (g[r1][c1].obstacle || g[r2][c2].obstacle) return false;
+    const a = g[r1][c1], b = g[r2][c2];
+    g[r1][c1] = b; g[r2][c2] = a;
+    const ok = simFindMatches(g).cells.size > 0;
+    g[r1][c1] = a; g[r2][c2] = b;
+    return ok;
+             };
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
+      if (trySwap(r, c, r, c + 1) || trySwap(r, c, r + 1, c)) return true;
+  return false;
+}
+function simShuffle(g, colors){
+  let guard = 0;
+  do {
+    for (let r = 0; r < ROWS; r++)
+      for (let c = 0; c < COLS; c++)
+        if (g[r][c] && !g[r][c].obstacle){ g[r][c].color = simRand(colors); g[r][c].special = null; }
+    guard++;
+            } while ((simFindMatches(g).cells.size > 0 || !simHasValid(g)) && guard < 50);
+}
+function simPlace(g, type, colors){
+  let guard = 0;
+  while (guard++ < 500){
+    const r = simRand(ROWS), c = simRand(COLS);
+    if (!g[r][c] || g[r][c].obstacle) continue;
+    g[r][c] = { color: simRand(colors), obstacle: type, special: null, hp: type === 'ice' ? 2 : 0 };
+    return;
+            }
+}
+function simGenerate(cfg){
+  const g = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+  let guard = 0;
+  do {
+    for (let r = 0; r < ROWS; r++)
+      for (let c = 0; c < COLS; c++)
+        g[r][c] = { color: simRand(cfg.colors), obstacle: null, special: null, hp: 0 };
+    for (let i = 0; i < (cfg.stone || 0); i++) simPlace(g, 'stone', cfg.colors);
+    for (let i = 0; i < (cfg.ice || 0); i++) simPlace(g, 'ice', cfg.colors);
+    guard++;
+            } while ((simFindMatches(g).cells.size > 0 || !simHasValid(g)) && guard < 100);
+  return g;
+}
+function cloneGrid(g){
+  return g.map(row => row.map(cell => cell
+    ? { color: cell.color, obstacle: cell.obstacle, special: cell.special, hp: cell.hp }
+    : null));
+}
+// 貪婪選步：試所有可行交換，選分數最高者
+function bestSimMove(g, colors){
+  let best = null, bestScore = -1;
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++){
+      const t = g[r][c];
+      if (!t || t.obstacle) continue;
+      const cands = [[r, c + 1], [r + 1, c]];
+      for (const [r2, c2] of cands){
+        if (r2 >= ROWS || c2 >= COLS) continue;
+        const t2 = g[r2][c2];
+        if (!t2 || t2.obstacle) continue;
+        const cp = cloneGrid(g);
+        cp[r][c] = cp[r2][c2]; cp[r2][c2] = cp[r][c];
+        const has = simFindMatches(cp).cells.size > 0;
+        if (!has) continue;
+        const sc = simResolve(cp, colors);
+        if (sc > bestScore){ bestScore = sc; best = { a: { r, c }, b: { r: r2, c: c2 } }; }
+            }
+        }
+  return best;
+}
+function playOneGame(cfg){
+  const g = simGenerate(cfg);
+  let score = 0, moves = cfg.moves;
+  while (moves > 0){
+    const mv = bestSimMove(g, cfg.colors);
+    if (!mv) break;
+    const tmp = g[mv.a.r][mv.a.c];
+    g[mv.a.r][mv.a.c] = g[mv.b.r][mv.b.c];
+    g[mv.b.r][mv.b.c] = tmp;
+    score += simResolve(g, cfg.colors);
+    moves--;
+    if (score >= cfg.target) break;
+    if (!simHasValid(g)) simShuffle(g, cfg.colors);
+        }
+  return { score, won: score >= cfg.target };
+}
+function simulateLevel(cfg, games = 30){
+  let total = 0, best = 0, won = 0;
+  for (let i = 0; i < games; i++){
+    const r = playOneGame(cfg);
+    total += r.score;
+    best = Math.max(best, r.score);
+    if (r.won) won++;
+        }
+  const avg = total / games;
+  const perMove = avg / cfg.moves;
+  return { avg, best, perMove, winRate: won / games, suggested: Math.round(perMove * cfg.moves * 0.7) };
+}
+
+tuneBtn.addEventListener('click', () => {
+  tuneBtn.disabled = true;
+  tuneReadout.textContent = '計算中…（跑 30 局，約 1~3 秒）';
+  setTimeout(() => {
+    const cfg = levels[currentLevel];
+    const res = simulateLevel(cfg, 30);
+    tuneReadout.innerHTML =
+     `第 ${currentLevel + 1} 關｜平均 ${Math.round(res.avg)}｜過關率 ${Math.round(res.winRate * 100)}%｜<b>建議目標 ${res.suggested}</b>（每步 ${Math.round(res.perMove)}）`;
+    console.log('[調參]', tuneReadout.textContent, res);
+    tuneBtn.disabled = false;
+       }, 60);
+});
+
+/* =====================================================================
+ *  啟動
+ * ===================================================================== */
+startLevel(0);
+loop();
+</script>
+</body>
+</html>
+
+							<script>
+                            	
+							</script>
+                        </body>
+                        </html>
+                    
