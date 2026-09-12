@@ -18,85 +18,86 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>經典消消樂</title>
+<title>消消樂 M7 體驗與調參</title>
 <style>
-     * { box-sizing: border-box; }
+      * { box-sizing: border-box; }
   body {
     margin: 0; min-height: 100vh; display: flex; flex-direction: column;
     align-items: center; justify-content: center; gap: 14px;
     background: #1a1530; color: #fff;
     font-family: "PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
     user-select: none; -webkit-tap-highlight-color: transparent;
-        }
+         }
   h1 { margin: 0; font-size: 22px; letter-spacing: 1px; }
-        .hud { display: flex; gap: 18px; font-size: 15px; flex-wrap: wrap; justify-content: center; }
-        .hud b { color: #ffd24d; font-size: 20px; }
-        .board-wrap { position: relative; }
+         .hud { display: flex; gap: 18px; font-size: 15px; flex-wrap: wrap; justify-content: center; }
+         .hud b { color: #ffd24d; font-size: 20px; }
+         .board-wrap { position: relative; }
   canvas {
     background: #241d44; border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0,0,0,.5);
     touch-action: none;
-        }
+         }
   button {
     background: #b388ff; color: #1a1530; border: 0; border-radius: 8px;
     padding: 8px 18px; font-size: 15px; font-weight: 700; cursor: pointer;
-        }
+         }
   button:hover { background: #c9a8ff; }
   button:disabled { opacity: 0.5; cursor: default; }
-        .hint { font-size: 13px; color: #9a8fd0; max-width: 560px; text-align: center; line-height: 1.6; }
-        .btn-row { display: flex; gap: 10px; }
+         .hint { font-size: 13px; color: #9a8fd0; max-width: 560px; text-align: center; line-height: 1.6; }
+         .btn-row { display: flex; gap: 10px; }
 
-      /* 目標進度條 */
-      .progress { width: 480px; max-width: 90vw; height: 10px; background: #3a3170; border-radius: 6px; overflow: hidden; }
-      .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg,#7cf03d,#ffd24d); transition: width 0.3s ease; }
-      .tune { font-size: 13px; color: #8fd8ff; min-height: 18px; text-align: center; }
+       .progress { width: 480px; max-width: 90vw; height: 10px; background: #3a3170; border-radius: 6px; overflow: hidden; }
+       .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg,#7cf03d,#ffd24d); transition: width 0.3s ease; }
+       .tune { font-size: 13px; color: #8fd8ff; min-height: 18px; text-align: center; }
 
-      #overlay { display: none; position: fixed; inset: 0; z-index: 10;
+       #overlay { display: none; position: fixed; inset: 0; z-index: 10;
     background: rgba(10,8,25,0.75);
     align-items: center; justify-content: center; }
-      #overlay.show { display: flex; }
-      .overlay-card {
+       #overlay.show { display: flex; }
+       .overlay-card {
     background: #2a2350; border: 1px solid #4a3f80; border-radius: 16px;
     padding: 32px 40px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.6);
     animation: pop 0.35s ease;
-        }
-     @keyframes pop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .overlay-card h2 { margin: 0 0 8px; font-size: 26px; }
-        .overlay-card p { margin: 0 0 20px; color: #b8aee0; font-size: 16px; }
-        .overlay-card button { font-size: 16px; padding: 10px 28px; }
-        .overlay-card button.revive { background: #7cf03d; }
+         }
+      @keyframes pop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+         .overlay-card h2 { margin: 0 0 8px; font-size: 26px; }
+         .overlay-card p { margin: 0 0 20px; color: #b8aee0; font-size: 16px; }
+         .overlay-card button { font-size: 16px; padding: 10px 28px; }
+         .overlay-card button.revive { background: #7cf03d; }
 </style>
 </head>
 <body>
-        <h1>經典消消樂</h1>
-        <div class="hud">
-            <span>關卡 <b id="level">1 / 5</b></span>
-            <span>步數 <b id="moves">0</b></span>
-            <span>分數 <b id="score">0</b> / 目標 <b id="target">0</b></span>
-          </div>
-        <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
-        <div class="board-wrap"><canvas id="canvas" width="480" height="480"></canvas></div>
-        <div class="btn-row">
-            <button id="newGame">重頭開始</button>
-            <button id="tuneBtn">調參（跑 30 局看難度）</button>
-          </div>
-        <div class="tune" id="tuneReadout"></div>
-        <p class="hint">
+         <h1>消消樂 · M7 體驗與調參</h1>
+         <div class="hud">
+             <span>關卡 <b id="level">1 / 8</b></span>
+             <span>步數 <b id="moves">0</b></span>
+             <span>分數 <b id="score">0</b> / 目標 <b id="target">0</b></span>
+           </div>
+         <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+         <div class="board-wrap"><canvas id="canvas" width="480" height="480"></canvas></div>
+         <div class="btn-row">
+             <button id="newGame">重頭開始</button>
+             <button id="tuneBtn">調參（跑 30 局看難度）</button>
+           </div>
+         <div class="tune" id="tuneReadout"></div>
+         <p class="hint">
          點擊 / 滑動交換相鄰棋子；<b style="color:#ffd24d">4 連出炸彈</b>、<b style="color:#7cf03d">5 連出彩虹</b>；<b style="color:#8fd8ff">冰塊</b>消 2 次破、<b style="color:#8890a0">石頭牆</b>阻擋掉落。<br>
-         分數會顯示進度條；4 秒沒操作會自動提示可行移動；步數用完可續命 +3。首次點擊啟動音效。
-          </p>
+         分數顯示進度條；4 秒沒操作自動提示；步數用完可續命 +3。首次點擊啟動音效。
+           </p>
 
-      <div id="overlay">
-        <div class="overlay-card">
-          <h2 id="overlayTitle"></h2>
-          <p id="overlayText"></p>
-          <button id="overlayBtn">下一關</button>
-        </div>
-      </div>
+       <div id="overlay">
+         <div class="overlay-card">
+           <h2 id="overlayTitle"></h2>
+           <p id="overlayText"></p>
+           <button id="overlayBtn">下一關</button>
+         </div>
+       </div>
 
 <script>
 /* =====================================================================
- *  常量 + 關卡資料（A：拍平曲線，每關只引入一個新變數）
+ *  常量 + 關卡資料
+ *  難度曲線：每關只引入一個新變數，障礙物用固定布局 obstacles
+ *  目標分為「起點估計」，請用調參工具逐關校到 70~85% 通過率
  * ===================================================================== */
 const COLS = 8, ROWS = 8;
 const CELL = 60;
@@ -104,13 +105,29 @@ const LERP = 0.2;
 const CLEAR_MS = 180;
 const GEM_COLORS = ['#ff4d6d','#4dd0e1','#ffd24d','#7cf03d','#b388ff','#ff9f43'];
 
-// 難度曲線：L3 先只加障礙物（顏色不變）→ L4 才加 6 色（撤障礙物）→ L5 兩者合體
+// r,c 為 0 起算（r=0 最上、c=0 最左）。每關固定布局，讓玩家記得關卡。
 const levels = [
-      { colors: 5, moves: 22, target: 500 },
-      { colors: 5, moves: 20, target: 900 },
-      { colors: 5, moves: 18, target: 1300, ice: 2 },
-      { colors: 6, moves: 18, target: 1800 },
-      { colors: 6, moves: 16, target: 2400, ice: 3, stone: 1 },
+      // 1：基本三消
+   { colors: 5, moves: 22, target: 500 },
+   // 2：連鎖 combo
+   { colors: 5, moves: 20, target: 900 },
+   // 3：學冰塊（固定 2 塊，對角）
+   { colors: 5, moves: 18, target: 1300,
+     obstacles: [ {type:'ice', r:3, c:3}, {type:'ice', r:4, c:4} ] },
+   // 4：學 6 色（無障礙）
+   { colors: 6, moves: 18, target: 1800 },
+   // 5：6 色 + 冰塊（喘息關，目標與 4 接近，步數放寬）
+   { colors: 6, moves: 19, target: 1900,
+     obstacles: [ {type:'ice', r:2, c:3}, {type:'ice', r:5, c:4} ] },
+   // 6：學石頭（冰塊 2 + 石頭 1）
+   { colors: 6, moves: 18, target: 2100,
+     obstacles: [ {type:'ice', r:2, c:2}, {type:'ice', r:5, c:5}, {type:'stone', r:3, c:3} ] },
+   // 7：加量（冰塊 3 + 石頭 1）
+   { colors: 6, moves: 17, target: 2300,
+     obstacles: [ {type:'ice', r:1, c:2}, {type:'ice', r:3, c:5}, {type:'ice', r:5, c:3}, {type:'stone', r:4, c:4} ] },
+   // 8：全合體（原第 5 關，步數調回 18、目標調低到可過）
+   { colors: 6, moves: 18, target: 2500,
+     obstacles: [ {type:'ice', r:2, c:1}, {type:'ice', r:2, c:6}, {type:'ice', r:5, c:4}, {type:'stone', r:4, c:3} ] },
 ];
 
 const canvas = document.getElementById('canvas');
@@ -138,10 +155,9 @@ let currentLevel = 0;
 let moves = 0;
 let target = 0;
 let activeColors = 5;
-let canRevive = false;        // B：失敗續命旗標
-let hintCells = null;         // B：離線提示的高亮格
+let canRevive = false;
+let hintCells = null;
 let idleTimer = null;
-// M6 特效狀態
 let particles = [];
 let floaters = [];
 let audioCtx = null;
@@ -168,22 +184,18 @@ function generateBoard(){
     for (let r = 0; r < ROWS; r++)
       for (let c = 0; c < COLS; c++)
         grid[r][c] = makeToken(randColor(), pixelX(c), pixelY(r));
-    placeObstacles(cfg.stone || 0, 'stone');
-    placeObstacles(cfg.ice || 0, 'ice');
+    placeFixedObstacles(cfg);
     guard++;
-        } while ((findMatches().size > 0 || !hasValidMoves()) && guard < 100);
+         } while ((findMatches().size > 0 || !hasValidMoves()) && guard < 100);
 }
 
-function placeObstacles(count, type){
-  let placed = 0, guard = 0;
-  while (placed < count && guard++ < 500){
-    const r = Math.floor(Math.random() * ROWS);
-    const c = Math.floor(Math.random() * COLS);
-    const t = grid[r][c];
-    if (!t || t.obstacle) continue;
-    grid[r][c] = makeObstacle(type, r, c);
-    placed++;
-        }
+// 固定布局：依 cfg.obstacles 放置障礙物到指定格
+function placeFixedObstacles(cfg){
+  if (!cfg.obstacles) return;
+  for (const o of cfg.obstacles){
+    if (o.r < 0 || o.r >= ROWS || o.c < 0 || o.c >= COLS) continue;
+    grid[o.r][o.c] = makeObstacle(o.type, o.r, o.c);
+      }
 }
 
 // 核心 1：掃描匹配（障礙物中斷連續）
@@ -199,17 +211,17 @@ function scanMatches(){
       if (!t || t.obstacle){ c++; continue; }
       let end = c;
       while (end + 1 < COLS && grid[r][end + 1] && !grid[r][end + 1].obstacle
-               && grid[r][end + 1].color === t.color) end++;
+                && grid[r][end + 1].color === t.color) end++;
       const len = end - c + 1;
       if (len >= 3){
         for (let k = c; k <= end; k++) add(r, k);
         const pivot = c + Math.floor((len - 1) / 2);
         if (len >= 5) markSpecial(specials, r, pivot, 'rainbow');
         else if (len === 4) markSpecial(specials, r, pivot, 'bomb');
-              }
+               }
       c = end + 1;
-          }
-        }
+           }
+         }
     for (let c = 0; c < COLS; c++){
     let r = 0;
     while (r < ROWS){
@@ -217,17 +229,17 @@ function scanMatches(){
       if (!t || t.obstacle){ r++; continue; }
       let end = r;
       while (end + 1 < ROWS && grid[end + 1][c] && !grid[end + 1][c].obstacle
-               && grid[end + 1][c].color === t.color) end++;
+                && grid[end + 1][c].color === t.color) end++;
       const len = end - r + 1;
       if (len >= 3){
         for (let k = r; k <= end; k++) add(k, c);
         const pivot = r + Math.floor((len - 1) / 2);
         if (len >= 5) markSpecial(specials, pivot, c, 'rainbow');
         else if (len === 4) markSpecial(specials, pivot, c, 'bomb');
-              }
+               }
       r = end + 1;
-          }
-        }
+           }
+         }
   return { cells, specials };
 }
 
@@ -249,8 +261,8 @@ function applyGravityAndRefill(){
       while (r >= 0 && !isObstacle(grid[r][c])) r--;
       const top = r + 1;
       gravitySegment(c, top, bottom);
-          }
-        }
+           }
+         }
 }
 
 function gravitySegment(c, top, bottom){
@@ -262,13 +274,13 @@ function gravitySegment(c, top, bottom){
       grid[write][c].tx = pixelX(c);
       grid[write][c].ty = pixelY(write);
       write--;
-           }
-         }
+            }
+          }
   for (let r = write; r >= top; r--){
     const t = makeToken(randColor(), pixelX(c), pixelY(r) - CELL * (write - r + 1));
     t.ty = pixelY(r);
     grid[r][c] = t;
-          }
+           }
 }
 
 function hasValidMoves(){
@@ -279,7 +291,7 @@ function hasValidMoves(){
     const ok = findMatches().size > 0;
     swapCells(r1, c1, r2, c2);
     return ok;
-           };
+            };
   for (let r = 0; r < ROWS; r++)
     for (let c = 0; c < COLS; c++)
       if (trySwap(r, c, r, c + 1) || trySwap(r, c, r + 1, c)) return true;
@@ -293,7 +305,7 @@ async function shuffleBoard(){
       for (let c = 0; c < COLS; c++)
         if (grid[r][c] && !grid[r][c].obstacle){ grid[r][c].color = randColor(); grid[r][c].scale = 0.1; }
     guard++;
-            } while ((findMatches().size > 0 || !hasValidMoves()) && guard < 50);
+             } while ((findMatches().size > 0 || !hasValidMoves()) && guard < 50);
   await waitFrame(10);
 }
 
@@ -310,7 +322,7 @@ function repairBoard(){
       const t = grid[r][c];
       if (!t) grid[r][c] = makeToken(randColor(), pixelX(c), pixelY(r));
       else if (t.obstacle === undefined){ t.state = 'idle'; t.scale = 1; }
-              }
+               }
 }
 
 /* =====================================================================
@@ -322,7 +334,7 @@ function mostCommonColor(){
     for (let c = 0; c < COLS; c++){
       const t = grid[r][c];
       if (t && !t.special && !t.obstacle) count[t.color]++;
-              }
+               }
   let best = -1, bi = 0;
   for (let i = 0; i < count.length; i++)
     if (count[i] > best){ best = count[i]; bi = i; }
@@ -342,15 +354,15 @@ function triggerSpecial(t, r, c, clearSet, triggerColor){
         if (nt && nt.obstacle === 'stone') continue;
         clearSet.add(nr + ',' + nc);
         if (nt && nt.special) triggerSpecial(nt, nr, nc, clearSet, triggerColor);
-                }
-            } else if (t.special === 'rainbow'){
+                 }
+             } else if (t.special === 'rainbow'){
     const color = (triggerColor != null) ? triggerColor : mostCommonColor();
     for (let rr = 0; rr < ROWS; rr++)
       for (let cc = 0; cc < COLS; cc++){
         const g = grid[rr][cc];
         if (g && g.color === color && !g.special && !g.obstacle) clearSet.add(rr + ',' + cc);
+                 }
                 }
-               }
 }
 
 function applyIceHits(clearSet){
@@ -365,14 +377,14 @@ function applyIceHits(clearSet){
       if (t && t.obstacle === 'ice' && !hitThisCycle.has(ikey)){
         hitThisCycle.add(ikey);
         t.hp--;
-                }
-              }
-            }
+                 }
+               }
+             }
   for (let r = 0; r < ROWS; r++)
     for (let c = 0; c < COLS; c++){
       const t = grid[r][c];
       if (t && t.obstacle === 'ice' && t.hp <= 0) clearSet.add(r + ',' + c);
-              }
+               }
 }
 
 /* =====================================================================
@@ -391,18 +403,18 @@ async function collapse(clearSet, specialsMap){
   for (const key of clearSet){
     const [r, c] = key.split(',').map(Number);
     if (grid[r][c] && grid[r][c].obstacle !== 'stone') grid[r][c] = null;
-            }
+             }
   for (const [key, type] of specialsMap){
     const [r, c] = key.split(',').map(Number);
     if (grid[r][c]){
       grid[r][c].special = type;
       grid[r][c].state = 'idle';
-                } else {
+                 } else {
       const t = makeToken(randColor(), pixelX(c), pixelY(r));
       t.special = type;
       grid[r][c] = t;
-                  }
-              }
+                   }
+               }
   applyGravityAndRefill();
   await waitForSettle();
 }
@@ -421,16 +433,16 @@ async function resolveBoard(){
       const [r, c] = key.split(',').map(Number);
       const t = grid[r][c];
       if (t && t.special) toTrigger.push([r, c]);
-              }
+               }
     for (const [r, c] of toTrigger){
       const t = grid[r][c];
       if (t && t.special) triggerSpecial(t, r, c, cells, t.color);
-              }
+               }
 
     applyIceHits(cells);
     addScore(cells.size + specials.size, combo);
     await collapse(cells, specials);
-            }
+             }
   if (!hasValidMoves()) await shuffleBoard();
   return combo;
 }
@@ -463,24 +475,24 @@ async function attemptSwap(a, b){
       playTone(440, 0.06, 'sine', 0.08);
       await resolveBoard();
       checkWinLose();
-            } else if (specialSwap){
+             } else if (specialSwap){
       moves--; updateHUD();
       playTone(520, 0.08, 'sine', 0.09);
       await triggerSwapSpecial(a, b);
       await resolveBoard();
       checkWinLose();
-                } else {
+                 } else {
       playTone(160, 0.1, 'sawtooth', 0.07);
       swapCells(a.r, a.c, b.r, b.c);
       await waitForSettle();
-                }
-               } catch (err){
+                 }
+                } catch (err){
     console.error('消除流程例外，強制解鎖：', err);
     repairBoard();
-               } finally {
+                } finally {
     locked = false;
     scheduleIdleHint();
-               }
+                }
 }
 
 function checkWinLose(){
@@ -501,12 +513,11 @@ function winLevel(){
       overlay.classList.remove('show');
       gameOver = false;
       startLevel(isLast ? 0 : currentLevel + 1);
-                };
+                 };
     overlay.classList.add('show');
-       }, 750);
+        }, 750);
 }
 
-// B：失敗續命（每關一次 +3 步）
 function loseLevel(){
   gameOver = true;
   playTone(220, 0.25, 'sawtooth', 0.12);
@@ -524,8 +535,8 @@ function loseLevel(){
         moves += 3;
         updateHUD();
         scheduleIdleHint();
-              };
-     } else {
+               };
+      } else {
       overlayTitle.textContent = '步數用完了…';
       overlayText.textContent = `分數 ${score} / 目標 ${target}｜再試一次吧`;
       overlayBtn.textContent = '重試本關';
@@ -534,10 +545,10 @@ function loseLevel(){
         overlay.classList.remove('show');
         gameOver = false;
         startLevel(currentLevel);
-              };
-     }
+               };
+      }
     overlay.classList.add('show');
-       }, 300);
+        }, 300);
 }
 
 function startLevel(index){
@@ -566,7 +577,7 @@ function updateHUD(){
 }
 
 /* =====================================================================
- *  B：離線提示（idle hint）
+ *  離線提示
  * ===================================================================== */
 function findValidMove(){
   for (let r = 0; r < ROWS; r++)
@@ -578,14 +589,14 @@ function findValidMove(){
         const ok = findMatches().size > 0;
         swapCells(r, c, r, c + 1);
         if (ok) return { a: { r, c }, b: { r, c: c + 1 } };
-            }
+             }
       if (r + 1 < ROWS && grid[r + 1][c] && !grid[r + 1][c].obstacle){
         swapCells(r, c, r + 1, c);
         const ok = findMatches().size > 0;
         swapCells(r, c, r + 1, c);
         if (ok) return { a: { r, c }, b: { r: r + 1, c } };
-            }
-        }
+             }
+         }
   return null;
 }
 
@@ -594,17 +605,17 @@ function scheduleIdleHint(){
   idleTimer = setTimeout(() => {
     if (!locked && !gameOver && !overlay.classList.contains('show')){
       hintCells = findValidMove();
-      }
-     }, 4000);
+       }
+      }, 4000);
 }
 
 /* =====================================================================
- *  M6 特效 + 音效
+ *  特效 + 音效
  * ===================================================================== */
 function initAudio(){
   if (!audioCtx){
     try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
-        }
+         }
   if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
 }
 function playTone(freq, duration = 0.12, type = 'sine', gain = 0.15){
@@ -621,7 +632,7 @@ function playTone(freq, duration = 0.12, type = 'sine', gain = 0.15){
     g.gain.exponentialRampToValueAtTime(0.0001, now + duration);
     osc.start(now);
     osc.stop(now + duration);
-        } catch (e) {}
+         } catch (e) {}
 }
 function playBoom(){ playTone(90, 0.25, 'sawtooth', 0.18); }
 
@@ -637,8 +648,8 @@ function spawnParticles(x, y, color, count, power){
       decay: 0.02 + Math.random() * 0.03,
       size: 3 + Math.random() * 4,
       color
-     });
-        }
+      });
+         }
   if (particles.length > 500) particles.splice(0, particles.length - 500);
 }
 
@@ -651,13 +662,13 @@ function clearCellsVisual(clearSet){
     if (t.special === 'bomb') boom = true;
     if (t.obstacle === 'ice'){
       spawnParticles(t.x, t.y, '#8fd8ff', 12, 3);
-       } else if (t.special === 'rainbow'){
+        } else if (t.special === 'rainbow'){
       spawnParticles(t.x, t.y, '#ffffff', 16, 3.5);
-       } else {
+        } else {
       spawnParticles(t.x, t.y, GEM_COLORS[t.color] || '#ffffff', 8, 2.5);
-       }
+        }
     t.state = 'clearing';
-     }
+      }
   if (boom) playBoom();
 }
 
@@ -670,7 +681,7 @@ function updateParticles(){
     p.vx *= 0.99;
     p.life -= p.decay;
     if (p.life <= 0) particles.splice(i, 1);
-        }
+         }
 }
 function renderParticles(){
   for (const p of particles){
@@ -679,7 +690,7 @@ function renderParticles(){
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
     ctx.fill();
-        }
+         }
   ctx.globalAlpha = 1;
 }
 
@@ -692,7 +703,7 @@ function updateFloaters(){
     f.y -= 0.6;
     f.life -= 0.015;
     if (f.life <= 0) floaters.splice(i, 1);
-        }
+         }
 }
 function renderFloaters(){
   for (const f of floaters){
@@ -702,12 +713,12 @@ function renderFloaters(){
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(f.text, f.x, f.y);
-        }
+         }
   ctx.globalAlpha = 1;
 }
 
 function celebrate(){
-   [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => playTone(f, 0.18, 'triangle', 0.14), i * 90));
+    [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => playTone(f, 0.18, 'triangle', 0.14), i * 90));
   for (let i = 0; i < 90; i++){
     particles.push({
       x: Math.random() * canvas.width,
@@ -718,8 +729,8 @@ function celebrate(){
       decay: 0.006 + Math.random() * 0.008,
       size: 4 + Math.random() * 4,
       color: GEM_COLORS[Math.floor(Math.random() * GEM_COLORS.length)]
-     });
-        }
+      });
+         }
 }
 
 /* =====================================================================
@@ -749,7 +760,7 @@ function drawGem(t){
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(String(t.hp), t.x, t.y);
     return;
-        }
+         }
 
     if (t.obstacle === 'stone'){
     ctx.save();
@@ -763,7 +774,7 @@ function drawGem(t){
     roundRect(x + 3, y + 3, size - 6, size * 0.3, 6 * t.scale);
     ctx.fill();
     return;
-        }
+         }
 
     if (t.special === 'rainbow'){
     ctx.save();
@@ -779,7 +790,7 @@ function drawGem(t){
     roundRect(x + 1, y + 1, size - 2, size - 2, 12 * t.scale);
     ctx.stroke();
     return;
-        }
+         }
 
     if (t.special === 'bomb'){
     ctx.save();
@@ -798,7 +809,7 @@ function drawGem(t){
     ctx.arc(t.x, t.y, size * 0.12, 0, Math.PI * 2);
     ctx.fill();
     return;
-        }
+         }
 
     ctx.save();
   ctx.shadowColor = 'rgba(0,0,0,0.35)';
@@ -841,10 +852,10 @@ function render(){
   ctx.lineWidth = 1;
   for (let i = 1; i < COLS; i++){
     ctx.beginPath(); ctx.moveTo(i * CELL, 0); ctx.lineTo(i * CELL, canvas.height); ctx.stroke();
-          }
+           }
   for (let i = 1; i < ROWS; i++){
     ctx.beginPath(); ctx.moveTo(0, i * CELL); ctx.lineTo(canvas.width, i * CELL); ctx.stroke();
-          }
+           }
   for (let r = 0; r < ROWS; r++)
     for (let c = 0; c < COLS; c++)
       drawGem(grid[r][c]);
@@ -852,15 +863,14 @@ function render(){
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 3;
     ctx.strokeRect(selected.c * CELL + 4, selected.r * CELL + 4, CELL - 8, CELL - 8);
-          }
-   // B：離線提示（脈動高亮）
+           }
   if (hintCells && !gameOver && !overlay.classList.contains('show')){
     const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 150);
     ctx.strokeStyle = `rgba(255,255,255,${0.25 + 0.55 * pulse})`;
     ctx.lineWidth = 3;
     ctx.strokeRect(hintCells.a.c * CELL + 3, hintCells.a.r * CELL + 3, CELL - 6, CELL - 6);
     ctx.strokeRect(hintCells.b.c * CELL + 3, hintCells.b.r * CELL + 3, CELL - 6, CELL - 6);
-          }
+           }
 }
 
 function updateAnimations(){
@@ -874,7 +884,7 @@ function updateAnimations(){
       else if (t.scale < 1) t.scale = Math.min(1, t.scale + 0.12);
       if (Math.abs(t.x - t.tx) < 1) t.x = t.tx;
       if (Math.abs(t.y - t.ty) < 1) t.y = t.ty;
-              }
+               }
 }
 
 function allSettled(){
@@ -885,7 +895,7 @@ function allSettled(){
       if (t.state === 'clearing') return false;
       if (Math.abs(t.x - t.tx) >= 1 || Math.abs(t.y - t.ty) >= 1) return false;
       if (t.scale < 0.99) return false;
-              }
+               }
   return true;
 }
 
@@ -897,20 +907,20 @@ function loop(){
     render();
     renderParticles();
     renderFloaters();
-          } catch (e){
+           } catch (e){
     console.error('渲染例外（已攔截，迴圈繼續）：', e);
-          }
+           }
   requestAnimationFrame(loop);
 }
 
 function waitForSettle(){
   return new Promise(resolve => {
     let guard = 0;
-          (function check(){
+           (function check(){
       if (allSettled() || ++guard > 300) resolve();
       else requestAnimationFrame(check);
-            })();
-          });
+             })();
+           });
 }
 function delay(ms){ return new Promise(r => setTimeout(r, ms)); }
 function waitFrame(n){ return new Promise(r => setTimeout(r, n * 16)); }
@@ -948,7 +958,7 @@ canvas.addEventListener('pointerdown', e => {
     attemptSwap(selected, cell);
     selected = null; startCell = null;
     return;
-          }
+           }
   selected = cell;
 });
 
@@ -960,8 +970,8 @@ canvas.addEventListener('pointermove', e => {
     if (adjacent(startCell, cell)){
       attemptSwap(startCell, cell);
       selected = null; startCell = null;
-              }
-            }
+               }
+             }
 });
 
 canvas.addEventListener('pointerup', () => { startCell = null; });
@@ -973,7 +983,7 @@ document.getElementById('newGame').addEventListener('click', () => {
 });
 
 /* =====================================================================
- *  A：自動調參工具（同步模擬，不碰 UI/動畫，計分與正式遊戲一致）
+ *  自動調參工具（同步模擬，障礙物亦用固定布局，與正式遊戲一致）
  * ===================================================================== */
 function simRand(n){ return Math.floor(Math.random() * n); }
 function simMark(map, r, c, type){
@@ -997,10 +1007,10 @@ function simFindMatches(g){
         const p = c + Math.floor((len - 1) / 2);
         if (len >= 5) simMark(specials, r, p, 'rainbow');
         else if (len === 4) simMark(specials, r, p, 'bomb');
-            }
+             }
       c = end + 1;
-        }
-      }
+         }
+       }
   for (let c = 0; c < COLS; c++){
     let r = 0;
     while (r < ROWS){
@@ -1014,10 +1024,10 @@ function simFindMatches(g){
         const p = r + Math.floor((len - 1) / 2);
         if (len >= 5) simMark(specials, p, c, 'rainbow');
         else if (len === 4) simMark(specials, p, c, 'bomb');
-            }
+             }
       r = end + 1;
-        }
-      }
+         }
+       }
   return { cells, specials };
 }
 function simGravity(g, colors){
@@ -1034,12 +1044,12 @@ function simGravity(g, colors){
         if (t && !t.obstacle){
           if (rr !== write){ g[write][c] = t; g[rr][c] = null; }
           write--;
-              }
-            }
+               }
+             }
       for (let rr = write; rr >= top; rr--)
         g[rr][c] = { color: simRand(colors), obstacle: null, special: null, hp: 0 };
-            }
-          }
+             }
+           }
 }
 function simMostCommon(g){
   const cnt = {};
@@ -1047,7 +1057,7 @@ function simMostCommon(g){
     for (let c = 0; c < COLS; c++){
       const t = g[r][c];
       if (t && !t.special && !t.obstacle) cnt[t.color] = (cnt[t.color] || 0) + 1;
-              }
+               }
   let best = -1, bi = 0;
   for (const k in cnt) if (cnt[k] > best){ best = cnt[k]; bi = +k; }
   return bi;
@@ -1065,15 +1075,15 @@ function simTrigger(g, t, r, c, clearSet, triggerColor){
         if (nt && nt.obstacle === 'stone') continue;
         clearSet.add(nr + ',' + nc);
         if (nt && nt.special) simTrigger(g, nt, nr, nc, clearSet, triggerColor);
-                }
-            } else if (t.special === 'rainbow'){
+                 }
+             } else if (t.special === 'rainbow'){
     const color = (triggerColor != null) ? triggerColor : simMostCommon(g);
     for (let rr = 0; rr < ROWS; rr++)
       for (let cc = 0; cc < COLS; cc++){
         const x = g[rr][cc];
         if (x && x.color === color && !x.special && !x.obstacle) clearSet.add(rr + ',' + cc);
+                 }
                 }
-               }
 }
 function simIceHits(g, clearSet){
   const hit = new Set();
@@ -1084,13 +1094,13 @@ function simIceHits(g, clearSet){
       const t = g[nr][nc];
       const ik = nr + ',' + nc;
       if (t && t.obstacle === 'ice' && !hit.has(ik)){ hit.add(ik); t.hp--; }
-              }
-            }
+               }
+             }
   for (let r = 0; r < ROWS; r++)
     for (let c = 0; c < COLS; c++){
       const t = g[r][c];
       if (t && t.obstacle === 'ice' && t.hp <= 0) clearSet.add(r + ',' + c);
-              }
+               }
 }
 function simResolve(g, colors){
   let total = 0, combo = 0;
@@ -1103,24 +1113,24 @@ function simResolve(g, colors){
       const [r, c] = k.split(',').map(Number);
       const t = g[r][c];
       if (t && t.special) toTrig.push([r, c]);
-              }
+               }
     for (const [r, c] of toTrig){
       const t = g[r][c];
       if (t && t.special) simTrigger(g, t, r, c, cells, t.color);
-              }
+               }
     simIceHits(g, cells);
-    total += (cells.size + specials.size) * 10 * combo;   // 與 addScore 一致
+    total += (cells.size + specials.size) * 10 * combo;
     for (const k of cells){
       const [r, c] = k.split(',').map(Number);
       if (g[r][c] && g[r][c].obstacle !== 'stone') g[r][c] = null;
-              }
+               }
     for (const [k, type] of specials){
       const [r, c] = k.split(',').map(Number);
       if (g[r][c]) g[r][c].special = type;
       else g[r][c] = { color: simRand(colors), obstacle: null, special: type, hp: 0 };
-              }
+               }
     simGravity(g, colors);
-            }
+             }
   return total;
 }
 function simHasValid(g){
@@ -1132,7 +1142,7 @@ function simHasValid(g){
     const ok = simFindMatches(g).cells.size > 0;
     g[r1][c1] = a; g[r2][c2] = b;
     return ok;
-             };
+              };
   for (let r = 0; r < ROWS; r++)
     for (let c = 0; c < COLS; c++)
       if (trySwap(r, c, r, c + 1) || trySwap(r, c, r + 1, c)) return true;
@@ -1145,16 +1155,7 @@ function simShuffle(g, colors){
       for (let c = 0; c < COLS; c++)
         if (g[r][c] && !g[r][c].obstacle){ g[r][c].color = simRand(colors); g[r][c].special = null; }
     guard++;
-            } while ((simFindMatches(g).cells.size > 0 || !simHasValid(g)) && guard < 50);
-}
-function simPlace(g, type, colors){
-  let guard = 0;
-  while (guard++ < 500){
-    const r = simRand(ROWS), c = simRand(COLS);
-    if (!g[r][c] || g[r][c].obstacle) continue;
-    g[r][c] = { color: simRand(colors), obstacle: type, special: null, hp: type === 'ice' ? 2 : 0 };
-    return;
-            }
+             } while ((simFindMatches(g).cells.size > 0 || !simHasValid(g)) && guard < 50);
 }
 function simGenerate(cfg){
   const g = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
@@ -1163,18 +1164,21 @@ function simGenerate(cfg){
     for (let r = 0; r < ROWS; r++)
       for (let c = 0; c < COLS; c++)
         g[r][c] = { color: simRand(cfg.colors), obstacle: null, special: null, hp: 0 };
-    for (let i = 0; i < (cfg.stone || 0); i++) simPlace(g, 'stone', cfg.colors);
-    for (let i = 0; i < (cfg.ice || 0); i++) simPlace(g, 'ice', cfg.colors);
+    if (cfg.obstacles){
+      for (const o of cfg.obstacles){
+        if (o.r < 0 || o.r >= ROWS || o.c < 0 || o.c >= COLS) continue;
+        g[o.r][o.c] = { color: simRand(cfg.colors), obstacle: o.type, special: null, hp: o.type === 'ice' ? 2 : 0 };
+          }
+        }
     guard++;
-            } while ((simFindMatches(g).cells.size > 0 || !simHasValid(g)) && guard < 100);
+             } while ((simFindMatches(g).cells.size > 0 || !simHasValid(g)) && guard < 100);
   return g;
 }
 function cloneGrid(g){
   return g.map(row => row.map(cell => cell
-    ? { color: cell.color, obstacle: cell.obstacle, special: cell.special, hp: cell.hp }
-    : null));
+     ? { color: cell.color, obstacle: cell.obstacle, special: cell.special, hp: cell.hp }
+     : null));
 }
-// 貪婪選步：試所有可行交換，選分數最高者
 function bestSimMove(g, colors){
   let best = null, bestScore = -1;
   for (let r = 0; r < ROWS; r++)
@@ -1192,8 +1196,8 @@ function bestSimMove(g, colors){
         if (!has) continue;
         const sc = simResolve(cp, colors);
         if (sc > bestScore){ bestScore = sc; best = { a: { r, c }, b: { r: r2, c: c2 } }; }
-            }
-        }
+             }
+         }
   return best;
 }
 function playOneGame(cfg){
@@ -1209,7 +1213,7 @@ function playOneGame(cfg){
     moves--;
     if (score >= cfg.target) break;
     if (!simHasValid(g)) simShuffle(g, cfg.colors);
-        }
+         }
   return { score, won: score >= cfg.target };
 }
 function simulateLevel(cfg, games = 30){
@@ -1219,7 +1223,7 @@ function simulateLevel(cfg, games = 30){
     total += r.score;
     best = Math.max(best, r.score);
     if (r.won) won++;
-        }
+         }
   const avg = total / games;
   const perMove = avg / cfg.moves;
   return { avg, best, perMove, winRate: won / games, suggested: Math.round(perMove * cfg.moves * 0.7) };
@@ -1232,10 +1236,10 @@ tuneBtn.addEventListener('click', () => {
     const cfg = levels[currentLevel];
     const res = simulateLevel(cfg, 30);
     tuneReadout.innerHTML =
-     `第 ${currentLevel + 1} 關｜平均 ${Math.round(res.avg)}｜過關率 ${Math.round(res.winRate * 100)}%｜<b>建議目標 ${res.suggested}</b>（每步 ${Math.round(res.perMove)}）`;
+      `第 ${currentLevel + 1} 關｜平均 ${Math.round(res.avg)}｜過關率 ${Math.round(res.winRate * 100)}%｜<b>建議目標 ${res.suggested}</b>（每步 ${Math.round(res.perMove)}）`;
     console.log('[調參]', tuneReadout.textContent, res);
     tuneBtn.disabled = false;
-       }, 60);
+        }, 60);
 });
 
 /* =====================================================================
@@ -1244,6 +1248,7 @@ tuneBtn.addEventListener('click', () => {
 startLevel(0);
 loop();
 </script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"a7357b08a73843d59c3104007bc7b186","r":1,"spa":2}' crossorigin="anonymous"></script>
 </body>
 </html>
 
